@@ -291,7 +291,7 @@ impl PasswordInput {
     fn prompt_password(&self, term: &Term, prompt: &str) -> io::Result<String> {
         loop {
             term.write_str(&format!("{}: ", prompt))?;
-            let input = term.read_line()?;
+            let input = term.read_secure()?;
             if self.clear {
                 term.clear_last_lines(1)?;
             }
