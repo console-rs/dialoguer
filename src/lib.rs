@@ -7,9 +7,15 @@
 //!
 //! * [indicatif](https://crates.io/crates/indicatif)
 //! * [console](https://crates.io/crates/console)
+//!
+//! # Crate Contents
+//!
+//! * Confirmation prompts
+//! * Input prompts
+//! * Menu selections
 extern crate console;
 
-pub use prompts::{Confirmation, Input};
+pub use prompts::{Confirmation, Input, PasswordInput};
 pub use select::Select;
 
 mod prompts;

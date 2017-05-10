@@ -45,6 +45,27 @@ pub struct Input {
     clear: bool,
 }
 
+/// Renders a password input prompt.
+///
+/// ## Example usage
+///
+/// ```rust
+/// # fn test() -> Box<std::error::Error> {
+/// use dialoguer::PasswordInput;
+///
+/// let password = PasswordInput::new("New Password")
+///     .confirm("Confirm password", "Passwords mismatching")
+///     .interact()?;
+/// println!("Length of the password is: {}", password.len());
+/// # } fn main() { test().unwrap(); }
+/// ```
+pub struct PasswordInput {
+    text: String,
+    confirmation_prompt: Option<(String, String)>,
+    replacement_char: Option<char>,
+    clear: bool,
+}
+
 impl Confirmation {
     /// Creates the prompt with a specific text.
     pub fn new(text: &str) -> Confirmation {
@@ -97,9 +118,9 @@ impl Confirmation {
     /// Enables user interaction and returns the result.
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
-    /// The dialog is rendered on stdout.
+    /// The dialog is rendered on stderr.
     pub fn interact(&self) -> io::Result<bool> {
-        self.interact_on(&Term::stdout())
+        self.interact_on(&Term::stderr())
     }
 
     /// Like `interact` but allows a specific terminal to be set.
@@ -187,9 +208,9 @@ impl Input {
     /// Enables user interaction and returns the result.
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
-    /// The dialog is rendered on stdout.
+    /// The dialog is rendered on stderr.
     pub fn interact(&self) -> io::Result<String> {
-        self.interact_on(&Term::stdout())
+        self.interact_on(&Term::stderr())
     }
 
     /// Like `interact` but allows a specific terminal to be set.
@@ -214,6 +235,69 @@ impl Input {
                 term.clear_last_lines(1)?;
             }
             return Ok(input);
+        }
+    }
+}
+
+impl PasswordInput {
+    /// Creates a new input prompt.
+    pub fn new(text: &str) -> PasswordInput {
+        PasswordInput {
+            text: text.into(),
+            confirmation_prompt: None,
+            replacement_char: None,
+            clear: false,
+        }
+    }
+
+    /// Sets the clear behavior of the prompt.
+    ///
+    /// The default is not to clear.
+    pub fn clear(&mut self, val: bool) -> &mut PasswordInput {
+        self.clear = val;
+        self
+    }
+
+    /// Enables confirmation prompting.
+    pub fn confirm(&mut self, prompt: &str, mismatch_err: &str) -> &mut PasswordInput {
+        self.confirmation_prompt = Some((prompt.into(), mismatch_err.into()));
+        self
+    }
+
+    /// Enables user interaction and returns the result.
+    ///
+    /// If the user confirms the result is `true`, `false` otherwise.
+    /// The dialog is rendered on stderr.
+    pub fn interact(&self) -> io::Result<String> {
+        self.interact_on(&Term::stderr())
+    }
+
+    /// Like `interact` but allows a specific terminal to be set.
+    pub fn interact_on(&self, term: &Term) -> io::Result<String> {
+        loop {
+            let password = self.prompt_password(term, &self.text)?;
+            if let Some((ref prompt, ref err)) = self.confirmation_prompt {
+                let pw2 = self.prompt_password(term, &prompt)?;
+                if password == pw2 {
+                    return Ok(password);
+                }
+                term.write_line(&err)?;
+            } else {
+                return Ok(password);
+            }
+        }
+    }
+
+    fn prompt_password(&self, term: &Term, prompt: &str) -> io::Result<String> {
+        loop {
+            term.write_str(&format!("{}: ", prompt))?;
+            let input = term.read_line()?;
+            if self.clear {
+                term.clear_last_lines(1)?;
+            }
+            if !input.is_empty() {
+                return Ok(input);
+            }
         }
     }
 }

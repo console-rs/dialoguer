@@ -51,9 +51,9 @@ impl Select {
     /// Enables user interaction and returns the result.
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
-    /// The dialog is rendered on stdout.
+    /// The dialog is rendered on stderr.
     pub fn interact(&self) -> io::Result<usize> {
-        self.interact_on(&Term::stdout())
+        self.interact_on(&Term::stderr())
     }
 
     /// Like `interact` but allows a specific terminal to be set.
