@@ -87,7 +87,7 @@ impl Select {
                                (self.items.len() as i64)) as usize;
                     }
                 }
-                Key::Enter if sel != !0 => {
+                Key::Enter | Key::Char(' ' ) if sel != !0 => {
                     if self.clear {
                         term.clear_last_lines(self.items.len())?;
                     }
