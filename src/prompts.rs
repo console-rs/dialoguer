@@ -63,7 +63,6 @@ pub struct PasswordInput {
     text: String,
     confirmation_prompt: Option<(String, String)>,
     replacement_char: Option<char>,
-    clear: bool,
 }
 
 impl Confirmation {
@@ -246,16 +245,7 @@ impl PasswordInput {
             text: text.into(),
             confirmation_prompt: None,
             replacement_char: None,
-            clear: false,
         }
-    }
-
-    /// Sets the clear behavior of the prompt.
-    ///
-    /// The default is not to clear.
-    pub fn clear(&mut self, val: bool) -> &mut PasswordInput {
-        self.clear = val;
-        self
     }
 
     /// Enables confirmation prompting.
@@ -281,7 +271,7 @@ impl PasswordInput {
                 if password == pw2 {
                     return Ok(password);
                 }
-                term.write_line(&err)?;
+                term.write_line(err)?;
             } else {
                 return Ok(password);
             }
@@ -290,11 +280,8 @@ impl PasswordInput {
 
     fn prompt_password(&self, term: &Term, prompt: &str) -> io::Result<String> {
         loop {
-            term.write_str(&format!("{}: ", prompt))?;
-            let input = term.read_secure()?;
-            if self.clear {
-                term.clear_last_lines(1)?;
-            }
+            term.write_str(&format!("\r{}: ", prompt))?;
+            let input = term.read_secure_line()?;
             if !input.is_empty() {
                 return Ok(input);
             }
