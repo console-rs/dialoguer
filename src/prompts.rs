@@ -4,6 +4,20 @@ use std::fmt::Write;
 use console::Term;
 
 /// Renders a simple confirmation prompt.
+///
+/// ## Example usage
+///
+/// ```rust
+/// # fn test() -> Box<std::error::Error> {
+/// use dialoguer::Confirmation;
+///
+/// if Confirmation::new("Do you want to continue?").interact()? {
+///     println!("Looks like you want to continue");
+/// } else {
+///     println!("nevermind then :(");
+/// }
+/// # } fn main() { test().unwrap(); }
+/// ```
 pub struct Confirmation {
     text: String,
     default: bool,
@@ -13,6 +27,17 @@ pub struct Confirmation {
 }
 
 /// Renders a simple input prompt.
+///
+/// ## Example usage
+///
+/// ```rust
+/// # fn test() -> Box<std::error::Error> {
+/// use dialoguer::Input;
+///
+/// let name = Input::new("Your name").interact()?;
+/// println!("Name: {}", name);
+/// # } fn main() { test().unwrap(); }
+/// ```
 pub struct Input {
     text: String,
     default: Option<String>,
