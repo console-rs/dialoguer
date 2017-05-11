@@ -10,8 +10,5 @@ documentation = "https://docs.rs/dialoguer"
 readme = "README.md"
 
 [dependencies]
-console = "0"
+console = ">=0.3.0 <1.0.0"
 tempfile = "2"
-
-[replace]
-"console:0.2.0" = { path = "../console" }
