@@ -11,12 +11,17 @@
 //! # Crate Contents
 //!
 //! * Confirmation prompts
-//! * Input prompts
+//! * Input prompts (regular and password)
 //! * Menu selections
+//! * Checkboxes
+//!
+//! Todo:
+//!
+//! * editor launching
 extern crate console;
 
 pub use prompts::{Confirmation, Input, PasswordInput};
-pub use select::Select;
+pub use select::{Select, Checkboxes};
 
 mod prompts;
 mod select;
