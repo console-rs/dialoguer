@@ -62,7 +62,6 @@ pub struct Input {
 pub struct PasswordInput {
     text: String,
     confirmation_prompt: Option<(String, String)>,
-    replacement_char: Option<char>,
 }
 
 impl Confirmation {
@@ -244,7 +243,6 @@ impl PasswordInput {
         PasswordInput {
             text: text.into(),
             confirmation_prompt: None,
-            replacement_char: None,
         }
     }
 
