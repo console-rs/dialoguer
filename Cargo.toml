@@ -11,6 +11,7 @@ readme = "README.md"
 
 [dependencies]
 console = "0"
+tempfile = "2"
 
 [replace]
-"console:0.1.0" = { path = "../console" }
+"console:0.2.0" = { path = "../console" }
