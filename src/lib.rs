@@ -5,8 +5,8 @@
 //!
 //! Best paired with other libraries in the family:
 //!
-//! * [indicatif](https://crates.io/crates/indicatif)
-//! * [console](https://crates.io/crates/console)
+//! * [indicatif](https://docs.rs/indicatif)
+//! * [console](https://docs.rs/console)
 //!
 //! # Crate Contents
 //!
