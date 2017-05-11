@@ -8,6 +8,22 @@ use std::ffi::{OsStr, OsString};
 use tempfile::NamedTempFileOptions;
 
 
+/// Launches the default editor edit a string.
+///
+/// Example:
+///
+/// ```rust
+/// # fn test() -> Box<std::error::Error> {
+/// use dialoguer::Editor;
+///
+/// if let Some(rv) = Editor::new().edit("Enter a commit message").unwrap() {
+///     println!("Your message:");
+///     println!("{}", rv);
+/// } else {
+///     println!("Abort!");
+/// }
+/// # } fn main() { test().unwrap(); }
+/// ```
 pub struct Editor {
     editor: OsString,
     extension: String,
@@ -30,6 +46,7 @@ fn get_default_editor() -> OsString {
 }
 
 impl Editor {
+    /// Creates a new editor.
     pub fn new() -> Editor {
         Editor {
             editor: get_default_editor(),

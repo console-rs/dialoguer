@@ -14,10 +14,7 @@
 //! * Input prompts (regular and password)
 //! * Menu selections
 //! * Checkboxes
-//!
-//! Todo:
-//!
-//! * editor launching
+//! * Editor launching
 extern crate console;
 extern crate tempfile;
 
