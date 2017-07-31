@@ -48,7 +48,7 @@ impl Select {
     }
 
     /// Adds multiple items to the selector.
-    pub fn items(&mut self, items: &[&str]) -> &mut Select {
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Select {
         for item in items {
             self.items.push(item.to_string());
         }
