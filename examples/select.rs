@@ -9,6 +9,7 @@ fn main() {
         "Chocolate Muffin",
         "A Pile of sweet, sweet mustard",
     ];
+
     let selection = Select::new()
         .default(0)
         .items(&selections[..])

@@ -210,3 +210,43 @@ impl Checkboxes {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_str() {
+        let selections = &[
+            "Ice Cream",
+            "Vanilla Cupcake",
+            "Chocolate Muffin",
+            "A Pile of sweet, sweet mustard",
+        ];
+
+        assert_eq!(Select::new().default(0).items(&selections[..]).items, selections);
+    }
+
+    #[test]
+    fn test_string() {
+        let selections = vec![
+            "a".to_string(),
+            "b".to_string()
+        ];
+
+        assert_eq!(Select::new().default(0).items(&selections[..]).items, selections);
+    }
+
+    #[test]
+    fn test_ref_str() {
+        let a = "a";
+        let b = "b";
+
+        let selections = &[
+            a,
+            b
+        ];
+
+        assert_eq!(Select::new().default(0).items(&selections[..]).items, selections);
+    }
+}

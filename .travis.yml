@@ -1,0 +1,12 @@
+language: rust
+rust:
+- stable
+- beta
+- nightly
+matrix:
+  allow_failures:
+  - rust: nightly
+cache: cargo
+before_script:
+- export PATH=$HOME/.cargo/bin:$PATH
+script: cargo build --verbose && cargo test --lib --verbose
