@@ -48,7 +48,7 @@ impl Select {
     }
 
     /// Adds multiple items to the selector.
-    pub fn items(&mut self, items: &[&str]) -> &mut Select {
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Select {
         for item in items {
             self.items.push(item.to_string());
         }
@@ -208,5 +208,45 @@ impl Checkboxes {
             }
             term.clear_last_lines(self.items.len())?;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_str() {
+        let selections = &[
+            "Ice Cream",
+            "Vanilla Cupcake",
+            "Chocolate Muffin",
+            "A Pile of sweet, sweet mustard",
+        ];
+
+        assert_eq!(Select::new().default(0).items(&selections[..]).items, selections);
+    }
+
+    #[test]
+    fn test_string() {
+        let selections = vec![
+            "a".to_string(),
+            "b".to_string()
+        ];
+
+        assert_eq!(Select::new().default(0).items(&selections[..]).items, selections);
+    }
+
+    #[test]
+    fn test_ref_str() {
+        let a = "a";
+        let b = "b";
+
+        let selections = &[
+            a,
+            b
+        ];
+
+        assert_eq!(Select::new().default(0).items(&selections[..]).items, selections);
     }
 }
