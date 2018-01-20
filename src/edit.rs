@@ -12,16 +12,17 @@ use tempfile::NamedTempFileOptions;
 ///
 /// Example:
 ///
-/// ```rust
-/// # fn test() -> Box<std::error::Error> {
+/// ```rust, no_run
+/// # fn test() -> std::io::Result<()> {
 /// use dialoguer::Editor;
 ///
-/// if let Some(rv) = Editor::new().edit("Enter a commit message").unwrap() {
+/// if let Some(rv) = Editor::new().edit("Enter a commit message")? {
 ///     println!("Your message:");
 ///     println!("{}", rv);
 /// } else {
 ///     println!("Abort!");
 /// }
+/// # Ok(())
 /// # } fn main() { test().unwrap(); }
 /// ```
 pub struct Editor {

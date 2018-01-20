@@ -7,8 +7,8 @@ use console::Term;
 ///
 /// ## Example usage
 ///
-/// ```rust
-/// # fn test() -> Box<std::error::Error> {
+/// ```rust, no_run
+/// # fn test() -> std::io::Result<()> {
 /// use dialoguer::Confirmation;
 ///
 /// if Confirmation::new("Do you want to continue?").interact()? {
@@ -16,6 +16,7 @@ use console::Term;
 /// } else {
 ///     println!("nevermind then :(");
 /// }
+/// # Ok(())
 /// # } fn main() { test().unwrap(); }
 /// ```
 pub struct Confirmation {
@@ -30,12 +31,13 @@ pub struct Confirmation {
 ///
 /// ## Example usage
 ///
-/// ```rust
-/// # fn test() -> Box<std::error::Error> {
+/// ```rust, no_run
+/// # fn test() -> std::io::Result<()> {
 /// use dialoguer::Input;
 ///
 /// let name = Input::new("Your name").interact()?;
 /// println!("Name: {}", name);
+/// # Ok(())
 /// # } fn main() { test().unwrap(); }
 /// ```
 pub struct Input {
@@ -49,14 +51,15 @@ pub struct Input {
 ///
 /// ## Example usage
 ///
-/// ```rust
-/// # fn test() -> Box<std::error::Error> {
+/// ```rust, no_run
+/// # fn test() -> std::io::Result<()> {
 /// use dialoguer::PasswordInput;
 ///
 /// let password = PasswordInput::new("New Password")
 ///     .confirm("Confirm password", "Passwords mismatching")
 ///     .interact()?;
 /// println!("Length of the password is: {}", password.len());
+/// # Ok(())
 /// # } fn main() { test().unwrap(); }
 /// ```
 pub struct PasswordInput {

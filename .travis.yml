@@ -9,4 +9,4 @@ matrix:
 cache: cargo
 before_script:
 - export PATH=$HOME/.cargo/bin:$PATH
-script: cargo build --verbose && cargo test --lib --verbose
+script: cargo build --verbose && cargo test --verbose
