@@ -12,7 +12,7 @@ fn main() {
 
     let selection = Select::new()
         .default(0)
-        .items(&selections[..])
+        .items(selections)
         .interact().unwrap();
     println!("Enjoy your {}!", selections[selection]);
 }
