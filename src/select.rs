@@ -8,6 +8,7 @@ use console::{Key, Term};
 pub struct Select {
     default: usize,
     items: Vec<String>,
+    prompt: Option<String>,
     clear: bool,
 }
 
@@ -23,6 +24,7 @@ impl Select {
         Select {
             default: !0,
             items: vec![],
+            prompt: None,
             clear: true,
         }
     }
@@ -55,6 +57,15 @@ impl Select {
         self
     }
 
+    /// Prefaces the menu with a prompt.
+    ///
+    /// When a prompt is set the system also prints out a confirmation after
+    /// the selection.
+    pub fn with_prompt(&mut self, prompt: &str) -> &mut Select {
+        self.prompt = Some(prompt.to_string());
+        self
+    }
+
     /// Enables user interaction and returns the result.
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
@@ -66,6 +77,11 @@ impl Select {
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
         let mut sel = self.default;
+        let mut height = self.items.len();
+        if let Some(ref prompt) = self.prompt {
+            term.write_line(&format!("{}:", prompt));
+            height += 1;
+        }
         loop {
             for (idx, item) in self.items.iter().enumerate() {
                 term.write_line(&format!(
@@ -96,7 +112,10 @@ impl Select {
                 }
                 Key::Enter | Key::Char(' ' ) if sel != !0 => {
                     if self.clear {
-                        term.clear_last_lines(self.items.len())?;
+                        term.clear_last_lines(height)?;
+                    }
+                    if let Some(ref prompt) = self.prompt {
+                        term.write_line(&format!("{}: {}", prompt, self.items[sel]))?;
                     }
                     return Ok(sel);
                 }

@@ -11,6 +11,7 @@ fn main() {
     ];
 
     let selection = Select::new()
+        .with_prompt("Pick your flavor")
         .default(0)
         .items(&selections[..])
         .interact().unwrap();
