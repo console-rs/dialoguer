@@ -1,6 +1,6 @@
 extern crate dialoguer;
 
-use dialoguer::{Checkboxes, ColorfulTheme};
+use dialoguer::{theme::ColorfulTheme, Checkboxes};
 
 fn main() {
     let checkboxes = &[
@@ -9,8 +9,7 @@ fn main() {
         "Chocolate Muffin",
         "A Pile of sweet, sweet mustard",
     ];
-    let selections = Checkboxes::new()
-        .theme(ColorfulTheme)
+    let selections = Checkboxes::with_theme(&ColorfulTheme)
         .with_prompt("Pick your food")
         .items(&checkboxes[..])
         .interact()

@@ -11,8 +11,8 @@ use tempfile::NamedTempFileOptions;
 ///
 /// Example:
 ///
-/// ```rust
-/// # fn test() -> Box<std::error::Error> {
+/// ```rust,no_run
+/// # fn test() -> Result<(), Box<std::error::Error>> {
 /// use dialoguer::Editor;
 ///
 /// if let Some(rv) = Editor::new().edit("Enter a commit message").unwrap() {
@@ -21,7 +21,7 @@ use tempfile::NamedTempFileOptions;
 /// } else {
 ///     println!("Abort!");
 /// }
-/// # } fn main() { test().unwrap(); }
+/// # Ok(()) } fn main() { test().unwrap(); }
 /// ```
 pub struct Editor {
     editor: OsString,

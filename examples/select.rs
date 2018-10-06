@@ -1,6 +1,6 @@
 extern crate dialoguer;
 
-use dialoguer::{ColorfulTheme, Select};
+use dialoguer::{theme::ColorfulTheme, Select};
 
 fn main() {
     let selections = &[
@@ -10,8 +10,7 @@ fn main() {
         "A Pile of sweet, sweet mustard",
     ];
 
-    let selection = Select::new()
-        .theme(ColorfulTheme)
+    let selection = Select::with_theme(&ColorfulTheme)
         .with_prompt("Pick your flavor")
         .default(0)
         .items(&selections[..])

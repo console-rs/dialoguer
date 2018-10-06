@@ -2,67 +2,66 @@ use std::io;
 use std::iter::repeat;
 use std::ops::Rem;
 
-use theme::{DefaultTheme, SelectionStyle, TermThemeRenderer, Theme};
+use theme::{get_default_theme, SelectionStyle, TermThemeRenderer, Theme};
 
 use console::{Key, Term};
 
 /// Renders a selection menu.
-pub struct Select {
+pub struct Select<'a> {
     default: usize,
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
-    theme: Box<Theme>,
+    theme: &'a Theme,
 }
 
 /// Renders a multi select checkbox menu.
-pub struct Checkboxes {
+pub struct Checkboxes<'a> {
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
-    theme: Box<Theme>,
+    theme: &'a Theme,
 }
 
-impl Select {
+impl<'a> Select<'a> {
     /// Creates the prompt with a specific text.
-    pub fn new() -> Select {
+    pub fn new() -> Select<'static> {
+        Select::with_theme(get_default_theme())
+    }
+
+    /// Same as `new` but with a specific theme.
+    pub fn with_theme(theme: &'a Theme) -> Select<'a> {
         Select {
             default: !0,
             items: vec![],
             prompt: None,
             clear: true,
-            theme: Box::new(DefaultTheme),
+            theme: theme,
         }
-    }
-
-    /// Sets a theme other than the default one.
-    pub fn theme<T: Theme + 'static>(&mut self, theme: T) -> &mut Select {
-        self.theme = Box::new(theme);
-        self
     }
 
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu.
-    pub fn clear(&mut self, val: bool) -> &mut Select {
+    pub fn clear(&mut self, val: bool) -> &mut Select<'a> {
         self.clear = val;
         self
     }
 
     /// Sets a default for the menu
-    pub fn default(&mut self, val: usize) -> &mut Select {
+    pub fn default(&mut self, val: usize) -> &mut Select<'a> {
         self.default = val;
         self
     }
 
     /// Add a single item to the selector.
-    pub fn item(&mut self, item: &str) -> &mut Select {
+    pub fn item(&mut self, item: &str) -> &mut Select<'a> {
         self.items.push(item.to_string());
         self
     }
 
     /// Adds multiple items to the selector.
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Select {
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Select<'a> {
         for item in items {
             self.items.push(item.to_string());
         }
@@ -73,7 +72,7 @@ impl Select {
     ///
     /// When a prompt is set the system also prints out a confirmation after
     /// the selection.
-    pub fn with_prompt(&mut self, prompt: &str) -> &mut Select {
+    pub fn with_prompt(&mut self, prompt: &str) -> &mut Select<'a> {
         self.prompt = Some(prompt.to_string());
         self
     }
@@ -88,7 +87,7 @@ impl Select {
 
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
-        let mut render = TermThemeRenderer::new(term, &*self.theme);
+        let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
         if let Some(ref prompt) = self.prompt {
             render.prompt(prompt)?;
@@ -136,39 +135,38 @@ impl Select {
     }
 }
 
-impl Checkboxes {
-    /// Creates the prompt with a specific text.
-    pub fn new() -> Checkboxes {
+impl<'a> Checkboxes<'a> {
+    /// Creates a new checkbox object.
+    pub fn new() -> Checkboxes<'static> {
+        Checkboxes::with_theme(get_default_theme())
+    }
+
+    /// Sets a theme other than the default one.
+    pub fn with_theme(theme: &'a Theme) -> Checkboxes<'a> {
         Checkboxes {
             items: vec![],
             clear: true,
             prompt: None,
-            theme: Box::new(DefaultTheme),
+            theme: theme,
         }
-    }
-
-    /// Sets a theme other than the default one.
-    pub fn theme<T: Theme + 'static>(&mut self, theme: T) -> &mut Checkboxes {
-        self.theme = Box::new(theme);
-        self
     }
 
     /// Sets the clear behavior of the checkbox menu.
     ///
     /// The default is to clear the checkbox menu.
-    pub fn clear(&mut self, val: bool) -> &mut Checkboxes {
+    pub fn clear(&mut self, val: bool) -> &mut Checkboxes<'a> {
         self.clear = val;
         self
     }
 
     /// Add a single item to the selector.
-    pub fn item(&mut self, item: &str) -> &mut Checkboxes {
+    pub fn item(&mut self, item: &str) -> &mut Checkboxes<'a> {
         self.items.push(item.to_string());
         self
     }
 
     /// Adds multiple items to the selector.
-    pub fn items(&mut self, items: &[&str]) -> &mut Checkboxes {
+    pub fn items(&mut self, items: &[&str]) -> &mut Checkboxes<'a> {
         for item in items {
             self.items.push(item.to_string());
         }
@@ -179,7 +177,7 @@ impl Checkboxes {
     ///
     /// When a prompt is set the system also prints out a confirmation after
     /// the selection.
-    pub fn with_prompt(&mut self, prompt: &str) -> &mut Checkboxes {
+    pub fn with_prompt(&mut self, prompt: &str) -> &mut Checkboxes<'a> {
         self.prompt = Some(prompt.to_string());
         self
     }
@@ -194,7 +192,7 @@ impl Checkboxes {
 
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
-        let mut render = TermThemeRenderer::new(term, &*self.theme);
+        let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
         if let Some(ref prompt) = self.prompt {
             render.prompt(prompt)?;
