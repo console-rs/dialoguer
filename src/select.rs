@@ -2,6 +2,8 @@ use std::io;
 use std::iter::repeat;
 use std::ops::Rem;
 
+use theme::{DefaultTheme, SelectionStyle, TermThemeRenderer, Theme};
+
 use console::{Key, Term};
 
 /// Renders a selection menu.
@@ -10,12 +12,15 @@ pub struct Select {
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
+    theme: Box<Theme>,
 }
 
 /// Renders a multi select checkbox menu.
 pub struct Checkboxes {
     items: Vec<String>,
+    prompt: Option<String>,
     clear: bool,
+    theme: Box<Theme>,
 }
 
 impl Select {
@@ -26,7 +31,14 @@ impl Select {
             items: vec![],
             prompt: None,
             clear: true,
+            theme: Box::new(DefaultTheme),
         }
+    }
+
+    /// Sets a theme other than the default one.
+    pub fn theme<T: Theme + 'static>(&mut self, theme: T) -> &mut Select {
+        self.theme = Box::new(theme);
+        self
     }
 
     /// Sets the clear behavior of the menu.
@@ -76,15 +88,21 @@ impl Select {
 
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
+        let mut render = TermThemeRenderer::new(term, &*self.theme);
         let mut sel = self.default;
-        let mut height = self.items.len();
         if let Some(ref prompt) = self.prompt {
-            term.write_line(&format!("{}:", prompt))?;
-            height += 1;
+            render.prompt(prompt)?;
         }
         loop {
             for (idx, item) in self.items.iter().enumerate() {
-                term.write_line(&format!("{} {}", if sel == idx { ">" } else { " " }, item,))?;
+                render.selection(
+                    item,
+                    if sel == idx {
+                        SelectionStyle::MenuSelected
+                    } else {
+                        SelectionStyle::MenuUnselected
+                    },
+                )?;
             }
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
@@ -104,16 +122,16 @@ impl Select {
                 }
                 Key::Enter | Key::Char(' ') if sel != !0 => {
                     if self.clear {
-                        term.clear_last_lines(height)?;
+                        render.clear()?;
                     }
                     if let Some(ref prompt) = self.prompt {
-                        term.write_line(&format!("{}: {}", prompt, self.items[sel]))?;
+                        render.single_prompt_selection(prompt, &self.items[sel])?;
                     }
                     return Ok(sel);
                 }
                 _ => {}
             }
-            term.clear_last_lines(self.items.len())?;
+            render.clear_preserve_prompt()?;
         }
     }
 }
@@ -124,7 +142,15 @@ impl Checkboxes {
         Checkboxes {
             items: vec![],
             clear: true,
+            prompt: None,
+            theme: Box::new(DefaultTheme),
         }
+    }
+
+    /// Sets a theme other than the default one.
+    pub fn theme<T: Theme + 'static>(&mut self, theme: T) -> &mut Checkboxes {
+        self.theme = Box::new(theme);
+        self
     }
 
     /// Sets the clear behavior of the checkbox menu.
@@ -149,6 +175,15 @@ impl Checkboxes {
         self
     }
 
+    /// Prefaces the menu with a prompt.
+    ///
+    /// When a prompt is set the system also prints out a confirmation after
+    /// the selection.
+    pub fn with_prompt(&mut self, prompt: &str) -> &mut Checkboxes {
+        self.prompt = Some(prompt.to_string());
+        self
+    }
+
     /// Enables user interaction and returns the result.
     ///
     /// The user can select the items with the space bar and on enter
@@ -159,16 +194,23 @@ impl Checkboxes {
 
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
+        let mut render = TermThemeRenderer::new(term, &*self.theme);
         let mut sel = 0;
-        let mut selected: Vec<_> = repeat(false).take(self.items.len()).collect();
+        if let Some(ref prompt) = self.prompt {
+            render.prompt(prompt)?;
+        }
+        let mut checked: Vec<_> = repeat(false).take(self.items.len()).collect();
         loop {
             for (idx, item) in self.items.iter().enumerate() {
-                term.write_line(&format!(
-                    "{} [{}] {}",
-                    if sel == idx { ">" } else { " " },
-                    if selected[idx] { "x" } else { " " },
+                render.selection(
                     item,
-                ))?;
+                    match (checked[idx], sel == idx) {
+                        (true, true) => SelectionStyle::CheckboxCheckedSelected,
+                        (true, false) => SelectionStyle::CheckboxCheckedUnselected,
+                        (false, true) => SelectionStyle::CheckboxUncheckedSelected,
+                        (false, false) => SelectionStyle::CheckboxUncheckedUnselected,
+                    },
+                )?;
             }
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
@@ -187,27 +229,43 @@ impl Checkboxes {
                     }
                 }
                 Key::Char(' ') => {
-                    selected[sel] = !selected[sel];
+                    checked[sel] = !checked[sel];
                 }
                 Key::Escape => {
                     if self.clear {
-                        term.clear_last_lines(self.items.len())?;
+                        render.clear()?;
+                    }
+                    if let Some(ref prompt) = self.prompt {
+                        render.multi_prompt_selection(prompt, &[][..])?;
                     }
                     return Ok(vec![]);
                 }
                 Key::Enter => {
                     if self.clear {
-                        term.clear_last_lines(self.items.len())?;
+                        render.clear()?;
                     }
-                    return Ok(selected
+                    if let Some(ref prompt) = self.prompt {
+                        let mut selections: Vec<_> = checked
+                            .iter()
+                            .enumerate()
+                            .filter_map(|(idx, &checked)| {
+                                if checked {
+                                    Some(self.items[idx].as_str())
+                                } else {
+                                    None
+                                }
+                            }).collect();
+                        render.multi_prompt_selection(prompt, &selections[..])?;
+                    }
+                    return Ok(checked
                         .into_iter()
                         .enumerate()
-                        .filter_map(|(idx, selected)| if selected { Some(idx) } else { None })
+                        .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
                         .collect());
                 }
                 _ => {}
             }
-            term.clear_last_lines(self.items.len())?;
+            render.clear_preserve_prompt()?;
         }
     }
 }

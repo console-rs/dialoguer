@@ -21,7 +21,9 @@ extern crate tempfile;
 pub use edit::Editor;
 pub use prompts::{Confirmation, Input, PasswordInput};
 pub use select::{Checkboxes, Select};
+pub use theme::{ColorfulTheme, DefaultTheme, SelectionStyle, Theme};
 
 mod edit;
 mod prompts;
 mod select;
+mod theme;
