@@ -79,7 +79,7 @@ impl Select {
         let mut sel = self.default;
         let mut height = self.items.len();
         if let Some(ref prompt) = self.prompt {
-            term.write_line(&format!("{}:", prompt));
+            term.write_line(&format!("{}:", prompt))?;
             height += 1;
         }
         loop {
