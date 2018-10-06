@@ -18,10 +18,10 @@
 extern crate console;
 extern crate tempfile;
 
-pub use prompts::{Confirmation, Input, PasswordInput};
-pub use select::{Select, Checkboxes};
 pub use edit::Editor;
+pub use prompts::{Confirmation, Input, PasswordInput};
+pub use select::{Checkboxes, Select};
 
+mod edit;
 mod prompts;
 mod select;
-mod edit;

@@ -9,9 +9,7 @@ fn main() {
         "Chocolate Muffin",
         "A Pile of sweet, sweet mustard",
     ];
-    let selections = Checkboxes::new()
-        .items(&checkboxes[..])
-        .interact().unwrap();
+    let selections = Checkboxes::new().items(&checkboxes[..]).interact().unwrap();
 
     if selections.is_empty() {
         println!("You did not select anything :(");

@@ -1,5 +1,5 @@
-use std::io;
 use std::fmt::Write;
+use std::io;
 
 use console::Term;
 
@@ -123,11 +123,19 @@ impl Confirmation {
 
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<bool> {
-        let prompt = format!("{}{} ", &self.text, if self.show_default {
-            if self.default { " [Y/n]" } else { " [y/N]" }
-        } else {
-            ""
-        });
+        let prompt = format!(
+            "{}{} ",
+            &self.text,
+            if self.show_default {
+                if self.default {
+                    " [Y/n]"
+                } else {
+                    " [y/N]"
+                }
+            } else {
+                ""
+            }
+        );
 
         if !self.line_input {
             term.write_str(&prompt)?;
@@ -137,7 +145,9 @@ impl Confirmation {
                     'y' | 'Y' => true,
                     'n' | 'N' => false,
                     '\n' | '\r' => self.default,
-                    _ => { continue; }
+                    _ => {
+                        continue;
+                    }
                 };
                 if self.clear.unwrap_or(true) {
                     term.clear_line()?;
@@ -154,7 +164,9 @@ impl Confirmation {
                     "y" | "Y" => true,
                     "n" | "N" => false,
                     "\n" | "\r" => self.default,
-                    _ => { continue; }
+                    _ => {
+                        continue;
+                    }
                 };
                 if self.clear.unwrap_or(false) {
                     term.clear_last_lines(1)?;

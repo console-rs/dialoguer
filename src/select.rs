@@ -1,6 +1,6 @@
 use std::io;
-use std::ops::Rem;
 use std::iter::repeat;
+use std::ops::Rem;
 
 use console::{Key, Term};
 
@@ -84,15 +84,7 @@ impl Select {
         }
         loop {
             for (idx, item) in self.items.iter().enumerate() {
-                term.write_line(&format!(
-                    "{} {}",
-                    if sel == idx {
-                        ">"
-                    } else {
-                        " "
-                    },
-                    item,
-                ))?;
+                term.write_line(&format!("{} {}", if sel == idx { ">" } else { " " }, item,))?;
             }
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
@@ -106,11 +98,11 @@ impl Select {
                     if sel == !0 {
                         sel = self.items.len() - 1;
                     } else {
-                        sel = ((sel as i64 - 1 + self.items.len() as i64) %
-                               (self.items.len() as i64)) as usize;
+                        sel = ((sel as i64 - 1 + self.items.len() as i64)
+                            % (self.items.len() as i64)) as usize;
                     }
                 }
-                Key::Enter | Key::Char(' ' ) if sel != !0 => {
+                Key::Enter | Key::Char(' ') if sel != !0 => {
                     if self.clear {
                         term.clear_last_lines(height)?;
                     }
@@ -173,16 +165,8 @@ impl Checkboxes {
             for (idx, item) in self.items.iter().enumerate() {
                 term.write_line(&format!(
                     "{} [{}] {}",
-                    if sel == idx {
-                        ">"
-                    } else {
-                        " "
-                    },
-                    if selected[idx] {
-                        "x"
-                    } else {
-                        " "
-                    },
+                    if sel == idx { ">" } else { " " },
+                    if selected[idx] { "x" } else { " " },
                     item,
                 ))?;
             }
@@ -198,11 +182,11 @@ impl Checkboxes {
                     if sel == !0 {
                         sel = self.items.len() - 1;
                     } else {
-                        sel = ((sel as i64 - 1 + self.items.len() as i64) %
-                               (self.items.len() as i64)) as usize;
+                        sel = ((sel as i64 - 1 + self.items.len() as i64)
+                            % (self.items.len() as i64)) as usize;
                     }
                 }
-                Key::Char(' ' ) => {
+                Key::Char(' ') => {
                     selected[sel] = !selected[sel];
                 }
                 Key::Escape => {
@@ -210,18 +194,16 @@ impl Checkboxes {
                         term.clear_last_lines(self.items.len())?;
                     }
                     return Ok(vec![]);
-                },
+                }
                 Key::Enter => {
                     if self.clear {
                         term.clear_last_lines(self.items.len())?;
                     }
-                    return Ok(selected.into_iter().enumerate().filter_map(|(idx, selected)| {
-                        if selected {
-                            Some(idx)
-                        } else {
-                            None
-                        }
-                    }).collect());
+                    return Ok(selected
+                        .into_iter()
+                        .enumerate()
+                        .filter_map(|(idx, selected)| if selected { Some(idx) } else { None })
+                        .collect());
                 }
                 _ => {}
             }
@@ -243,17 +225,20 @@ mod tests {
             "A Pile of sweet, sweet mustard",
         ];
 
-        assert_eq!(Select::new().default(0).items(&selections[..]).items, selections);
+        assert_eq!(
+            Select::new().default(0).items(&selections[..]).items,
+            selections
+        );
     }
 
     #[test]
     fn test_string() {
-        let selections = vec![
-            "a".to_string(),
-            "b".to_string()
-        ];
+        let selections = vec!["a".to_string(), "b".to_string()];
 
-        assert_eq!(Select::new().default(0).items(&selections[..]).items, selections);
+        assert_eq!(
+            Select::new().default(0).items(&selections[..]).items,
+            selections
+        );
     }
 
     #[test]
@@ -261,11 +246,11 @@ mod tests {
         let a = "a";
         let b = "b";
 
-        let selections = &[
-            a,
-            b
-        ];
+        let selections = &[a, b];
 
-        assert_eq!(Select::new().default(0).items(&selections[..]).items, selections);
+        assert_eq!(
+            Select::new().default(0).items(&selections[..]).items,
+            selections
+        );
     }
 }

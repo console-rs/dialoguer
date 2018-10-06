@@ -1,12 +1,11 @@
+use std::env;
+use std::ffi::{OsStr, OsString};
+use std::fs;
 use std::io;
 use std::io::{Read, Write};
-use std::fs;
-use std::env;
 use std::process;
-use std::ffi::{OsStr, OsString};
 
 use tempfile::NamedTempFileOptions;
-
 
 /// Launches the default editor edit a string.
 ///
