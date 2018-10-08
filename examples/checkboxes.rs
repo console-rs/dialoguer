@@ -9,7 +9,7 @@ fn main() {
         "Chocolate Muffin",
         "A Pile of sweet, sweet mustard",
     ];
-    let selections = Checkboxes::with_theme(&ColorfulTheme)
+    let selections = Checkboxes::with_theme(&ColorfulTheme::default())
         .with_prompt("Pick your food")
         .items(&checkboxes[..])
         .interact()

@@ -2,7 +2,7 @@
 use std::fmt;
 use std::io;
 
-use console::{style, Term};
+use console::{Style, Term};
 
 /// Rendering style for a selected item
 #[derive(Debug, Clone, Copy)]
@@ -130,7 +130,39 @@ pub struct SimpleTheme;
 impl Theme for SimpleTheme {}
 
 /// A colorful theme
-pub struct ColorfulTheme;
+pub struct ColorfulTheme {
+    /// The style for default values in prompts and similar
+    pub defaults_style: Style,
+    /// The style for errors indicators
+    pub error_style: Style,
+    /// The style for user interface indicators
+    pub indicator_style: Style,
+    /// The style for inactive elements
+    pub inactive_style: Style,
+    /// The style for active elements
+    pub active_style: Style,
+    /// The style for values indicating "yes"
+    pub yes_style: Style,
+    /// The style for values indicating "no"
+    pub no_style: Style,
+    /// The style for values embedded in prompts
+    pub values_style: Style,
+}
+
+impl Default for ColorfulTheme {
+    fn default() -> ColorfulTheme {
+        ColorfulTheme {
+            defaults_style: Style::new().dim(),
+            error_style: Style::new().red(),
+            indicator_style: Style::new().cyan().bold(),
+            inactive_style: Style::new().dim(),
+            active_style: Style::new(),
+            yes_style: Style::new().green(),
+            no_style: Style::new().green(),
+            values_style: Style::new().cyan(),
+        }
+    }
+}
 
 impl Theme for ColorfulTheme {
     fn format_prompt(&self, f: &mut fmt::Write, prompt: &str) -> fmt::Result {
@@ -144,13 +176,18 @@ impl Theme for ColorfulTheme {
         default: Option<&str>,
     ) -> fmt::Result {
         match default {
-            Some(default) => write!(f, "{} [{}]: ", prompt, style(default).dim()),
+            Some(default) => write!(
+                f,
+                "{} [{}]: ",
+                prompt,
+                self.defaults_style.apply_to(default)
+            ),
             None => write!(f, "{}: ", prompt),
         }
     }
 
     fn format_error(&self, f: &mut fmt::Write, err: &str) -> fmt::Result {
-        write!(f, "{}: {}", style("error").red(), err)
+        write!(f, "{}: {}", self.error_style.apply_to("error"), err)
     }
 
     fn format_confirmation_prompt(
@@ -162,8 +199,8 @@ impl Theme for ColorfulTheme {
         write!(f, "{}", &prompt)?;
         match default {
             None => {}
-            Some(true) => write!(f, " {} ", style("[Y/n]").dim())?,
-            Some(false) => write!(f, " {} ", style("[y/N]").dim())?,
+            Some(true) => write!(f, " {} ", self.defaults_style.apply_to("[Y/n]"))?,
+            Some(false) => write!(f, " {} ", self.defaults_style.apply_to("[y/N]"))?,
         }
         Ok(())
     }
@@ -179,9 +216,9 @@ impl Theme for ColorfulTheme {
             "{} {}",
             &prompt,
             if selection {
-                style("yes").green()
+                self.yes_style.apply_to("yes")
             } else {
-                style("no").red()
+                self.no_style.apply_to("no")
             }
         )
     }
@@ -192,7 +229,7 @@ impl Theme for ColorfulTheme {
         prompt: &str,
         sel: &str,
     ) -> fmt::Result {
-        write!(f, "{}: {}", prompt, style(sel).cyan())
+        write!(f, "{}: {}", prompt, self.values_style.apply_to(sel))
     }
 
     fn format_multi_prompt_selection(
@@ -207,7 +244,7 @@ impl Theme for ColorfulTheme {
                 f,
                 "{}{}",
                 if idx == 0 { "" } else { ", " },
-                style(sel).cyan()
+                self.values_style.apply_to(sel)
             )?;
         }
         Ok(())
@@ -215,22 +252,35 @@ impl Theme for ColorfulTheme {
 
     fn format_selection(&self, f: &mut fmt::Write, text: &str, st: SelectionStyle) -> fmt::Result {
         match st {
-            SelectionStyle::CheckboxUncheckedSelected => {
-                write!(f, "{} [ ] {}", style(">").cyan().bold(), text)
+            SelectionStyle::CheckboxUncheckedSelected => write!(
+                f,
+                "{} [ ] {}",
+                self.indicator_style.apply_to(">"),
+                self.active_style.apply_to(text)
+            ),
+            SelectionStyle::CheckboxUncheckedUnselected => {
+                write!(f, "  [ ] {}", self.inactive_style.apply_to(text))
             }
-            SelectionStyle::CheckboxUncheckedUnselected => write!(f, "  [ ] {}", style(text).dim()),
             SelectionStyle::CheckboxCheckedSelected => write!(
                 f,
                 "{} [{}] {}",
-                style(">").cyan().bold(),
-                style("x").green().bold(),
-                text
+                self.indicator_style.apply_to(">"),
+                self.indicator_style.apply_to("x"),
+                self.active_style.apply_to(text),
             ),
-            SelectionStyle::CheckboxCheckedUnselected => {
-                write!(f, "  [{}] {}", style("x").green().bold(), style(text).dim())
-            }
-            SelectionStyle::MenuSelected => write!(f, "{} {}", style(">").cyan().bold(), text),
-            SelectionStyle::MenuUnselected => write!(f, "  {}", style(text).dim()),
+            SelectionStyle::CheckboxCheckedUnselected => write!(
+                f,
+                "  [{}] {}",
+                self.indicator_style.apply_to("x"),
+                self.inactive_style.apply_to(text)
+            ),
+            SelectionStyle::MenuSelected => write!(
+                f,
+                "{} {}",
+                self.indicator_style.apply_to(">"),
+                self.active_style.apply_to(text)
+            ),
+            SelectionStyle::MenuUnselected => write!(f, "  {}", self.inactive_style.apply_to(text)),
         }
     }
 }
@@ -373,6 +423,6 @@ impl<'a> TermThemeRenderer<'a> {
 /// Returns the default theme.
 ///
 /// (This returns the simple theme)
-pub fn get_default_theme() -> &'static Theme {
+pub(crate) fn get_default_theme() -> &'static Theme {
     &SimpleTheme
 }

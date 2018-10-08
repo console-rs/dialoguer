@@ -1,9 +1,9 @@
 extern crate dialoguer;
 
-use dialoguer::{theme::ColorfulTheme, Confirmation, Input};
+use dialoguer::{Confirmation, Input};
 
 fn main() {
-    if Confirmation::with_theme(&ColorfulTheme)
+    if Confirmation::new()
         .with_text("Do you want to continue?")
         .interact()
         .unwrap()
@@ -14,9 +14,6 @@ fn main() {
         return;
     }
 
-    let input = Input::with_theme(&ColorfulTheme)
-        .with_prompt("Your name")
-        .interact()
-        .unwrap();
+    let input = Input::new().with_prompt("Your name").interact().unwrap();
     println!("Hello {}!", input);
 }

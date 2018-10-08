@@ -11,4 +11,5 @@ readme = "README.md"
 
 [dependencies]
 console = ">=0.3.0, <1.0.0"
+lazy_static = "0.2.11"
 tempfile = "2"

@@ -10,7 +10,7 @@ fn main() {
         "A Pile of sweet, sweet mustard",
     ];
 
-    let selection = Select::with_theme(&ColorfulTheme)
+    let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Pick your flavor")
         .default(0)
         .items(&selections[..])
