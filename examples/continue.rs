@@ -14,6 +14,6 @@ fn main() {
         return;
     }
 
-    let input = Input::new().with_prompt("Your name").interact().unwrap();
+    let input: String = Input::new().with_prompt("Your name").interact().unwrap();
     println!("Hello {}!", input);
 }

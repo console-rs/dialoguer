@@ -1,4 +1,6 @@
+use std::fmt::{Debug, Display};
 use std::io;
+use std::str::FromStr;
 
 use theme::{get_default_theme, TermThemeRenderer, Theme};
 
@@ -38,9 +40,9 @@ pub struct Confirmation<'a> {
 /// println!("Name: {}", name);
 /// # Ok(()) } fn main() { test().unwrap(); }
 /// ```
-pub struct Input<'a> {
+pub struct Input<'a, T> {
     prompt: String,
-    default: Option<String>,
+    default: Option<T>,
     show_default: bool,
     theme: &'a Theme,
 }
@@ -140,14 +142,18 @@ impl<'a> Confirmation<'a> {
     }
 }
 
-impl<'a> Input<'a> {
+impl<'a, T> Input<'a, T>
+where
+    T: Clone + FromStr + Display,
+    T::Err: Display + Debug,
+{
     /// Creates a new input prompt.
-    pub fn new() -> Input<'static> {
+    pub fn new() -> Input<'static, T> {
         Input::with_theme(get_default_theme())
     }
 
     /// Creats an input with a specific theme.
-    pub fn with_theme(theme: &'a Theme) -> Input<'a> {
+    pub fn with_theme(theme: &'a Theme) -> Input<'a, T> {
         Input {
             prompt: "".into(),
             default: None,
@@ -157,7 +163,7 @@ impl<'a> Input<'a> {
     }
 
     /// Sets the input prompt.
-    pub fn with_prompt(&mut self, prompt: &str) -> &mut Input<'a> {
+    pub fn with_prompt(&mut self, prompt: &str) -> &mut Input<'a, T> {
         self.prompt = prompt.into();
         self
     }
@@ -167,8 +173,8 @@ impl<'a> Input<'a> {
     /// Out of the box the prompt does not have a default and will continue
     /// to display until the user hit enter.  If a default is set the user
     /// can instead accept the default with enter.
-    pub fn default(&mut self, s: &str) -> &mut Input<'a> {
-        self.default = Some(s.into());
+    pub fn default(&mut self, value: T) -> &mut Input<'a, T> {
+        self.default = Some(value);
         self
     }
 
@@ -176,7 +182,7 @@ impl<'a> Input<'a> {
     ///
     /// The default is to append `[default]` to the prompt to tell the
     /// user that a default is acceptable.
-    pub fn show_default(&mut self, val: bool) -> &mut Input<'a> {
+    pub fn show_default(&mut self, val: bool) -> &mut Input<'a, T> {
         self.show_default = val;
         self
     }
@@ -185,19 +191,20 @@ impl<'a> Input<'a> {
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
-    pub fn interact(&self) -> io::Result<String> {
+    pub fn interact(&self) -> io::Result<T> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    pub fn interact_on(&self, term: &Term) -> io::Result<String> {
+    pub fn interact_on(&self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
+            let default_string = self.default.as_ref().map(|x| x.to_string());
             render.input_prompt(
                 &self.prompt,
                 if self.show_default {
-                    self.default.as_ref().map(|x| x.as_str())
+                    default_string.as_ref().map(|x| x.as_str())
                 } else {
                     None
                 },
@@ -206,16 +213,24 @@ impl<'a> Input<'a> {
             render.add_line();
             if input.is_empty() {
                 render.clear()?;
-                if let Some(ref d) = self.default {
-                    render.single_prompt_selection(&self.prompt, d)?;
-                    return Ok(d.to_string());
+                if let Some(ref default) = self.default {
+                    render.single_prompt_selection(&self.prompt, &default.to_string())?;
+                    return Ok(default.clone());
                 } else {
                     continue;
                 }
             }
             render.clear()?;
-            render.single_prompt_selection(&self.prompt, &input)?;
-            return Ok(input);
+            match input.parse::<T>() {
+                Ok(value) => {
+                    render.single_prompt_selection(&self.prompt, &input)?;
+                    return Ok(value);
+                }
+                Err(err) => {
+                    render.error(&err.to_string())?;
+                    continue;
+                }
+            }
         }
     }
 }
