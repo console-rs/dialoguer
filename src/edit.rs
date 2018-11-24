@@ -1,19 +1,18 @@
+use std::env;
+use std::ffi::{OsStr, OsString};
+use std::fs;
 use std::io;
 use std::io::{Read, Write};
-use std::fs;
-use std::env;
 use std::process;
-use std::ffi::{OsStr, OsString};
 
 use tempfile::NamedTempFileOptions;
-
 
 /// Launches the default editor edit a string.
 ///
 /// Example:
 ///
-/// ```rust
-/// # fn test() -> Box<std::error::Error> {
+/// ```rust,no_run
+/// # fn test() -> Result<(), Box<std::error::Error>> {
 /// use dialoguer::Editor;
 ///
 /// if let Some(rv) = Editor::new().edit("Enter a commit message").unwrap() {
@@ -22,7 +21,7 @@ use tempfile::NamedTempFileOptions;
 /// } else {
 ///     println!("Abort!");
 /// }
-/// # } fn main() { test().unwrap(); }
+/// # Ok(()) } fn main() { test().unwrap(); }
 /// ```
 pub struct Editor {
     editor: OsString,

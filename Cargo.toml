@@ -1,7 +1,7 @@
 [package]
 name = "dialoguer"
 description = "A command line prompting library."
-version = "0.1.0"
+version = "0.3.0"
 authors = ["Armin Ronacher <armin.ronacher@active-4.com>"]
 keywords = ["cli", "menu", "prompt"]
 license = "MIT"
@@ -11,4 +11,5 @@ readme = "README.md"
 
 [dependencies]
 console = ">=0.3.0, <1.0.0"
+lazy_static = "1"
 tempfile = "2"

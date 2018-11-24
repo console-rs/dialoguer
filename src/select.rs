@@ -1,57 +1,79 @@
 use std::io;
-use std::ops::Rem;
 use std::iter::repeat;
+use std::ops::Rem;
+
+use theme::{get_default_theme, SelectionStyle, TermThemeRenderer, Theme};
 
 use console::{Key, Term};
 
 /// Renders a selection menu.
-pub struct Select {
+pub struct Select<'a> {
     default: usize,
     items: Vec<String>,
+    prompt: Option<String>,
     clear: bool,
+    theme: &'a Theme,
 }
 
 /// Renders a multi select checkbox menu.
-pub struct Checkboxes {
+pub struct Checkboxes<'a> {
     items: Vec<String>,
+    prompt: Option<String>,
     clear: bool,
+    theme: &'a Theme,
 }
 
-impl Select {
+impl<'a> Select<'a> {
     /// Creates the prompt with a specific text.
-    pub fn new() -> Select {
+    pub fn new() -> Select<'static> {
+        Select::with_theme(get_default_theme())
+    }
+
+    /// Same as `new` but with a specific theme.
+    pub fn with_theme(theme: &'a Theme) -> Select<'a> {
         Select {
             default: !0,
             items: vec![],
+            prompt: None,
             clear: true,
+            theme: theme,
         }
     }
 
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu.
-    pub fn clear(&mut self, val: bool) -> &mut Select {
+    pub fn clear(&mut self, val: bool) -> &mut Select<'a> {
         self.clear = val;
         self
     }
 
     /// Sets a default for the menu
-    pub fn default(&mut self, val: usize) -> &mut Select {
+    pub fn default(&mut self, val: usize) -> &mut Select<'a> {
         self.default = val;
         self
     }
 
     /// Add a single item to the selector.
-    pub fn item(&mut self, item: &str) -> &mut Select {
+    pub fn item(&mut self, item: &str) -> &mut Select<'a> {
         self.items.push(item.to_string());
         self
     }
 
     /// Adds multiple items to the selector.
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Select {
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Select<'a> {
         for item in items {
             self.items.push(item.to_string());
         }
+        self
+    }
+
+    /// Prefaces the menu with a prompt.
+    ///
+    /// When a prompt is set the system also prints out a confirmation after
+    /// the selection.
+    pub fn with_prompt(&mut self, prompt: &str) -> &mut Select<'a> {
+        self.prompt = Some(prompt.to_string());
         self
     }
 
@@ -87,18 +109,21 @@ impl Select {
 
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
+        let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
+        if let Some(ref prompt) = self.prompt {
+            render.prompt(prompt)?;
+        }
         loop {
             for (idx, item) in self.items.iter().enumerate() {
-                term.write_line(&format!(
-                    "{} {}",
-                    if sel == idx {
-                        ">"
-                    } else {
-                        " "
-                    },
+                render.selection(
                     item,
-                ))?;
+                    if sel == idx {
+                        SelectionStyle::MenuSelected
+                    } else {
+                        SelectionStyle::MenuUnselected
+                    },
+                )?;
             }
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
@@ -120,51 +145,70 @@ impl Select {
                     if sel == !0 {
                         sel = self.items.len() - 1;
                     } else {
-                        sel = ((sel as i64 - 1 + self.items.len() as i64) %
-                               (self.items.len() as i64)) as usize;
+                        sel = ((sel as i64 - 1 + self.items.len() as i64)
+                            % (self.items.len() as i64)) as usize;
                     }
                 }
-                Key::Enter | Key::Char(' ' ) if sel != !0 => {
+                Key::Enter | Key::Char(' ') if sel != !0 => {
                     if self.clear {
-                        term.clear_last_lines(self.items.len())?;
+                        render.clear()?;
+                    }
+                    if let Some(ref prompt) = self.prompt {
+                        render.single_prompt_selection(prompt, &self.items[sel])?;
                     }
                     return Ok(Some(sel));
                 }
                 _ => {}
             }
-            term.clear_last_lines(self.items.len())?;
+            render.clear_preserve_prompt()?;
         }
     }
 }
 
-impl Checkboxes {
-    /// Creates the prompt with a specific text.
-    pub fn new() -> Checkboxes {
+impl<'a> Checkboxes<'a> {
+    /// Creates a new checkbox object.
+    pub fn new() -> Checkboxes<'static> {
+        Checkboxes::with_theme(get_default_theme())
+    }
+
+    /// Sets a theme other than the default one.
+    pub fn with_theme(theme: &'a Theme) -> Checkboxes<'a> {
         Checkboxes {
             items: vec![],
             clear: true,
+            prompt: None,
+            theme: theme,
         }
     }
 
     /// Sets the clear behavior of the checkbox menu.
     ///
     /// The default is to clear the checkbox menu.
-    pub fn clear(&mut self, val: bool) -> &mut Checkboxes {
+    pub fn clear(&mut self, val: bool) -> &mut Checkboxes<'a> {
         self.clear = val;
         self
     }
 
     /// Add a single item to the selector.
-    pub fn item(&mut self, item: &str) -> &mut Checkboxes {
+    pub fn item(&mut self, item: &str) -> &mut Checkboxes<'a> {
         self.items.push(item.to_string());
         self
     }
 
     /// Adds multiple items to the selector.
-    pub fn items(&mut self, items: &[&str]) -> &mut Checkboxes {
+    pub fn items(&mut self, items: &[&str]) -> &mut Checkboxes<'a> {
         for item in items {
             self.items.push(item.to_string());
         }
+        self
+    }
+
+    /// Prefaces the menu with a prompt.
+    ///
+    /// When a prompt is set the system also prints out a confirmation after
+    /// the selection.
+    pub fn with_prompt(&mut self, prompt: &str) -> &mut Checkboxes<'a> {
+        self.prompt = Some(prompt.to_string());
         self
     }
 
@@ -178,24 +222,23 @@ impl Checkboxes {
 
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
+        let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
-        let mut selected: Vec<_> = repeat(false).take(self.items.len()).collect();
+        if let Some(ref prompt) = self.prompt {
+            render.prompt(prompt)?;
+        }
+        let mut checked: Vec<_> = repeat(false).take(self.items.len()).collect();
         loop {
             for (idx, item) in self.items.iter().enumerate() {
-                term.write_line(&format!(
-                    "{} [{}] {}",
-                    if sel == idx {
-                        ">"
-                    } else {
-                        " "
-                    },
-                    if selected[idx] {
-                        "x"
-                    } else {
-                        " "
-                    },
+                render.selection(
                     item,
-                ))?;
+                    match (checked[idx], sel == idx) {
+                        (true, true) => SelectionStyle::CheckboxCheckedSelected,
+                        (true, false) => SelectionStyle::CheckboxCheckedUnselected,
+                        (false, true) => SelectionStyle::CheckboxUncheckedSelected,
+                        (false, false) => SelectionStyle::CheckboxUncheckedUnselected,
+                    },
+                )?;
             }
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
@@ -209,34 +252,48 @@ impl Checkboxes {
                     if sel == !0 {
                         sel = self.items.len() - 1;
                     } else {
-                        sel = ((sel as i64 - 1 + self.items.len() as i64) %
-                               (self.items.len() as i64)) as usize;
+                        sel = ((sel as i64 - 1 + self.items.len() as i64)
+                            % (self.items.len() as i64)) as usize;
                     }
                 }
                 Key::Char(' ') => {
-                    selected[sel] = !selected[sel];
+                    checked[sel] = !checked[sel];
                 }
                 Key::Escape => {
                     if self.clear {
-                        term.clear_last_lines(self.items.len())?;
+                        render.clear()?;
+                    }
+                    if let Some(ref prompt) = self.prompt {
+                        render.multi_prompt_selection(prompt, &[][..])?;
                     }
                     return Ok(vec![]);
-                },
+                }
                 Key::Enter => {
                     if self.clear {
-                        term.clear_last_lines(self.items.len())?;
+                        render.clear()?;
                     }
-                    return Ok(selected.into_iter().enumerate().filter_map(|(idx, selected)| {
-                        if selected {
-                            Some(idx)
-                        } else {
-                            None
-                        }
-                    }).collect());
+                    if let Some(ref prompt) = self.prompt {
+                        let mut selections: Vec<_> = checked
+                            .iter()
+                            .enumerate()
+                            .filter_map(|(idx, &checked)| {
+                                if checked {
+                                    Some(self.items[idx].as_str())
+                                } else {
+                                    None
+                                }
+                            }).collect();
+                        render.multi_prompt_selection(prompt, &selections[..])?;
+                    }
+                    return Ok(checked
+                        .into_iter()
+                        .enumerate()
+                        .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
+                        .collect());
                 }
                 _ => {}
             }
-            term.clear_last_lines(self.items.len())?;
+            render.clear_preserve_prompt()?;
         }
     }
 }
@@ -254,17 +311,20 @@ mod tests {
             "A Pile of sweet, sweet mustard",
         ];
 
-        assert_eq!(Select::new().default(0).items(&selections[..]).items, selections);
+        assert_eq!(
+            Select::new().default(0).items(&selections[..]).items,
+            selections
+        );
     }
 
     #[test]
     fn test_string() {
-        let selections = vec![
-            "a".to_string(),
-            "b".to_string()
-        ];
+        let selections = vec!["a".to_string(), "b".to_string()];
 
-        assert_eq!(Select::new().default(0).items(&selections[..]).items, selections);
+        assert_eq!(
+            Select::new().default(0).items(&selections[..]).items,
+            selections
+        );
     }
 
     #[test]
@@ -272,11 +332,11 @@ mod tests {
         let a = "a";
         let b = "b";
 
-        let selections = &[
-            a,
-            b
-        ];
+        let selections = &[a, b];
 
-        assert_eq!(Select::new().default(0).items(&selections[..]).items, selections);
+        assert_eq!(
+            Select::new().default(0).items(&selections[..]).items,
+            selections
+        );
     }
 }
