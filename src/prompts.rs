@@ -36,7 +36,7 @@ pub struct Confirmation<'a> {
 /// # fn test() -> Result<(), Box<std::error::Error>> {
 /// use dialoguer::Input;
 ///
-/// let name = Input::new().with_prompt("Your name").interact()?;
+/// let name = Input::<String>::new().with_prompt("Your name").interact()?;
 /// println!("Name: {}", name);
 /// # Ok(()) } fn main() { test().unwrap(); }
 /// ```
