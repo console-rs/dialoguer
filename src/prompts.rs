@@ -64,6 +64,7 @@ pub struct Input<'a, T> {
 pub struct PasswordInput<'a> {
     prompt: String,
     theme: &'a Theme,
+    allow_empty_password: bool,
     confirmation_prompt: Option<(String, String)>,
 }
 
@@ -246,6 +247,7 @@ impl<'a> PasswordInput<'a> {
         PasswordInput {
             prompt: "".into(),
             theme: theme,
+            allow_empty_password: false,
             confirmation_prompt: None,
         }
     }
@@ -263,6 +265,14 @@ impl<'a> PasswordInput<'a> {
         mismatch_err: &str,
     ) -> &mut PasswordInput<'a> {
         self.confirmation_prompt = Some((prompt.into(), mismatch_err.into()));
+        self
+    }
+
+    /// Allows/Disables empty password.
+    ///
+    /// By default this setting is set to false (i.e. password is not empty).
+    pub fn allow_empty_password(&mut self, allow_empty_password: bool) -> &mut PasswordInput<'a> {
+        self.allow_empty_password = allow_empty_password;
         self
     }
 
@@ -301,7 +311,7 @@ impl<'a> PasswordInput<'a> {
             render.password_prompt(prompt)?;
             let input = render.term().read_secure_line()?;
             render.add_line();
-            if !input.is_empty() {
+            if !input.is_empty() || self.allow_empty_password {
                 return Ok(input);
             }
         }
