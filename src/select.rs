@@ -13,6 +13,7 @@ pub struct Select<'a> {
     prompt: Option<String>,
     clear: bool,
     theme: &'a Theme,
+    paged: bool,
 }
 
 /// Renders a multi select checkbox menu.
@@ -21,6 +22,7 @@ pub struct Checkboxes<'a> {
     prompt: Option<String>,
     clear: bool,
     theme: &'a Theme,
+    paged: bool,
 }
 
 impl<'a> Select<'a> {
@@ -37,9 +39,14 @@ impl<'a> Select<'a> {
             prompt: None,
             clear: true,
             theme: theme,
+            paged: false,
         }
     }
-
+    /// Enables or disables paging
+    pub fn paged(&mut self, val: bool) -> &mut Select<'a> {
+        self.paged = val;
+        self
+    }
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu.
@@ -87,13 +94,25 @@ impl<'a> Select<'a> {
 
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
+        let mut page = 0;
+        let mut capacity = self.items.len();
+        if self.paged {
+            capacity = term.size().0 as usize - 1;
+        }
+        let pages = (self.items.len() / capacity) + 1;
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
         if let Some(ref prompt) = self.prompt {
             render.prompt(prompt)?;
         }
         loop {
-            for (idx, item) in self.items.iter().enumerate() {
+            for (idx, item) in self
+                .items
+                .iter()
+                .enumerate()
+                .skip(page * capacity)
+                .take(capacity)
+            {
                 render.selection(
                     item,
                     if sel == idx {
@@ -119,6 +138,27 @@ impl<'a> Select<'a> {
                             % (self.items.len() as i64)) as usize;
                     }
                 }
+                Key::ArrowLeft | Key::Char('h') => {
+                    if self.paged {
+                        if page == 0 {
+                            page = pages - 1;
+                        } else {
+                            page = page - 1;
+                        }
+                        sel = page * capacity;
+                    }
+                }
+                Key::ArrowRight | Key::Char('l') => {
+                    if self.paged {
+                        if page == pages - 1 {
+                            page = 0;
+                        } else {
+                            page = page + 1;
+                        }
+                        sel = page * capacity;
+                    }
+                }
+
                 Key::Enter | Key::Char(' ') if sel != !0 => {
                     if self.clear {
                         render.clear()?;
@@ -129,6 +169,9 @@ impl<'a> Select<'a> {
                     return Ok(sel);
                 }
                 _ => {}
+            }
+            if sel < page * capacity || sel >= (page + 1) * capacity {
+                page = sel / capacity;
             }
             render.clear_preserve_prompt()?;
         }
@@ -148,9 +191,14 @@ impl<'a> Checkboxes<'a> {
             clear: true,
             prompt: None,
             theme: theme,
+            paged: false,
         }
     }
-
+    /// Enables or disables paging
+    pub fn paged(&mut self, val: bool) -> &mut Checkboxes<'a> {
+        self.paged = val;
+        self
+    }
     /// Sets the clear behavior of the checkbox menu.
     ///
     /// The default is to clear the checkbox menu.
@@ -192,6 +240,12 @@ impl<'a> Checkboxes<'a> {
 
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
+        let mut page = 0;
+        let mut capacity = self.items.len();
+        if self.paged {
+            capacity = term.size().0 as usize - 1;
+        }
+        let pages = (self.items.len() / capacity) + 1;
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
         if let Some(ref prompt) = self.prompt {
@@ -199,7 +253,13 @@ impl<'a> Checkboxes<'a> {
         }
         let mut checked: Vec<_> = repeat(false).take(self.items.len()).collect();
         loop {
-            for (idx, item) in self.items.iter().enumerate() {
+            for (idx, item) in self
+                .items
+                .iter()
+                .enumerate()
+                .skip(page * capacity)
+                .take(capacity)
+            {
                 render.selection(
                     item,
                     match (checked[idx], sel == idx) {
@@ -224,6 +284,26 @@ impl<'a> Checkboxes<'a> {
                     } else {
                         sel = ((sel as i64 - 1 + self.items.len() as i64)
                             % (self.items.len() as i64)) as usize;
+                    }
+                }
+                Key::ArrowLeft | Key::Char('h') => {
+                    if self.paged {
+                        if page == 0 {
+                            page = pages - 1;
+                        } else {
+                            page = page - 1;
+                        }
+                        sel = page * capacity;
+                    }
+                }
+                Key::ArrowRight | Key::Char('l') => {
+                    if self.paged {
+                        if page == pages - 1 {
+                            page = 0;
+                        } else {
+                            page = page + 1;
+                        }
+                        sel = page * capacity;
                     }
                 }
                 Key::Char(' ') => {
@@ -252,7 +332,8 @@ impl<'a> Checkboxes<'a> {
                                 } else {
                                     None
                                 }
-                            }).collect();
+                            })
+                            .collect();
                         render.multi_prompt_selection(prompt, &selections[..])?;
                     }
                     return Ok(checked
@@ -263,6 +344,10 @@ impl<'a> Checkboxes<'a> {
                 }
                 _ => {}
             }
+            if sel < page * capacity || sel >= (page + 1) * capacity {
+                page = sel / capacity;
+            }
+
             render.clear_preserve_prompt()?;
         }
     }
