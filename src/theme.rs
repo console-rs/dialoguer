@@ -413,8 +413,15 @@ impl<'a> TermThemeRenderer<'a> {
         Ok(())
     }
 
-    pub fn clear_preserve_prompt(&mut self) -> io::Result<()> {
-        self.term.clear_last_lines(self.height)?;
+    pub fn clear_preserve_prompt(&mut self, size_vec:&Vec<usize>) -> io::Result<()> {
+        let mut new_height = self.height;
+        //Check each item size, increment on finding an overflow
+        for size in size_vec {
+            if *size > self.term.size().1 as usize {
+                new_height += 1;
+            }
+        }
+        self.term.clear_last_lines(new_height)?;
         self.height = 0;
         Ok(())
     }
