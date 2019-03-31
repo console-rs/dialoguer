@@ -86,14 +86,36 @@ impl<'a> Select<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// If the user confirms the result is `true`, `false` otherwise.
+    /// The index of the selected item.
     /// The dialog is rendered on stderr.
     pub fn interact(&self) -> io::Result<usize> {
         self.interact_on(&Term::stderr())
     }
 
+    /// Enables user interaction and returns the result.
+    ///
+    /// The index of the selected item. None if the user
+    /// cancelled with Esc or 'q'.
+    /// The dialog is rendered on stderr.
+    pub fn interact_opt(&self) -> io::Result<Option<usize>> {
+        self._interact_on(&Term::stderr(), true)
+    }
+
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
+        self._interact_on(term, false)?.ok_or(io::Error::new(
+            io::ErrorKind::Other,
+            "Quit not allowed in this case",
+        ))
+    }
+
+    /// Like `interact` but allows a specific terminal to be set.
+    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<usize>> {
+        self._interact_on(term, true)
+    }
+
+    /// Like `interact` but allows a specific terminal to be set.
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
         let mut page = 0;
         let mut capacity = self.items.len();
         if self.paged {
@@ -128,6 +150,14 @@ impl<'a> Select<'a> {
                         sel = 0;
                     } else {
                         sel = (sel as u64 + 1).rem(self.items.len() as u64) as usize;
+                    }
+                }
+                Key::Escape | Key::Char('q') => {
+                    if allow_quit {
+                        if self.clear {
+                            term.clear_last_lines(self.items.len())?;
+                        }
+                        return Ok(None);
                     }
                 }
                 Key::ArrowUp | Key::Char('k') => {
@@ -166,7 +196,7 @@ impl<'a> Select<'a> {
                     if let Some(ref prompt) = self.prompt {
                         render.single_prompt_selection(prompt, &self.items[sel])?;
                     }
-                    return Ok(sel);
+                    return Ok(Some(sel));
                 }
                 _ => {}
             }
