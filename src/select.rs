@@ -127,6 +127,11 @@ impl<'a> Select<'a> {
         if let Some(ref prompt) = self.prompt {
             render.prompt(prompt)?;
         }
+        let mut size_vec = Vec::new();
+        for items in self.items.iter().as_slice() {
+            let size = &items.len();
+            size_vec.push(size.clone());
+        }
         loop {
             for (idx, item) in self
                 .items
@@ -203,7 +208,7 @@ impl<'a> Select<'a> {
             if sel < page * capacity || sel >= (page + 1) * capacity {
                 page = sel / capacity;
             }
-            render.clear_preserve_prompt()?;
+            render.clear_preserve_prompt(&size_vec)?;
         }
     }
 }
@@ -280,6 +285,11 @@ impl<'a> Checkboxes<'a> {
         let mut sel = 0;
         if let Some(ref prompt) = self.prompt {
             render.prompt(prompt)?;
+        }
+        let mut size_vec = Vec::new();
+        for items in self.items.iter().as_slice() {
+            let size = &items.len();
+            size_vec.push(size.clone());
         }
         let mut checked: Vec<_> = repeat(false).take(self.items.len()).collect();
         loop {
@@ -377,8 +387,7 @@ impl<'a> Checkboxes<'a> {
             if sel < page * capacity || sel >= (page + 1) * capacity {
                 page = sel / capacity;
             }
-
-            render.clear_preserve_prompt()?;
+            render.clear_preserve_prompt(&size_vec)?;
         }
     }
 }
