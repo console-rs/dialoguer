@@ -8,8 +8,11 @@ license = "MIT"
 homepage = "https://github.com/mitsuhiko/dialoguer"
 documentation = "https://docs.rs/dialoguer"
 readme = "README.md"
-
+[features]
+default = ["validation"]
+validation = ["regex"]
 [dependencies]
 console = ">=0.3.0, <1.0.0"
 lazy_static = "1"
 tempfile = "2"
+regex = { version = "1.1.5", optional = true }
