@@ -45,6 +45,7 @@ pub struct Input<'a, T> {
     default: Option<T>,
     show_default: bool,
     theme: &'a Theme,
+    permit_empty: bool
 }
 /// Renders a simple input prompt, validated against a rule.
 ///
@@ -180,6 +181,7 @@ where
             default: None,
             show_default: true,
             theme: theme,
+            permit_empty: false
         }
     }
     /// Sets the input prompt.
@@ -197,7 +199,13 @@ where
         self.default = Some(value);
         self
     }
-
+    /// Enables or disables an empty input
+    ///
+    /// By default, if there is no default value set for the input, the user must input a non-empty string.
+    pub fn allow_empty(&mut self, val: bool) -> &mut Input<'a, T> {
+        self.permit_empty = val;
+        self
+    }
     /// Disables or enables the default value display.
     ///
     /// The default is to append `[default]` to the prompt to tell the
@@ -235,7 +243,7 @@ where
                 if let Some(ref default) = self.default {
                     render.single_prompt_selection(&self.prompt, &default.to_string())?;
                     return Ok(default.clone());
-                } else {
+                } else if !self.permit_empty {
                     continue;
                 }
             }
@@ -290,7 +298,13 @@ where
         self.input.default = Some(value);
         self
     }
-
+    /// Enables or disables an empty input
+    ///
+    /// By default, if there is no default value set for the input, the user must input a non-empty string.
+    pub fn allow_empty(&mut self, val: bool) -> &mut ValidatedInput<'a, T, V> {
+        self.input.permit_empty = val;
+        self
+    }
     /// Disables or enables the default value display.
     ///
     /// The default is to append `[default]` to the prompt to tell the
@@ -326,7 +340,7 @@ where
                 if let Some(ref default) = self.input.default {
                     render.single_prompt_selection(&self.input.prompt, &default.to_string())?;
                     return Ok(default.clone());
-                } else {
+                } else if !self.input.permit_empty {
                     continue;
                 }
             }
