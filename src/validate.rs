@@ -51,6 +51,28 @@ pub mod prebuilt {
             }
         }
     }
+    /// Validates email addresses
+    ///
+    /// The regex used here isn't the most sophisticated, but should work just fine for almost all emails. I borrowed it from [this site](https://www.regular-expressions.info/index.html).
+    pub struct EmailAddress {
+        regex: Regex
+    }
+    impl EmailAddress {
+        pub fn default() -> EmailAddress {
+            EmailAddress {
+                regex: Regex::new(r"(?i:[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})").unwrap()
+            }
+        }
+    }
+    impl Validator for EmailAddress {
+        fn validate(&self, text: String) -> Result<(), String> {
+            if self.regex.is_match(&text) {
+                Ok(())
+            } else {
+                Err("Please enter a valid email address".to_string())
+            }
+        }
+    }
     /// A custom validator
     ///
     /// ## Example
