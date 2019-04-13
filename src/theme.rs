@@ -128,7 +128,67 @@ pub trait Theme {
 pub struct SimpleTheme;
 
 impl Theme for SimpleTheme {}
+/// The default theme, with a custom prompt character in place of `:`
+pub struct CustomPromptCharacterTheme {
+    prompt_character: char,
+}
+impl CustomPromptCharacterTheme {
+    /// Creates a theme, the prompt character for which is customized
+    pub fn new(character: char) -> CustomPromptCharacterTheme {
+        CustomPromptCharacterTheme {
+            prompt_character: character,
+        }
+    }
+}
+impl Default for CustomPromptCharacterTheme {
+    fn default() -> Self {
+        CustomPromptCharacterTheme {
+            prompt_character: ':',
+        }
+    }
+}
+impl Theme for CustomPromptCharacterTheme {
+    /// Given a prompt this formats out what the prompt should look like (multiline).
+    fn format_prompt(&self, f: &mut fmt::Write, prompt: &str) -> fmt::Result {
+        write!(f, "{}{}", prompt, self.prompt_character)
+    }
 
+    /// Given a prompt this formats out what the prompt should look like (singleline).
+    fn format_singleline_prompt(
+        &self,
+        f: &mut fmt::Write,
+        prompt: &str,
+        default: Option<&str>,
+    ) -> fmt::Result {
+        match default {
+            Some(default) => write!(f, "{} [{}]{} ", prompt, default, self.prompt_character),
+            None => write!(f, "{}{} ", prompt, self.prompt_character),
+        }
+    }
+    /// Renders a prompt and a single selection made.
+    fn format_single_prompt_selection(
+        &self,
+        f: &mut fmt::Write,
+        prompt: &str,
+        sel: &str,
+    ) -> fmt::Result {
+        write!(f, "{}{} {}", prompt, self.prompt_character, sel)
+    }
+
+    /// Renders a prompt and multiple selections,
+    fn format_multi_prompt_selection(
+        &self,
+        f: &mut fmt::Write,
+        prompt: &str,
+        selections: &[&str],
+    ) -> fmt::Result {
+        write!(f, "{}{} ", prompt, self.prompt_character)?;
+        for (idx, sel) in selections.iter().enumerate() {
+            write!(f, "{}{}", if idx == 0 { "" } else { ", " }, sel)?;
+        }
+        Ok(())
+    }
+}
 /// A colorful theme
 pub struct ColorfulTheme {
     /// The style for default values in prompts and similar
@@ -413,7 +473,7 @@ impl<'a> TermThemeRenderer<'a> {
         Ok(())
     }
 
-    pub fn clear_preserve_prompt(&mut self, size_vec:&Vec<usize>) -> io::Result<()> {
+    pub fn clear_preserve_prompt(&mut self, size_vec: &Vec<usize>) -> io::Result<()> {
         let mut new_height = self.height;
         //Check each item size, increment on finding an overflow
         for size in size_vec {

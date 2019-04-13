@@ -111,7 +111,7 @@ impl Editor {
         new_f.read_to_string(&mut rv)?;
 
         if self.trim_newlines {
-            let len = rv.trim_right_matches(&['\n', '\r'][..]).len();
+            let len = rv.trim_end_matches(&['\n', '\r'][..]).len();
             rv.truncate(len);
         }
 

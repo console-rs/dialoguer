@@ -11,7 +11,7 @@ fn main() {
         pinput.with_prompt("Enter a phone number");
         einput.with_prompt("Enter an email address");
         let ph = pinput.interact().unwrap();
-        let e : String= einput.interact().unwrap();
+        let e: String = einput.interact().unwrap();
         println!("{}\n{}", ph, e);
     }
 }

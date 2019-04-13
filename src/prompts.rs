@@ -45,7 +45,7 @@ pub struct Input<'a, T> {
     default: Option<T>,
     show_default: bool,
     theme: &'a Theme,
-    permit_empty: bool
+    permit_empty: bool,
 }
 /// Renders a simple input prompt, validated against a rule.
 ///
@@ -59,9 +59,9 @@ pub struct Input<'a, T> {
 /// let name = ValidatedInput::<String, PhoneNumber>::new(PhoneNumber::default()).with_prompt("Phone number").interact()?;
 /// println!("A valid phone number: {}", name);
 /// # Ok(()) }
-/// # fn main() { 
+/// # fn main() {
 /// # #[cfg(feature = "validation")]
-/// # test().unwrap(); 
+/// # test().unwrap();
 /// # }
 /// ```
 pub struct ValidatedInput<'a, T, V> {
@@ -181,7 +181,7 @@ where
             default: None,
             show_default: true,
             theme: theme,
-            permit_empty: false
+            permit_empty: false,
         }
     }
     /// Sets the input prompt.

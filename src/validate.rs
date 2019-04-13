@@ -55,12 +55,12 @@ pub mod prebuilt {
     ///
     /// The regex used here isn't the most sophisticated, but should work just fine for almost all emails. I borrowed it from [this site](https://www.regular-expressions.info/index.html).
     pub struct EmailAddress {
-        regex: Regex
+        regex: Regex,
     }
     impl EmailAddress {
         pub fn default() -> EmailAddress {
             EmailAddress {
-                regex: Regex::new(r"(?i:[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})").unwrap()
+                regex: Regex::new(r"(?i:[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})").unwrap(),
             }
         }
     }
