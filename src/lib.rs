@@ -17,9 +17,9 @@
 //! * Checkboxes
 //! * Editor launching
 extern crate console;
-extern crate tempfile;
 #[cfg(feature = "validation")]
 extern crate regex;
+extern crate tempfile;
 pub use edit::Editor;
 pub use prompts::{Confirmation, Input, PasswordInput, ValidatedInput};
 pub use select::{Checkboxes, Select};
