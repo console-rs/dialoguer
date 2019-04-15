@@ -48,22 +48,6 @@ pub struct Input<'a, T> {
     permit_empty: bool,
 }
 /// Renders a simple input prompt, validated against a rule.
-///
-/// ## Example usage
-///
-/// ```rust,no_run
-/// # #[cfg(feature = "validation")]
-/// # fn test() -> Result<(), Box<std::error::Error>> {
-/// use dialoguer::{ValidatedInput, validate::prebuilt::PhoneNumber};
-///
-/// let name = ValidatedInput::<String, PhoneNumber>::new(PhoneNumber::default()).with_prompt("Phone number").interact()?;
-/// println!("A valid phone number: {}", name);
-/// # Ok(()) }
-/// # fn main() {
-/// # #[cfg(feature = "validation")]
-/// # test().unwrap();
-/// # }
-/// ```
 pub struct ValidatedInput<'a, T, V> {
     pub input: Input<'a, T>,
     validator: Option<V>,
