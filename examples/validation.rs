@@ -1,17 +1,24 @@
 extern crate dialoguer;
-#[cfg(feature = "validation")]
-use dialoguer::validate::prebuilt::*;
-use dialoguer::ValidatedInput;
-fn main() {
-    #[cfg(feature = "validation")]
-    {
-        let mut pinput: ValidatedInput<String, PhoneNumber> =
-            ValidatedInput::new(PhoneNumber::default());
-        let mut einput = ValidatedInput::new(EmailAddress::default());
-        pinput.with_prompt("Enter a phone number");
-        einput.with_prompt("Enter an email address");
-        let ph = pinput.interact().unwrap();
-        let e: String = einput.interact().unwrap();
-        println!("{}\n{}", ph, e);
+use dialoguer::{Input, Validator};
+
+struct EmailValidator;
+
+impl Validator for EmailValidator {
+    type Err = String;
+
+    fn validate(&self, value: &str) -> Result<(), String> {
+        if value.contains('@') {
+            Ok(())
+        } else {
+            Err("not an email address".into())
+        }
     }
+}
+
+fn main() {
+    let email: String = Input::new()
+        .with_prompt("Enter an email address")
+        .validate_with(EmailValidator)
+        .interact().unwrap();
+    println!("email: {}", email);
 }

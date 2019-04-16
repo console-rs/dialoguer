@@ -2,10 +2,10 @@ use std::fmt::{Debug, Display};
 use std::io;
 use std::str::FromStr;
 
-use theme::{get_default_theme, TermThemeRenderer, Theme};
-
 use console::Term;
+use theme::{get_default_theme, TermThemeRenderer, Theme};
 use validate::Validator;
+
 /// Renders a simple confirmation prompt.
 ///
 /// ## Example usage
@@ -46,28 +46,9 @@ pub struct Input<'a, T> {
     show_default: bool,
     theme: &'a Theme,
     permit_empty: bool,
+    validator: Option<Box<Fn(&str) -> Option<String>>>,
 }
-/// Renders a simple input prompt, validated against a rule.
-///
-/// ## Example usage
-///
-/// ```rust,no_run
-/// # #[cfg(feature = "validation")]
-/// # fn test() -> Result<(), Box<std::error::Error>> {
-/// use dialoguer::{ValidatedInput, validate::prebuilt::PhoneNumber};
-///
-/// let name = ValidatedInput::<String, PhoneNumber>::new(PhoneNumber::default()).with_prompt("Phone number").interact()?;
-/// println!("A valid phone number: {}", name);
-/// # Ok(()) }
-/// # fn main() {
-/// # #[cfg(feature = "validation")]
-/// # test().unwrap();
-/// # }
-/// ```
-pub struct ValidatedInput<'a, T, V> {
-    pub input: Input<'a, T>,
-    validator: Option<V>,
-}
+
 /// Renders a password input prompt.
 ///
 /// ## Example usage
@@ -101,7 +82,7 @@ impl<'a> Confirmation<'a> {
             text: "".into(),
             default: true,
             show_default: true,
-            theme: theme,
+            theme,
         }
     }
 
@@ -180,8 +161,9 @@ where
             prompt: "".into(),
             default: None,
             show_default: true,
-            theme: theme,
+            theme,
             permit_empty: false,
+            validator: None,
         }
     }
     /// Sets the input prompt.
@@ -212,6 +194,23 @@ where
     /// user that a default is acceptable.
     pub fn show_default(&mut self, val: bool) -> &mut Input<'a, T> {
         self.show_default = val;
+        self
+    }
+
+    /// Registers a validator.
+    pub fn validate_with<V: Validator + 'static>(&mut self, validator: V) -> &mut Input<'a, T> {
+        let old_validator_func = self.validator.take();
+        self.validator = Some(Box::new(move |value: &str| -> Option<String> {
+            if let Some(old) = old_validator_func.as_ref() {
+                if let Some(err) = old(value) {
+                    return Some(err);
+                }
+            }
+            match validator.validate(value) {
+                Ok(()) => None,
+                Err(err) => Some(err.to_string()),
+            }
+        }));
         self
     }
 
@@ -248,6 +247,12 @@ where
                 }
             }
             render.clear()?;
+            if let Some(ref validator) = self.validator {
+                if let Some(err) = validator(&input) {
+                    render.error(&err)?;
+                    continue;
+                }
+            }
             match input.parse::<T>() {
                 Ok(value) => {
                     render.single_prompt_selection(&self.prompt, &input)?;
@@ -261,109 +266,7 @@ where
         }
     }
 }
-impl<'a, T, V> ValidatedInput<'a, T, V>
-where
-    T: Clone + FromStr + Display,
-    T::Err: Display + Debug,
-    V: Validator,
-{
-    /// Creates a new input prompt. The validator passed is used for all inputs.
-    pub fn new(validator: V) -> ValidatedInput<'a, T, V> {
-        let input: Input<'a, T> = Input::new();
-        ValidatedInput {
-            input: input,
-            validator: Some(validator),
-        }
-    }
-    /// Creates an input with a specific theme.
-    pub fn with_theme(validator: V, theme: &'a Theme) -> ValidatedInput<'a, T, V> {
-        let input: Input<'a, T> = Input::with_theme(theme);
-        ValidatedInput {
-            input: input,
-            validator: Some(validator),
-        }
-    }
-    /// Sets the input prompt.
-    pub fn with_prompt(&mut self, prompt: &str) -> &mut ValidatedInput<'a, T, V> {
-        self.input.prompt = prompt.into();
-        self
-    }
 
-    /// Sets a default.
-    ///
-    /// Out of the box the prompt does not have a default and will continue
-    /// to display until the user hit enter.  If a default is set the user
-    /// can instead accept the default with enter.
-    pub fn default(&mut self, value: T) -> &mut ValidatedInput<'a, T, V> {
-        self.input.default = Some(value);
-        self
-    }
-    /// Enables or disables an empty input
-    ///
-    /// By default, if there is no default value set for the input, the user must input a non-empty string.
-    pub fn allow_empty(&mut self, val: bool) -> &mut ValidatedInput<'a, T, V> {
-        self.input.permit_empty = val;
-        self
-    }
-    /// Disables or enables the default value display.
-    ///
-    /// The default is to append `[default]` to the prompt to tell the
-    /// user that a default is acceptable.
-    pub fn show_default(&mut self, val: bool) -> &mut ValidatedInput<'a, T, V> {
-        self.input.show_default = val;
-        self
-    }
-    /// Enables user interaction and returns the result.
-    ///
-    /// If the user confirms the result is `true`, `false` otherwise.
-    /// The dialog is rendered on stderr.
-    pub fn interact(&self) -> io::Result<T> {
-        self.interact_on(&Term::stderr())
-    }
-    /// Like `interact` but allows a specific terminal to be set.
-    pub fn interact_on(&self, term: &Term) -> io::Result<T> {
-        let mut render = TermThemeRenderer::new(term, self.input.theme);
-        loop {
-            let default_string = self.input.default.as_ref().map(|x| x.to_string());
-            render.input_prompt(
-                &self.input.prompt,
-                if self.input.show_default {
-                    default_string.as_ref().map(|x| x.as_str())
-                } else {
-                    None
-                },
-            )?;
-            let input = term.read_line()?;
-            render.add_line();
-            if input.is_empty() {
-                render.clear()?;
-                if let Some(ref default) = self.input.default {
-                    render.single_prompt_selection(&self.input.prompt, &default.to_string())?;
-                    return Ok(default.clone());
-                } else if !self.input.permit_empty {
-                    continue;
-                }
-            }
-            if let Some(ref validator) = self.validator {
-                if let Err(msg) = validator.validate(input.clone()) {
-                    render.error(msg.as_str())?;
-                    continue;
-                }
-            }
-            render.clear()?;
-            match input.parse::<T>() {
-                Ok(value) => {
-                    render.single_prompt_selection(&self.input.prompt, &input)?;
-                    return Ok(value);
-                }
-                Err(err) => {
-                    render.error(&err.to_string())?;
-                    continue;
-                }
-            }
-        }
-    }
-}
 impl<'a> PasswordInput<'a> {
     /// Creates a new input prompt.
     pub fn new() -> PasswordInput<'static> {

@@ -9,10 +9,6 @@ homepage = "https://github.com/mitsuhiko/dialoguer"
 documentation = "https://docs.rs/dialoguer"
 readme = "README.md"
 
-[features]
-default = ["validation"]
-validation = ["regex"]
-
 [dependencies]
 console = ">=0.3.0, <1.0.0"
 lazy_static = "1"

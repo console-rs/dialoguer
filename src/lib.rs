@@ -17,15 +17,14 @@
 //! * Checkboxes
 //! * Editor launching
 extern crate console;
-#[cfg(feature = "validation")]
-extern crate regex;
 extern crate tempfile;
 pub use edit::Editor;
-pub use prompts::{Confirmation, Input, PasswordInput, ValidatedInput};
+pub use prompts::{Confirmation, Input, PasswordInput};
 pub use select::{Checkboxes, Select};
+pub use validate::Validator;
 
 mod edit;
 mod prompts;
 mod select;
 pub mod theme;
-pub mod validate;
+mod validate;
