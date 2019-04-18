@@ -48,7 +48,6 @@ pub struct Input<'a, T> {
     permit_empty: bool,
     validator: Option<Box<Fn(&str) -> Option<String>>>,
 }
-
 /// Renders a password input prompt.
 ///
 /// ## Example usage
