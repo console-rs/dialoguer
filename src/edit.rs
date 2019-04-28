@@ -5,8 +5,6 @@ use std::io;
 use std::io::{Read, Write};
 use std::process;
 
-use tempfile::NamedTempFileOptions;
-
 /// Launches the default editor edit a string.
 ///
 /// Example:
@@ -86,11 +84,11 @@ impl Editor {
     /// Returns `None` if the file was not saved or otherwise the
     /// entered text.
     pub fn edit(&self, s: &str) -> io::Result<Option<String>> {
-        let mut f = NamedTempFileOptions::new()
+        let mut f = tempfile::Builder::new()
             .prefix("edit-")
             .suffix(&self.extension)
             .rand_bytes(12)
-            .create()?;
+            .tempfile()?;
         f.write_all(s.as_bytes())?;
         f.flush()?;
         let ts = fs::metadata(f.path())?.modified()?;
