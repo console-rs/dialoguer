@@ -249,7 +249,7 @@ impl<'a> Checkboxes<'a> {
     }
 
     /// Adds multiple items to the selector.
-    pub fn items(&mut self, items: &[&str]) -> &mut Checkboxes<'a> {
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Checkboxes<'a> {
         for item in items {
             self.items.push(item.to_string());
         }
