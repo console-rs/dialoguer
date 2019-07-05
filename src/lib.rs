@@ -20,7 +20,7 @@ extern crate console;
 extern crate tempfile;
 pub use edit::Editor;
 pub use prompts::{Confirmation, Input, PasswordInput};
-pub use select::{Checkboxes, Select};
+pub use select::{Checkboxes, Select, OrderList};
 pub use validate::Validator;
 
 mod edit;
