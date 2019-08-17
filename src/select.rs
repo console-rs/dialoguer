@@ -62,7 +62,7 @@ impl<'a> Select<'a> {
     }
 
     /// Add a single item to the selector.
-    pub fn item(&mut self, item: &str) -> &mut Select<'a> {
+    pub fn item<T: ToString>(&mut self, item: &T) -> &mut Select<'a> {
         self.items.push(item.to_string());
         self
     }
@@ -70,7 +70,7 @@ impl<'a> Select<'a> {
     /// Adds multiple items to the selector.
     pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Select<'a> {
         for item in items {
-            self.items.push(item.to_string());
+            self.item(item);
         }
         self
     }
@@ -243,7 +243,7 @@ impl<'a> Checkboxes<'a> {
     }
 
     /// Add a single item to the selector.
-    pub fn item(&mut self, item: &str) -> &mut Checkboxes<'a> {
+    pub fn item<T: ToString>(&mut self, item: &T) -> &mut Checkboxes<'a> {
         self.items.push(item.to_string());
         self
     }
@@ -251,7 +251,7 @@ impl<'a> Checkboxes<'a> {
     /// Adds multiple items to the selector.
     pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Checkboxes<'a> {
         for item in items {
-            self.items.push(item.to_string());
+            self.item(item);
         }
         self
     }
