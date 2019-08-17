@@ -18,6 +18,7 @@ pub struct Select<'a> {
 
 /// Renders a multi select checkbox menu.
 pub struct Checkboxes<'a> {
+    defaults: Vec<bool>,
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
@@ -223,6 +224,7 @@ impl<'a> Checkboxes<'a> {
     pub fn with_theme(theme: &'a Theme) -> Checkboxes<'a> {
         Checkboxes {
             items: vec![],
+            defaults: vec![],
             clear: true,
             prompt: None,
             theme: theme,
@@ -242,9 +244,21 @@ impl<'a> Checkboxes<'a> {
         self
     }
 
+    /// Sets a defaults for the menu
+    pub fn defaults(&mut self, val: &[bool]) -> &mut Checkboxes<'a> {
+        self.defaults = val.to_vec()
+            .iter()
+            .map(|x| x.clone())
+            .chain(repeat(false))
+            .take(self.items.len())
+            .collect();
+        self
+    }
+
     /// Add a single item to the selector.
     pub fn item<T: ToString>(&mut self, item: &T) -> &mut Checkboxes<'a> {
         self.items.push(item.to_string());
+        self.defaults.push(false);
         self
     }
 
@@ -291,7 +305,7 @@ impl<'a> Checkboxes<'a> {
             let size = &items.len();
             size_vec.push(size.clone());
         }
-        let mut checked: Vec<_> = repeat(false).take(self.items.len()).collect();
+        let mut checked: Vec<bool> = self.defaults.clone();
         loop {
             for (idx, item) in self
                 .items
@@ -356,14 +370,20 @@ impl<'a> Checkboxes<'a> {
                     if let Some(ref prompt) = self.prompt {
                         render.multi_prompt_selection(prompt, &[][..])?;
                     }
-                    return Ok(vec![]);
+                    return Ok(
+                        self.defaults.clone()
+                            .into_iter()
+                            .enumerate()
+                            .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
+                            .collect()
+                    );
                 }
                 Key::Enter => {
                     if self.clear {
                         render.clear()?;
                     }
                     if let Some(ref prompt) = self.prompt {
-                        let mut selections: Vec<_> = checked
+                        let selections: Vec<_> = checked
                             .iter()
                             .enumerate()
                             .filter_map(|(idx, &checked)| {
