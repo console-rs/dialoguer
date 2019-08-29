@@ -109,7 +109,7 @@ impl<'a> Select<'a> {
         ))
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
+    /// Like `interact_opt` but allows a specific terminal to be set.
     pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<usize>> {
         self._interact_on(term, true)
     }
