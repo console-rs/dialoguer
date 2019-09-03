@@ -16,6 +16,7 @@
 //! * Menu selections
 //! * Checkboxes
 //! * Editor launching
+//! * Menu fuzzy match selections
 extern crate console;
 extern crate tempfile;
 extern crate regex;

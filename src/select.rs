@@ -440,13 +440,13 @@ impl<'a> FuzzySelect<'a> {
         self
     }
 
-    /// Add a single item to the selector.
+    /// Add a single item to the fuzzy selector.
     pub fn item(&mut self, item: &str) -> &mut FuzzySelect<'a> {
         self.items.push(item.to_string());
         self
     }
 
-    /// Adds multiple items to the selector.
+    /// Adds multiple items to the fuzzy selector.
     pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut FuzzySelect<'a> {
         for item in items {
             self.items.push(item.to_string());
@@ -457,7 +457,7 @@ impl<'a> FuzzySelect<'a> {
     /// Prefaces the menu with a prompt.
     ///
     /// When a prompt is set the system also prints out a confirmation after
-    /// the selection.
+    /// the fuzzy selection.
     pub fn with_prompt(&mut self, prompt: &str) -> &mut FuzzySelect<'a> {
         self.prompt = Some(prompt.to_string());
         self
