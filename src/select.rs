@@ -587,7 +587,7 @@ impl<'a> FuzzySelect<'a> {
                     }
                 }
 
-                Key::Enter => {
+                Key::Enter if filtered_list.len() > 0 => {
                     if self.clear {
                         render.clear()?;
                     }
