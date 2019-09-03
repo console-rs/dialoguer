@@ -515,12 +515,21 @@ impl<'a> FuzzySelect<'a> {
         loop {
             let regexp_str = format!(r"{}\w+", search_term); 
             let re = Regex::new(&regexp_str).unwrap();
-            
-            for (idx, item) in self
+
+            let filtered_list: Vec<&String> = self
                 .items
                 .iter()
+                .filter(|item| re.is_match(&item.to_lowercase()))
+                .collect();
+
+            capacity = filtered_list.len();
+            if self.paged {
+                capacity = term.size().0 as usize - 1;
+            }
+            
+            for (idx, item) in filtered_list
+                .iter()
                 .enumerate()
-                .filter(|(_idx, item)| re.is_match(item))
                 .skip(page * capacity)
                 .take(capacity)
             {
@@ -538,23 +547,23 @@ impl<'a> FuzzySelect<'a> {
                     if sel == !0 {
                         sel = 0;
                     } else {
-                        sel = (sel as u64 + 1).rem(self.items.len() as u64) as usize;
+                        sel = (sel as u64 + 1).rem(filtered_list.len() as u64) as usize;
                     }
                 }
                 Key::Escape => {
                     if allow_quit {
                         if self.clear {
-                            term.clear_last_lines(self.items.len())?;
+                            term.clear_last_lines(filtered_list.len())?;
                         }
                         return Ok(None);
                     }
                 }
-                Key::ArrowUp => {
+                Key::ArrowUp if filtered_list.len() > 0 => {
                     if sel == !0 {
-                        sel = self.items.len() - 1;
+                        sel = filtered_list.len() - 1;
                     } else {
-                        sel = ((sel as i64 - 1 + self.items.len() as i64)
-                            % (self.items.len() as i64)) as usize;
+                        sel = ((sel as i64 - 1 + filtered_list.len() as i64)
+                            % (filtered_list.len() as i64)) as usize;
                     }
                 }
                 Key::ArrowLeft => {
@@ -583,7 +592,7 @@ impl<'a> FuzzySelect<'a> {
                         render.clear()?;
                     }
                     if let Some(ref prompt) = self.prompt {
-                        render.single_prompt_selection(prompt, &self.items[sel])?;
+                        render.single_prompt_selection(prompt, &filtered_list[sel])?;
                     }
                     return Ok(Some(sel));
                 },
@@ -591,11 +600,11 @@ impl<'a> FuzzySelect<'a> {
                     search_term.pop();
                 },
                 Key::Char(key) => {
-                    search_term.push(key);
+                    search_term.push(key.to_lowercase().to_string().pop().unwrap());
                 },
                 _ => {}
             }
-            if sel < page * capacity || sel >= (page + 1) * capacity {
+            if filtered_list.len() > 0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
                 page = sel / capacity;
             }
             render.clear_preserve_prompt(&size_vec)?;
