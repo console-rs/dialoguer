@@ -18,6 +18,7 @@
 //! * Editor launching
 extern crate console;
 extern crate tempfile;
+extern crate regex;
 pub use edit::Editor;
 pub use prompts::{Confirmation, Input, PasswordInput};
 pub use select::{Checkboxes, Select};
