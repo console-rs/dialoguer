@@ -16,6 +16,6 @@ fn main() {
         .items(&selections[..])
         .interact()
         .unwrap();
-    println!("Enjoy your {}!", selections[selection]);
+    println!("Enjoy your {}!", selection);
 }
 
