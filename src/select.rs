@@ -41,6 +41,7 @@ pub struct FuzzySelect<'a> {
     paged: bool,
     offset: usize,
     lines_per_item: usize,
+    ignore_casing: bool,
 }
 
 impl<'a> Select<'a> {
@@ -455,6 +456,7 @@ impl<'a> FuzzySelect<'a> {
             paged: false,
             offset: 1,
             lines_per_item: 1,
+            ignore_casing: true,
         }
     }
     /// Enables or disables paging
@@ -485,6 +487,12 @@ impl<'a> FuzzySelect<'a> {
     /// Enables or disables paging
     pub fn lines_per_item(&mut self, val: usize) -> &mut FuzzySelect<'a> {
         self.lines_per_item = val;
+        self
+    }
+
+    /// Specify whether casing should be ignored in matches
+    pub fn ignore_casing(&mut self, val: bool) -> &mut FuzzySelect<'a> {
+        self.ignore_casing = val;
         self
     }
 
@@ -567,12 +575,16 @@ impl<'a> FuzzySelect<'a> {
             let filtered_list: Vec<&String> = self
                 .items
                 .iter()
-                .filter(|item| re.is_match(&item.to_lowercase()))
+                .filter(|item| if self.ignore_casing { 
+                    re.is_match(&item.to_lowercase())
+                } else {
+                    re.is_match(item)
+                })
                 .collect();
 
             capacity = filtered_list.len();
             if self.paged {
-                capacity = term.size().0 as usize - 1;
+                capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
             }
             
             for (idx, item) in filtered_list
@@ -648,7 +660,11 @@ impl<'a> FuzzySelect<'a> {
                     search_term.pop();
                 },
                 Key::Char(key) => {
-                    search_term.push(key.to_lowercase().to_string().pop().unwrap());
+                    if self.ignore_casing {
+                        search_term.push(key.to_lowercase().to_string().pop().unwrap());
+                    } else { 
+                        search_term.push(key);
+                    }
                     sel = 0;
                 },
                 _ => {}
