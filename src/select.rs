@@ -16,6 +16,8 @@ pub struct Select<'a> {
     clear: bool,
     theme: &'a Theme,
     paged: bool,
+    offset: usize,
+    lines_per_item: usize,
 }
 
 /// Renders a multi select checkbox menu.
@@ -25,6 +27,8 @@ pub struct Checkboxes<'a> {
     clear: bool,
     theme: &'a Theme,
     paged: bool,
+    offset: usize,
+    lines_per_item: usize,
 }
 
 /// Renders a selection menu that user can fuzzy match to reduce set.
@@ -35,6 +39,9 @@ pub struct FuzzySelect<'a> {
     clear: bool,
     theme: &'a Theme,
     paged: bool,
+    offset: usize,
+    lines_per_item: usize,
+    ignore_casing: bool,
 }
 
 impl<'a> Select<'a> {
@@ -52,6 +59,8 @@ impl<'a> Select<'a> {
             clear: true,
             theme: theme,
             paged: false,
+            offset: 1,
+            lines_per_item: 1,
         }
     }
     /// Enables or disables paging
@@ -70,6 +79,18 @@ impl<'a> Select<'a> {
     /// Sets a default for the menu
     pub fn default(&mut self, val: usize) -> &mut Select<'a> {
         self.default = val;
+        self
+    }
+
+    /// Sets number of lines paged offset includes
+    pub fn offset(&mut self, val: usize) -> &mut Select<'a> {
+        self.offset = val;
+        self
+    }
+
+    /// Enables or disables paging
+    pub fn lines_per_item(&mut self, val: usize) -> &mut Select<'a> {
+        self.lines_per_item = val;
         self
     }
 
@@ -131,7 +152,7 @@ impl<'a> Select<'a> {
         let mut page = 0;
         let mut capacity = self.items.len();
         if self.paged {
-            capacity = term.size().0 as usize - 1;
+            capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
         }
         let pages = (self.items.len() / capacity) + 1;
         let mut render = TermThemeRenderer::new(term, self.theme);
@@ -239,6 +260,8 @@ impl<'a> Checkboxes<'a> {
             prompt: None,
             theme: theme,
             paged: false,
+            offset: 1,
+            lines_per_item: 1,
         }
     }
     /// Enables or disables paging
@@ -251,6 +274,18 @@ impl<'a> Checkboxes<'a> {
     /// The default is to clear the checkbox menu.
     pub fn clear(&mut self, val: bool) -> &mut Checkboxes<'a> {
         self.clear = val;
+        self
+    }
+
+    /// Sets number of lines paged offset includes
+    pub fn offset(&mut self, val: usize) -> &mut Checkboxes<'a> {
+        self.offset = val;
+        self
+    }
+
+    /// Enables or disables paging
+    pub fn lines_per_item(&mut self, val: usize) -> &mut Checkboxes<'a> {
+        self.lines_per_item = val;
         self
     }
 
@@ -290,7 +325,7 @@ impl<'a> Checkboxes<'a> {
         let mut page = 0;
         let mut capacity = self.items.len();
         if self.paged {
-            capacity = term.size().0 as usize - 1;
+            capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
         }
         let pages = (self.items.len() / capacity) + 1;
         let mut render = TermThemeRenderer::new(term, self.theme);
@@ -419,6 +454,9 @@ impl<'a> FuzzySelect<'a> {
             clear: true,
             theme: theme,
             paged: false,
+            offset: 1,
+            lines_per_item: 1,
+            ignore_casing: true,
         }
     }
     /// Enables or disables paging
@@ -437,6 +475,24 @@ impl<'a> FuzzySelect<'a> {
     /// Sets a default for the menu
     pub fn default(&mut self, val: usize) -> &mut FuzzySelect<'a> {
         self.default = val;
+        self
+    }
+
+    /// Sets number of lines paged offset includes
+    pub fn offset(&mut self, val: usize) -> &mut FuzzySelect<'a> {
+        self.offset = val;
+        self
+    }
+
+    /// Enables or disables paging
+    pub fn lines_per_item(&mut self, val: usize) -> &mut FuzzySelect<'a> {
+        self.lines_per_item = val;
+        self
+    }
+
+    /// Specify whether casing should be ignored in matches
+    pub fn ignore_casing(&mut self, val: bool) -> &mut FuzzySelect<'a> {
+        self.ignore_casing = val;
         self
     }
 
@@ -499,7 +555,7 @@ impl<'a> FuzzySelect<'a> {
         let mut capacity = self.items.len();
         let mut search_term = String::new();
         if self.paged {
-            capacity = term.size().0 as usize - 1;
+            capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
         }
         let pages = (self.items.len() / capacity) + 1;
         let mut render = TermThemeRenderer::new(term, self.theme);
@@ -519,12 +575,16 @@ impl<'a> FuzzySelect<'a> {
             let filtered_list: Vec<&String> = self
                 .items
                 .iter()
-                .filter(|item| re.is_match(&item.to_lowercase()))
+                .filter(|item| if self.ignore_casing { 
+                    re.is_match(&item.to_lowercase())
+                } else {
+                    re.is_match(item)
+                })
                 .collect();
 
             capacity = filtered_list.len();
             if self.paged {
-                capacity = term.size().0 as usize - 1;
+                capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
             }
             
             for (idx, item) in filtered_list
@@ -600,7 +660,11 @@ impl<'a> FuzzySelect<'a> {
                     search_term.pop();
                 },
                 Key::Char(key) => {
-                    search_term.push(key.to_lowercase().to_string().pop().unwrap());
+                    if self.ignore_casing {
+                        search_term.push(key.to_lowercase().to_string().pop().unwrap());
+                    } else { 
+                        search_term.push(key);
+                    }
                     sel = 0;
                 },
                 _ => {}
