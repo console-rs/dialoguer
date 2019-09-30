@@ -601,6 +601,7 @@ impl<'a> FuzzySelect<'a> {
                 },
                 Key::Char(key) => {
                     search_term.push(key.to_lowercase().to_string().pop().unwrap());
+                    sel = 0;
                 },
                 _ => {}
             }
