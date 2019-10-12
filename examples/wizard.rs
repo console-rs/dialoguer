@@ -16,7 +16,7 @@ struct Config {
     cert: Option<String>,
 }
 
-fn init_config() -> Result<Option<Config>, Box<Error>> {
+fn init_config() -> Result<Option<Config>, Box<dyn Error>> {
     let theme = ColorfulTheme {
         values_style: Style::new().yellow().dim(),
         indicator_style: Style::new().yellow().bold(),
@@ -45,9 +45,9 @@ fn init_config() -> Result<Option<Config>, Box<Error>> {
     let tls = Select::with_theme(&theme)
         .with_prompt("Configure TLS")
         .default(0)
-        .item("automatic with ACME")
-        .item("manual")
-        .item("no")
+        .item(&"automatic with ACME")
+        .item(&"manual")
+        .item(&"no")
         .interact()?;
 
     let (private_key, cert, use_acme) = match tls {

@@ -14,7 +14,7 @@ pub struct Select<'a> {
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
-    theme: &'a Theme,
+    theme: &'a dyn Theme,
     paged: bool,
     offset: usize,
     lines_per_item: usize,
@@ -26,7 +26,7 @@ pub struct Checkboxes<'a> {
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
-    theme: &'a Theme,
+    theme: &'a dyn Theme,
     paged: bool,
     offset: usize,
     lines_per_item: usize,
@@ -38,7 +38,7 @@ pub struct FuzzySelect<'a> {
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
-    theme: &'a Theme,
+    theme: &'a dyn Theme,
     paged: bool,
     offset: usize,
     lines_per_item: usize,
@@ -52,7 +52,7 @@ impl<'a> Select<'a> {
     }
 
     /// Same as `new` but with a specific theme.
-    pub fn with_theme(theme: &'a Theme) -> Select<'a> {
+    pub fn with_theme(theme: &'a dyn Theme) -> Select<'a> {
         Select {
             default: !0,
             items: vec![],
@@ -254,7 +254,7 @@ impl<'a> Checkboxes<'a> {
     }
 
     /// Sets a theme other than the default one.
-    pub fn with_theme(theme: &'a Theme) -> Checkboxes<'a> {
+    pub fn with_theme(theme: &'a dyn Theme) -> Checkboxes<'a> {
         Checkboxes {
             items: vec![],
             defaults: vec![],
@@ -289,6 +289,19 @@ impl<'a> Checkboxes<'a> {
             .collect();
         self
     }
+
+   /// Sets number of lines paged offset includes
+    pub fn offset(&mut self, val: usize) -> &mut Checkboxes<'a> {
+        self.offset = val;
+        self
+    }
+
+    /// Enables or disables paging
+    pub fn lines_per_item(&mut self, val: usize) -> &mut Checkboxes<'a> {
+        self.lines_per_item = val;
+        self
+    }
+
 
     /// Add a single item to the selector.
     pub fn item<T: ToString>(&mut self, item: &T) -> &mut Checkboxes<'a> {
@@ -454,7 +467,7 @@ impl<'a> FuzzySelect<'a> {
     }
 
     /// Same as `new` but with a specific theme.
-    pub fn with_theme(theme: &'a Theme) -> FuzzySelect<'a> {
+    pub fn with_theme(theme: &'a dyn Theme) -> FuzzySelect<'a> {
         FuzzySelect {
             default: !0,
             items: vec![],
@@ -594,7 +607,6 @@ impl<'a> FuzzySelect<'a> {
             if self.paged {
                 capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
             }
-            
             for (idx, item) in filtered_list
                 .iter()
                 .enumerate()

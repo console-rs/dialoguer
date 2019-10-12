@@ -24,14 +24,14 @@ pub enum SelectionStyle {
 /// Implements a theme for dialoguer.
 pub trait Theme {
     /// Given a prompt this formats out what the prompt should look like (multiline).
-    fn format_prompt(&self, f: &mut fmt::Write, prompt: &str) -> fmt::Result {
+    fn format_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         write!(f, "{}:", prompt)
     }
 
     /// Given a prompt this formats out what the prompt should look like (singleline).
     fn format_singleline_prompt(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &str,
         default: Option<&str>,
     ) -> fmt::Result {
@@ -42,14 +42,14 @@ pub trait Theme {
     }
 
     /// Formats out an error.
-    fn format_error(&self, f: &mut fmt::Write, err: &str) -> fmt::Result {
+    fn format_error(&self, f: &mut dyn fmt::Write, err: &str) -> fmt::Result {
         write!(f, "error: {}", err)
     }
 
     /// Formats a confirmation prompt.
     fn format_confirmation_prompt(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &str,
         default: Option<bool>,
     ) -> fmt::Result {
@@ -65,7 +65,7 @@ pub trait Theme {
     /// Formats a confirmation prompt.
     fn format_confirmation_prompt_selection(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &str,
         selection: bool,
     ) -> fmt::Result {
@@ -75,7 +75,7 @@ pub trait Theme {
     /// Renders a prompt and a single selection made.
     fn format_single_prompt_selection(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &str,
         sel: &str,
     ) -> fmt::Result {
@@ -85,7 +85,7 @@ pub trait Theme {
     /// Renders a prompt and multiple selections,
     fn format_multi_prompt_selection(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &str,
         selections: &[&str],
     ) -> fmt::Result {
@@ -97,14 +97,14 @@ pub trait Theme {
     }
 
     /// Renders a prompt and multiple selections,
-    fn format_password_prompt_selection(&self, f: &mut fmt::Write, prompt: &str) -> fmt::Result {
+    fn format_password_prompt_selection(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_single_prompt_selection(f, prompt, "[hidden]")
     }
 
     /// Formats a selection.
     fn format_selection(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         text: &str,
         style: SelectionStyle,
     ) -> fmt::Result {
@@ -149,14 +149,14 @@ impl Default for CustomPromptCharacterTheme {
 }
 impl Theme for CustomPromptCharacterTheme {
     /// Given a prompt this formats out what the prompt should look like (multiline).
-    fn format_prompt(&self, f: &mut fmt::Write, prompt: &str) -> fmt::Result {
+    fn format_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         write!(f, "{}{}", prompt, self.prompt_character)
     }
 
     /// Given a prompt this formats out what the prompt should look like (singleline).
     fn format_singleline_prompt(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &str,
         default: Option<&str>,
     ) -> fmt::Result {
@@ -168,7 +168,7 @@ impl Theme for CustomPromptCharacterTheme {
     /// Renders a prompt and a single selection made.
     fn format_single_prompt_selection(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &str,
         sel: &str,
     ) -> fmt::Result {
@@ -178,7 +178,7 @@ impl Theme for CustomPromptCharacterTheme {
     /// Renders a prompt and multiple selections,
     fn format_multi_prompt_selection(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &str,
         selections: &[&str],
     ) -> fmt::Result {
@@ -225,13 +225,13 @@ impl Default for ColorfulTheme {
 }
 
 impl Theme for ColorfulTheme {
-    fn format_prompt(&self, f: &mut fmt::Write, prompt: &str) -> fmt::Result {
+    fn format_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         write!(f, "{}:", prompt)
     }
 
     fn format_singleline_prompt(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &str,
         default: Option<&str>,
     ) -> fmt::Result {
@@ -246,13 +246,13 @@ impl Theme for ColorfulTheme {
         }
     }
 
-    fn format_error(&self, f: &mut fmt::Write, err: &str) -> fmt::Result {
+    fn format_error(&self, f: &mut dyn fmt::Write, err: &str) -> fmt::Result {
         write!(f, "{}: {}", self.error_style.apply_to("error"), err)
     }
 
     fn format_confirmation_prompt(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &str,
         default: Option<bool>,
     ) -> fmt::Result {
@@ -267,7 +267,7 @@ impl Theme for ColorfulTheme {
 
     fn format_confirmation_prompt_selection(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &str,
         selection: bool,
     ) -> fmt::Result {
@@ -285,7 +285,7 @@ impl Theme for ColorfulTheme {
 
     fn format_single_prompt_selection(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &str,
         sel: &str,
     ) -> fmt::Result {
@@ -294,7 +294,7 @@ impl Theme for ColorfulTheme {
 
     fn format_multi_prompt_selection(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &str,
         selections: &[&str],
     ) -> fmt::Result {
@@ -310,7 +310,7 @@ impl Theme for ColorfulTheme {
         Ok(())
     }
 
-    fn format_selection(&self, f: &mut fmt::Write, text: &str, st: SelectionStyle) -> fmt::Result {
+    fn format_selection(&self, f: &mut dyn fmt::Write, text: &str, st: SelectionStyle) -> fmt::Result {
         match st {
             SelectionStyle::CheckboxUncheckedSelected => write!(
                 f,
@@ -348,14 +348,14 @@ impl Theme for ColorfulTheme {
 /// Helper struct to conveniently render a theme ot a term.
 pub(crate) struct TermThemeRenderer<'a> {
     term: &'a Term,
-    theme: &'a Theme,
+    theme: &'a dyn Theme,
     height: usize,
     prompt_height: usize,
     prompts_reset_height: bool,
 }
 
 impl<'a> TermThemeRenderer<'a> {
-    pub fn new(term: &'a Term, theme: &'a Theme) -> TermThemeRenderer<'a> {
+    pub fn new(term: &'a Term, theme: &'a dyn Theme) -> TermThemeRenderer<'a> {
         TermThemeRenderer {
             term: term,
             theme: theme,
@@ -377,7 +377,7 @@ impl<'a> TermThemeRenderer<'a> {
         self.height += 1;
     }
 
-    fn write_formatted_str<F: FnOnce(&mut TermThemeRenderer, &mut fmt::Write) -> fmt::Result>(
+    fn write_formatted_str<F: FnOnce(&mut TermThemeRenderer, &mut dyn fmt::Write) -> fmt::Result>(
         &mut self,
         f: F,
     ) -> io::Result<()> {
@@ -387,7 +387,7 @@ impl<'a> TermThemeRenderer<'a> {
         self.term.write_str(&buf)
     }
 
-    fn write_formatted_line<F: FnOnce(&mut TermThemeRenderer, &mut fmt::Write) -> fmt::Result>(
+    fn write_formatted_line<F: FnOnce(&mut TermThemeRenderer, &mut dyn fmt::Write) -> fmt::Result>(
         &mut self,
         f: F,
     ) -> io::Result<()> {
@@ -397,7 +397,7 @@ impl<'a> TermThemeRenderer<'a> {
         self.term.write_line(&buf)
     }
 
-    fn write_formatted_prompt<F: FnOnce(&mut TermThemeRenderer, &mut fmt::Write) -> fmt::Result>(
+    fn write_formatted_prompt<F: FnOnce(&mut TermThemeRenderer, &mut dyn fmt::Write) -> fmt::Result>(
         &mut self,
         f: F,
     ) -> io::Result<()> {
@@ -490,6 +490,6 @@ impl<'a> TermThemeRenderer<'a> {
 /// Returns the default theme.
 ///
 /// (This returns the simple theme)
-pub(crate) fn get_default_theme() -> &'static Theme {
+pub(crate) fn get_default_theme() -> &'static dyn Theme {
     &SimpleTheme
 }

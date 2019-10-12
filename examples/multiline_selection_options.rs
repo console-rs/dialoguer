@@ -2,7 +2,7 @@ extern crate dialoguer;
 
 use dialoguer::{theme::ColorfulTheme, Select, FuzzySelect, Checkboxes};
 
-const selections: [&str; 100] = [
+const SELECTIONS: [&str; 100] = [
     "Option A\n  This is an option",
     "Option B\n  This is another option",
     "Option C\n  A better option",
@@ -112,10 +112,10 @@ fn main() {
         .offset(1)
         .paged(true)
         .lines_per_item(2)
-        .items(&selections)
+        .items(&SELECTIONS)
         .interact()
         .unwrap();
-    println!("Enjoy your {}!", selections[selection]);
+    println!("Enjoy your {}!", SELECTIONS[selection]);
 
     let fuzzy_selection = FuzzySelect::with_theme(&ColorfulTheme::default())
         .with_prompt("FuzzySelect your favourite option")
@@ -124,7 +124,7 @@ fn main() {
         .paged(true)
         .lines_per_item(2)
         .ignore_casing(false)
-        .items(&selections)
+        .items(&SELECTIONS)
         .interact()
         .unwrap();
     println!("Enjoy your {}!", fuzzy_selection);
@@ -134,16 +134,16 @@ fn main() {
         .offset(1)
         .paged(true)
         .lines_per_item(2)
-        .items(&selections)
+        .items(&SELECTIONS)
         .interact()
         .unwrap();
-    
+ 
     if check_selects.is_empty() {
         println!("You did not select anything :(");
     } else {
         println!("You selected these things:");
         for selection in check_selects {
-            println!("  {}", selections[selection]);
+            println!("  {}", SELECTIONS[selection]);
         }
     }
 }
