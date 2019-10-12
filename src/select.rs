@@ -161,7 +161,7 @@ impl<'a> Select<'a> {
             render.prompt(prompt)?;
         }
         let mut size_vec = Vec::new();
-        for items in self.items.iter().as_slice() {
+        for items in self.items.iter().flat_map(|i| i.split('\n')).collect::<Vec<_>>() {
             let size = &items.len();
             size_vec.push(size.clone());
         }
@@ -334,7 +334,7 @@ impl<'a> Checkboxes<'a> {
             render.prompt(prompt)?;
         }
         let mut size_vec = Vec::new();
-        for items in self.items.iter().as_slice() {
+        for items in self.items.iter().flat_map(|i| i.split('\n')).collect::<Vec<_>>() {
             let size = &items.len();
             size_vec.push(size.clone());
         }
