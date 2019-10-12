@@ -16,11 +16,13 @@
 //! * Menu selections
 //! * Checkboxes
 //! * Editor launching
+//! * Menu fuzzy match selections
 extern crate console;
 extern crate tempfile;
+extern crate regex;
 pub use edit::Editor;
 pub use prompts::{Confirmation, Input, PasswordInput};
-pub use select::{Checkboxes, Select};
+pub use select::{Checkboxes, FuzzySelect, Select};
 pub use validate::Validator;
 
 mod edit;
