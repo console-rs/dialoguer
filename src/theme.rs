@@ -122,6 +122,13 @@ pub trait Theme {
             text
         )
     }
+
+    /// Given a prompt this formats out what the prompt should look like (multiline).
+    fn format_datetime(&self, f: &mut fmt::Write, prompt: &str, datetime: &str) -> fmt::Result {
+        // TODO: parse datetime into components, style whether components are selected or not
+        // TODO: make format customizable
+        write!(f, "{} {}:", prompt, datetime)
+    }
 }
 
 /// The default theme.
