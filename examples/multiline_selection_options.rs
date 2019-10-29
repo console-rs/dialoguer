@@ -122,6 +122,7 @@ fn main() {
         .default(0)
         .offset(1)
         .paged(true)
+        .show_match(false)
         .lines_per_item(2)
         .ignore_casing(false)
         .items(&selections)
