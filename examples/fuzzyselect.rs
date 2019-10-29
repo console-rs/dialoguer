@@ -14,6 +14,7 @@ fn main() {
         .with_prompt("Pick your flavor")
         .default(0)
         .items(&selections[..])
+        .show_match(true)
         .interact()
         .unwrap();
     println!("Enjoy your {}!", selection);

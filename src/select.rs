@@ -42,6 +42,7 @@ pub struct FuzzySelect<'a> {
     offset: usize,
     lines_per_item: usize,
     ignore_casing: bool,
+    show_match: bool,
 }
 
 impl<'a> Select<'a> {
@@ -457,6 +458,7 @@ impl<'a> FuzzySelect<'a> {
             offset: 1,
             lines_per_item: 1,
             ignore_casing: true,
+            show_match: false,
         }
     }
     /// Enables or disables paging
@@ -493,6 +495,12 @@ impl<'a> FuzzySelect<'a> {
     /// Specify whether casing should be ignored in matches
     pub fn ignore_casing(&mut self, val: bool) -> &mut FuzzySelect<'a> {
         self.ignore_casing = val;
+        self
+    }
+
+    /// Specify whether match string is shown as typed
+    pub fn show_match(&mut self, val: bool) -> &mut FuzzySelect<'a> {
+        self.show_match = val;
         self
     }
 
@@ -557,6 +565,9 @@ impl<'a> FuzzySelect<'a> {
         if self.paged {
             capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
         }
+        if self.show_match {
+            capacity -= 1;
+        }
         let pages = (self.items.len() / capacity) + 1;
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
@@ -585,6 +596,9 @@ impl<'a> FuzzySelect<'a> {
             capacity = filtered_list.len();
             if self.paged {
                 capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
+            }
+            if self.show_match {
+                term.write_line(&search_term)?;
             }
             
             for (idx, item) in filtered_list
@@ -673,6 +687,9 @@ impl<'a> FuzzySelect<'a> {
                 page = sel / capacity;
             }
             render.clear_preserve_prompt(&size_vec)?;
+            if self.show_match {
+                term.clear_last_lines(1)?;
+            }
         }
     }
 }
