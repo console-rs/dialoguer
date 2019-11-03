@@ -20,13 +20,16 @@
 extern crate console;
 extern crate tempfile;
 extern crate regex;
+extern crate chrono;
 pub use edit::Editor;
 pub use prompts::{Confirmation, Input, PasswordInput};
 pub use select::{Checkboxes, FuzzySelect, Select};
 pub use validate::Validator;
+pub use datetime::Datetime;
 
 mod edit;
 mod prompts;
 mod select;
 pub mod theme;
 mod validate;
+mod datetime;

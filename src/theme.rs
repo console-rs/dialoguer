@@ -124,10 +124,10 @@ pub trait Theme {
     }
 
     /// Given a prompt this formats out what the prompt should look like (multiline).
-    fn format_datetime(&self, f: &mut fmt::Write, prompt: &str, datetime: &str) -> fmt::Result {
+    fn format_datetime(&self, f: &mut fmt::Write, text: &str, datetime: &str) -> fmt::Result {
         // TODO: parse datetime into components, style whether components are selected or not
         // TODO: make format customizable
-        write!(f, "{} {}:", prompt, datetime)
+        write!(f, "{} {}", text, datetime)
     }
 }
 
@@ -471,6 +471,10 @@ impl<'a> TermThemeRenderer<'a> {
 
     pub fn selection(&mut self, text: &str, style: SelectionStyle) -> io::Result<()> {
         self.write_formatted_line(|this, buf| this.theme.format_selection(buf, text, style))
+    }
+
+    pub fn datetime(&mut self, text: &str, datetime: &str) -> io::Result<()> {
+        self.write_formatted_line(|this, buf| this.theme.format_datetime(buf, text, datetime))
     }
 
     pub fn clear(&mut self) -> io::Result<()> {
