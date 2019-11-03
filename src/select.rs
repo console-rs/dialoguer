@@ -205,7 +205,7 @@ impl<'a> Select<'a> {
                 }
                 _ => {}
             }
-            if sel < page * capacity || sel >= (page + 1) * capacity {
+            if sel != !0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
                 page = sel / capacity;
             }
             render.clear_preserve_prompt(&size_vec)?;
