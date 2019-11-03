@@ -4,6 +4,7 @@ use theme::{get_default_theme, TermThemeRenderer, Theme};
 use chrono::{DateTime, Duration, Datelike, Timelike, Utc};
 use console::{Key, Term, style};
 
+#[derive(PartialEq)]
 pub enum DateType {
     Date,
     Time,
@@ -91,6 +92,7 @@ impl <'a> DateTimeSelect<'a> {
             DateType::Time => 2,
             DateType::DateTime => 5,
         };
+        let mut digits: Vec<u32> = Vec::with_capacity(4);
 
         loop {
             let date_str = match &self.date_type {
@@ -129,9 +131,41 @@ impl <'a> DateTimeSelect<'a> {
                 false => date_str,
             };
 
+            // Render current state of datetime string.
             render.datetime(&self.prompt, &date_str)?;
+
             match term.read_key()? {
                 Key::Enter => {
+                    // Clean up formatting of returned string.
+                    let date_str = match &self.date_type {
+                        DateType::Date => {
+                            format!(
+                                "{}-{:02}-{:02}",
+                                date_val.year(),
+                                date_val.month(),
+                                date_val.day(),
+                            )
+                        },
+                        DateType::Time => {
+                            format!(
+                                "{:02}:{:02}:{:02}",
+                                date_val.hour(),
+                                date_val.minute(),
+                                date_val.second(),
+                            )
+                        },
+                        DateType::DateTime => {
+                            format!(
+                                "{}-{:02}-{:02} {:02}:{:02}:{:02}",
+                                date_val.year(),
+                                date_val.month(),
+                                date_val.day(),
+                                date_val.hour(),
+                                date_val.minute(),
+                                date_val.second(),
+                            )
+                        },
+                    };
                     return Ok(date_str.to_owned());
                 },
                 Key::ArrowRight | Key::Char('l') => {
@@ -140,6 +174,7 @@ impl <'a> DateTimeSelect<'a> {
                     } else {
                         pos + 1
                     };
+                    digits = Vec::with_capacity(4);
                 },
                 Key::ArrowLeft | Key::Char('h') => {
                     pos = if pos == 0 {
@@ -147,7 +182,9 @@ impl <'a> DateTimeSelect<'a> {
                     } else {
                         pos - 1
                     };
+                    digits = Vec::with_capacity(4);
                 },
+                // Increment date by 1.
                 Key::ArrowUp | Key::Char('j') => {
                     date_val = match (&self.date_type, pos) {
                         (DateType::Date, 0) => date_val.with_year(date_val.year() + 1).unwrap(),
@@ -178,7 +215,9 @@ impl <'a> DateTimeSelect<'a> {
                         (DateType::Time, _) => panic!("stepped out of bounds on Time"),
                         (DateType::DateTime, _) => panic!("stepped out of bounds on DateTime"),
                     };
+                    digits = Vec::with_capacity(4);
                 },
+                // Decrement the date by 1.
                 Key::ArrowDown | Key::Char('k') => {
                     date_val = match (&self.date_type, pos) {
                         (DateType::Date, 0) => date_val.with_year(date_val.year() - 1).unwrap(),
@@ -209,8 +248,44 @@ impl <'a> DateTimeSelect<'a> {
                         (DateType::Time, _) => panic!("stepped out of bounds on Time"),
                         (DateType::DateTime, _) => panic!("stepped out of bounds on DateTime"),
                     };
+                    digits = Vec::with_capacity(4);
                 },
-
+                // Allow numerical inputs.
+                Key::Char(val) => {
+                    if val.is_digit(10) {
+                        digits.push(val.to_digit(10).unwrap());
+                        // Need 4 digits to set year
+                        if pos == 0 && digits.len() == 4 {
+                            let num = digits[0] * 1000 + digits[1] * 100 + digits[2] * 10 + digits[3];
+                            date_val = match &self.date_type {
+                                DateType::Date => date_val.with_year(num as i32).unwrap(),
+                                DateType::DateTime => date_val.with_year(num as i32).unwrap(),
+                                DateType::Time => panic!("Time not supported for 4 digits"),
+                            };
+                            digits = Vec::with_capacity(4);
+                        } else if (pos > 0 && digits.len() == 2) || (self.date_type == DateType::Time && pos == 0) {
+                            let num = digits[0] * 10 + digits[1];
+                            date_val = match (&self.date_type, pos) {
+                                (DateType::Date, 1) => date_val.with_month(num).unwrap_or(date_val),
+                                (DateType::Date, 2) => date_val.with_day(num).unwrap_or(date_val),
+                                (DateType::Time, 0) => date_val.with_hour(num).unwrap_or(date_val),
+                                (DateType::Time, 1) => date_val.with_minute(num).unwrap_or(date_val),
+                                (DateType::Time, 2) => date_val.with_second(num).unwrap_or(date_val),
+                                (DateType::DateTime, 1) => date_val.with_month(num).unwrap_or(date_val),
+                                (DateType::DateTime, 2) => date_val.with_day(num).unwrap_or(date_val),
+                                (DateType::DateTime, 3) => date_val.with_hour(num).unwrap_or(date_val),
+                                (DateType::DateTime, 4) => date_val.with_minute(num).unwrap_or(date_val),
+                                (DateType::DateTime, 5) => date_val.with_second(num).unwrap_or(date_val),
+                                (DateType::Date, _) => panic!("stepped out of bounds on Date"),
+                                (DateType::Time, _) => panic!("stepped out of bounds on Time"),
+                                (DateType::DateTime, _) => panic!("stepped out of bounds on DateTime"),
+                            };
+                            digits = Vec::with_capacity(4);
+                        }
+                    } else {
+                        digits = Vec::with_capacity(4);
+                    }
+                }
                 // TODO: Add cases for changing date_val.
                 _ => {}
             }
