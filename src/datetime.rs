@@ -53,7 +53,7 @@ impl <'a> DateTimeSelect<'a> {
         self.default = Some(datetime.into());
         self
     }
-    /// Sets weekday time to start with.
+    /// Sets whether to show weekday or not.
     pub fn weekday(&mut self, val: bool) -> &mut DateTimeSelect<'a> {
         self.weekday = val;
         self
