@@ -122,6 +122,14 @@ pub trait Theme {
             text
         )
     }
+
+    /// Formats datetime selection.
+    fn format_datetime(&self, f: &mut fmt::Write, text: &Option<String>, datetime: &str) -> fmt::Result {
+        match text {
+            Some(text) => write!(f, "{}: {}", text, datetime),
+            None => write!(f, "{}", datetime),
+        }
+    }
 }
 
 /// The default theme.
@@ -185,6 +193,33 @@ impl Theme for CustomPromptCharacterTheme {
         write!(f, "{}{} ", prompt, self.prompt_character)?;
         for (idx, sel) in selections.iter().enumerate() {
             write!(f, "{}{}", if idx == 0 { "" } else { ", " }, sel)?;
+        }
+        Ok(())
+    }
+    /// Renders a prompt and datetime selector.
+    fn format_datetime(
+        &self,
+        f: &mut fmt::Write,
+        prompt: &Option<String>,
+        datetime: &str,
+    ) -> fmt::Result {
+        match prompt {
+            Some(prompt) => {
+                write!(
+                    f,
+                    "{}{} {}",
+                    prompt,
+                    self.prompt_character,
+                    datetime
+                )?;
+            },
+            None => {
+                write!(
+                    f,
+                    "{}",
+                    datetime
+                )?;
+            }
         }
         Ok(())
     }
@@ -309,7 +344,6 @@ impl Theme for ColorfulTheme {
         }
         Ok(())
     }
-
     fn format_selection(&self, f: &mut fmt::Write, text: &str, st: SelectionStyle) -> fmt::Result {
         match st {
             SelectionStyle::CheckboxUncheckedSelected => write!(
@@ -464,6 +498,10 @@ impl<'a> TermThemeRenderer<'a> {
 
     pub fn selection(&mut self, text: &str, style: SelectionStyle) -> io::Result<()> {
         self.write_formatted_line(|this, buf| this.theme.format_selection(buf, text, style))
+    }
+
+    pub fn datetime(&mut self, text: &Option<String>, datetime: &str) -> io::Result<()> {
+        self.write_formatted_line(|this, buf| this.theme.format_datetime(buf, text, datetime))
     }
 
     pub fn clear(&mut self) -> io::Result<()> {
