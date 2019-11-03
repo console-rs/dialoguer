@@ -15,7 +15,7 @@ fn main() {
         .date_type("date")
         .interact()
         .unwrap();
-    println!("Date selected {}", datetime);
+    println!("Date selected {}", date);
 
     let time = DateTimeSelect::new()
         .with_prompt("Pick a time")
@@ -23,6 +23,6 @@ fn main() {
         .weekday(false)
         .interact()
         .unwrap();
-    println!("Datetime selected {}", datetime);
+    println!("Datetime selected {}", time);
 }
 
