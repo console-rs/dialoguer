@@ -6,7 +6,7 @@ use console::{Key, Term};
 
 // TODO: Add fields to set default time.
 pub struct Datetime<'a> {
-    prompt: String,
+    prompt: Option<String>,
     theme: &'a Theme,
 }
 
@@ -18,13 +18,13 @@ impl <'a> Datetime<'a> {
     /// Creates a datetime with a specific theme.
     pub fn with_theme(theme: &'a Theme) -> Datetime<'a> {
         Datetime {
-            prompt: "".into(),
+            prompt: None,
             theme,
         }
     }
     /// Sets the input prompt.
     pub fn with_prompt(&mut self, prompt: &str) -> &mut Datetime<'a> {
-        self.prompt = prompt.into();
+        self.prompt = Some(prompt.into());
         self
     }
     /// Enables user interaction and returns the result.
@@ -47,13 +47,14 @@ impl <'a> Datetime<'a> {
         );
         let mut render = TermThemeRenderer::new(term, self.theme);
         loop {
-            render.datetime("What time?", &date_val);
+            render.datetime(&self.prompt, &date_val);
             match term.read_key()? {
                 Key::Enter => {
                     return Ok(date_val.to_owned());
                 },
                 _ => {}
             }
+            render.clear()?;
         }
     }
 }
