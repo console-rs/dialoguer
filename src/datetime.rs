@@ -129,7 +129,7 @@ impl <'a> DateTimeSelect<'a> {
                 false => date_str,
             };
 
-            render.datetime(&self.prompt, &date_str);
+            render.datetime(&self.prompt, &date_str)?;
             match term.read_key()? {
                 Key::Enter => {
                     return Ok(date_str.to_owned());
