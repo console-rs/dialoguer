@@ -18,6 +18,7 @@ pub struct Select<'a> {
 
 /// Renders a multi select checkbox menu.
 pub struct Checkboxes<'a> {
+    defaults: Vec<bool>,
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
@@ -248,6 +249,7 @@ impl<'a> Checkboxes<'a> {
     pub fn with_theme(theme: &'a dyn Theme) -> Checkboxes<'a> {
         Checkboxes {
             items: vec![],
+            defaults: vec![],
             clear: true,
             prompt: None,
             theme,
@@ -267,9 +269,26 @@ impl<'a> Checkboxes<'a> {
         self
     }
 
+    /// Sets a defaults for the menu
+    pub fn defaults(&mut self, val: &[bool]) -> &mut Checkboxes<'a> {
+        self.defaults = val.to_vec()
+            .iter()
+            .cloned()
+            .chain(repeat(false))
+            .take(self.items.len())
+            .collect();
+        self
+    }
+
     /// Add a single item to the selector.
     pub fn item(&mut self, item: &str) -> &mut Checkboxes<'a> {
+        self.item_checked(item, false)
+    }
+
+    /// Add a single item to the selector with a default checked state.
+    pub fn item_checked(&mut self, item: &str, checked: bool) -> &mut Checkboxes<'a> {
         self.items.push(item.to_string());
+        self.defaults.push(checked);
         self
     }
 
@@ -277,6 +296,16 @@ impl<'a> Checkboxes<'a> {
     pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Checkboxes<'a> {
         for item in items {
             self.items.push(item.to_string());
+            self.defaults.push(false);
+        }
+        self
+    }
+
+    /// Adds multiple items to the selector with checked state
+    pub fn items_checked<T: ToString>(&mut self, items: &[(T, bool)]) -> &mut Checkboxes<'a> {
+        for &(ref item, checked) in items {
+            self.items.push(item.to_string());
+            self.defaults.push(checked);
         }
         self
     }
@@ -322,7 +351,7 @@ impl<'a> Checkboxes<'a> {
             let size = &items.len();
             size_vec.push(size.clone());
         }
-        let mut checked: Vec<_> = repeat(false).take(self.items.len()).collect();
+        let mut checked: Vec<bool> = self.defaults.clone();
         loop {
             for (idx, item) in self
                 .items
@@ -387,7 +416,13 @@ impl<'a> Checkboxes<'a> {
                     if let Some(ref prompt) = self.prompt {
                         render.multi_prompt_selection(prompt, &[][..])?;
                     }
-                    return Ok(vec![]);
+                    return Ok(
+                        self.defaults.clone()
+                            .into_iter()
+                            .enumerate()
+                            .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
+                            .collect()
+                    );
                 }
                 Key::Enter => {
                     if self.clear {
