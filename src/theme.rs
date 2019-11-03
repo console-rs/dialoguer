@@ -125,8 +125,6 @@ pub trait Theme {
 
     /// Formats datetime selection.
     fn format_datetime(&self, f: &mut fmt::Write, text: &Option<String>, datetime: &str) -> fmt::Result {
-        // TODO: parse datetime into components, style whether components are selected or not
-        // TODO: make format customizable
         match text {
             Some(text) => write!(f, "{}: {}", text, datetime),
             None => write!(f, "{}", datetime),
