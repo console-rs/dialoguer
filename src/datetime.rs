@@ -110,17 +110,17 @@ impl <'a> DateTimeSelect<'a> {
                 DateType::Date => {
                     format!(
                         "{}-{:02}-{:02}",
-                        if pos == 0 { style(date_val.year()).bold() } else { style(date_val.year()) },
-                        if pos == 1 { style(date_val.month()).bold() } else { style(date_val.month()) },
-                        if pos == 2 { style(date_val.day()).bold() } else { style(date_val.day()) },
+                        if pos == 0 { style(date_val.year()).bold() } else { style(date_val.year()).dim() },
+                        if pos == 1 { style(date_val.month()).bold() } else { style(date_val.month()).dim() },
+                        if pos == 2 { style(date_val.day()).bold() } else { style(date_val.day()).dim() },
                     )
                 },
                 DateType::Time => {
                     format!(
                         "{:02}:{:02}:{:02}",
-                        if pos == 0 { style(date_val.hour()).bold() } else { style(date_val.hour()) },
-                        if pos == 1 { style(date_val.minute()).bold() } else { style(date_val.minute()) },
-                        if pos == 2 { style(date_val.second()).bold() } else { style(date_val.second()) },
+                        if pos == 0 { style(date_val.hour()).bold() } else { style(date_val.hour()).dim() },
+                        if pos == 1 { style(date_val.minute()).bold() } else { style(date_val.minute()).dim() },
+                        if pos == 2 { style(date_val.second()).bold() } else { style(date_val.second()).dim() },
                     )
                 },
                 DateType::DateTime => {
