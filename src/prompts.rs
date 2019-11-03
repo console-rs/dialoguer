@@ -44,6 +44,7 @@ pub struct Input<'a, T> {
     prompt: String,
     default: Option<T>,
     show_default: bool,
+    initial_text: Option<String>,
     theme: &'a Theme,
     permit_empty: bool,
     validator: Option<Box<Fn(&str) -> Option<String>>>,
@@ -160,14 +161,22 @@ where
             prompt: "".into(),
             default: None,
             show_default: true,
+            initial_text: None,
             theme,
             permit_empty: false,
             validator: None,
         }
     }
+
     /// Sets the input prompt.
     pub fn with_prompt(&mut self, prompt: &str) -> &mut Input<'a, T> {
         self.prompt = prompt.into();
+        self
+    }
+
+    /// Sets whether the default can be editable.
+    pub fn with_initial_text(&mut self, val: &str) -> &mut Input<'a, T> {
+        self.initial_text = Some(val.into());
         self
     }
 
@@ -234,8 +243,13 @@ where
                     None
                 },
             )?;
-            let input = term.read_line()?;
+            let input = if let Some(initial_text) = self.initial_text.as_ref() {
+                term.read_line_initial_text(initial_text)?
+            } else {
+                term.read_line()?
+            };
             render.add_line();
+            term.clear_line()?;
             if input.is_empty() {
                 render.clear()?;
                 if let Some(ref default) = self.default {
