@@ -30,15 +30,21 @@ pub struct Editor {
 
 fn get_default_editor() -> OsString {
     if let Some(prog) = env::var_os("VISUAL") {
-        return prog.into();
+        return prog;
     }
     if let Some(prog) = env::var_os("EDITOR") {
-        return prog.into();
+        return prog;
     }
     if cfg!(windows) {
         "notepad.exe".into()
     } else {
         "vi".into()
+    }
+}
+
+impl Default for Editor {
+    fn default() -> Editor {
+        Editor::new()
     }
 }
 
@@ -98,10 +104,8 @@ impl Editor {
             .spawn()?
             .wait()?;
 
-        if rv.success() {
-            if self.require_save && ts >= fs::metadata(f.path())?.modified()? {
-                return Ok(None);
-            }
+        if rv.success() && self.require_save && ts >= fs::metadata(f.path())?.modified()? {
+            return Ok(None);
         }
 
         let mut new_f = fs::File::open(f.path())?;

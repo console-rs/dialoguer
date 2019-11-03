@@ -12,7 +12,7 @@ pub struct Select<'a> {
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
-    theme: &'a Theme,
+    theme: &'a dyn Theme,
     paged: bool,
 }
 
@@ -21,8 +21,23 @@ pub struct Checkboxes<'a> {
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
-    theme: &'a Theme,
+    theme: &'a dyn Theme,
     paged: bool,
+}
+
+/// Renders a list to order.
+pub struct OrderList<'a> {
+    items: Vec<String>,
+    prompt: Option<String>,
+    clear: bool,
+    theme: &'a dyn Theme,
+    paged: bool,
+}
+
+impl<'a> Default for Select<'a> {
+    fn default() -> Select<'a> {
+        Select::new()
+    }
 }
 
 impl<'a> Select<'a> {
@@ -32,13 +47,13 @@ impl<'a> Select<'a> {
     }
 
     /// Same as `new` but with a specific theme.
-    pub fn with_theme(theme: &'a Theme) -> Select<'a> {
+    pub fn with_theme(theme: &'a dyn Theme) -> Select<'a> {
         Select {
             default: !0,
             items: vec![],
             prompt: None,
             clear: true,
-            theme: theme,
+            theme,
             paged: false,
         }
     }
@@ -103,10 +118,8 @@ impl<'a> Select<'a> {
 
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
-        self._interact_on(term, false)?.ok_or(io::Error::new(
-            io::ErrorKind::Other,
-            "Quit not allowed in this case",
-        ))
+        self._interact_on(term, false)?
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
     /// Like `interact_opt` but allows a specific terminal to be set.
@@ -117,10 +130,11 @@ impl<'a> Select<'a> {
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
         let mut page = 0;
-        let mut capacity = self.items.len();
-        if self.paged {
-            capacity = term.size().0 as usize - 1;
-        }
+        let capacity = if self.paged {
+            term.size().0 as usize - 1
+        } else {
+            self.items.len()
+        };
         let pages = (self.items.len() / capacity) + 1;
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
@@ -128,7 +142,12 @@ impl<'a> Select<'a> {
             render.prompt(prompt)?;
         }
         let mut size_vec = Vec::new();
-        for items in self.items.iter().flat_map(|i| i.split('\n')).collect::<Vec<_>>() {
+        for items in self
+            .items
+            .iter()
+            .flat_map(|i| i.split('\n'))
+            .collect::<Vec<_>>()
+        {
             let size = &items.len();
             size_vec.push(size.clone());
         }
@@ -178,7 +197,7 @@ impl<'a> Select<'a> {
                         if page == 0 {
                             page = pages - 1;
                         } else {
-                            page = page - 1;
+                            page -= 1;
                         }
                         sel = page * capacity;
                     }
@@ -188,7 +207,7 @@ impl<'a> Select<'a> {
                         if page == pages - 1 {
                             page = 0;
                         } else {
-                            page = page + 1;
+                            page -= 1;
                         }
                         sel = page * capacity;
                     }
@@ -213,6 +232,12 @@ impl<'a> Select<'a> {
     }
 }
 
+impl<'a> Default for Checkboxes<'a> {
+    fn default() -> Checkboxes<'a> {
+        Checkboxes::new()
+    }
+}
+
 impl<'a> Checkboxes<'a> {
     /// Creates a new checkbox object.
     pub fn new() -> Checkboxes<'static> {
@@ -220,12 +245,12 @@ impl<'a> Checkboxes<'a> {
     }
 
     /// Sets a theme other than the default one.
-    pub fn with_theme(theme: &'a Theme) -> Checkboxes<'a> {
+    pub fn with_theme(theme: &'a dyn Theme) -> Checkboxes<'a> {
         Checkboxes {
             items: vec![],
             clear: true,
             prompt: None,
-            theme: theme,
+            theme,
             paged: false,
         }
     }
@@ -276,10 +301,11 @@ impl<'a> Checkboxes<'a> {
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
         let mut page = 0;
-        let mut capacity = self.items.len();
-        if self.paged {
-            capacity = term.size().0 as usize - 1;
-        }
+        let capacity = if self.paged {
+            term.size().0 as usize - 1
+        } else {
+            self.items.len()
+        };
         let pages = (self.items.len() / capacity) + 1;
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
@@ -287,7 +313,12 @@ impl<'a> Checkboxes<'a> {
             render.prompt(prompt)?;
         }
         let mut size_vec = Vec::new();
-        for items in self.items.iter().flat_map(|i| i.split('\n')).collect::<Vec<_>>() {
+        for items in self
+            .items
+            .iter()
+            .flat_map(|i| i.split('\n'))
+            .collect::<Vec<_>>()
+        {
             let size = &items.len();
             size_vec.push(size.clone());
         }
@@ -331,7 +362,7 @@ impl<'a> Checkboxes<'a> {
                         if page == 0 {
                             page = pages - 1;
                         } else {
-                            page = page - 1;
+                            page -= 1;
                         }
                         sel = page * capacity;
                     }
@@ -341,7 +372,7 @@ impl<'a> Checkboxes<'a> {
                         if page == pages - 1 {
                             page = 0;
                         } else {
-                            page = page + 1;
+                            page += 1;
                         }
                         sel = page * capacity;
                     }
@@ -363,7 +394,7 @@ impl<'a> Checkboxes<'a> {
                         render.clear()?;
                     }
                     if let Some(ref prompt) = self.prompt {
-                        let mut selections: Vec<_> = checked
+                        let selections: Vec<_> = checked
                             .iter()
                             .enumerate()
                             .filter_map(|(idx, &checked)| {
@@ -381,6 +412,208 @@ impl<'a> Checkboxes<'a> {
                         .enumerate()
                         .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
                         .collect());
+                }
+                _ => {}
+            }
+            if sel < page * capacity || sel >= (page + 1) * capacity {
+                page = sel / capacity;
+            }
+            render.clear_preserve_prompt(&size_vec)?;
+        }
+    }
+}
+
+impl<'a> Default for OrderList<'a> {
+    fn default() -> OrderList<'a> {
+        OrderList::new()
+    }
+}
+
+impl<'a> OrderList<'a> {
+    /// Creates a new orderlist object.
+    pub fn new() -> OrderList<'static> {
+        OrderList::with_theme(get_default_theme())
+    }
+
+    /// Sets a theme other than the default one.
+    pub fn with_theme(theme: &'a dyn Theme) -> OrderList<'a> {
+        OrderList {
+            items: vec![],
+            clear: true,
+            prompt: None,
+            theme,
+            paged: false,
+        }
+    }
+    /// Enables or disables paging
+    pub fn paged(&mut self, val: bool) -> &mut OrderList<'a> {
+        self.paged = val;
+        self
+    }
+    /// Sets the clear behavior of the checkbox menu.
+    ///
+    /// The default is to clear the checkbox menu.
+    pub fn clear(&mut self, val: bool) -> &mut OrderList<'a> {
+        self.clear = val;
+        self
+    }
+
+    /// Add a single item to the selector.
+    pub fn item(&mut self, item: &str) -> &mut OrderList<'a> {
+        self.items.push(item.to_string());
+        self
+    }
+
+    /// Adds multiple items to the selector.
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut OrderList<'a> {
+        for item in items {
+            self.items.push(item.to_string());
+        }
+        self
+    }
+
+    /// Prefaces the menu with a prompt.
+    ///
+    /// When a prompt is set the system also prints out a confirmation after
+    /// the selection.
+    pub fn with_prompt(&mut self, prompt: &str) -> &mut OrderList<'a> {
+        self.prompt = Some(prompt.to_string());
+        self
+    }
+
+    /// Enables user interaction and returns the result.
+    ///
+    /// The user can order the items with the space bar and the arrows.
+    /// On enter the ordered list will be returned.
+    pub fn interact(&self) -> io::Result<Vec<usize>> {
+        self.interact_on(&Term::stderr())
+    }
+
+    /// Like `interact` but allows a specific terminal to be set.
+    pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
+        let mut page = 0;
+        let capacity = if self.paged {
+            term.size().0 as usize - 1
+        } else {
+            self.items.len()
+        };
+        let pages = (self.items.len() as f64 / capacity as f64).ceil() as usize;
+        let mut render = TermThemeRenderer::new(term, self.theme);
+        let mut sel = 0;
+        if let Some(ref prompt) = self.prompt {
+            render.prompt(prompt)?;
+        }
+        let mut size_vec = Vec::new();
+        for items in self.items.iter().as_slice() {
+            let size = &items.len();
+            size_vec.push(size.clone());
+        }
+        let mut order: Vec<_> = (0..self.items.len()).collect();
+        let mut checked: bool = false;
+        loop {
+            for (idx, item) in order
+                .iter()
+                .enumerate()
+                .skip(page * capacity)
+                .take(capacity)
+            {
+                render.selection(
+                    &self.items[*item],
+                    match (sel == idx, checked) {
+                        (true, true) => SelectionStyle::CheckboxCheckedSelected,
+                        (true, false) => SelectionStyle::CheckboxUncheckedSelected,
+                        (false, _) => SelectionStyle::CheckboxUncheckedUnselected,
+                    },
+                )?;
+            }
+            match term.read_key()? {
+                Key::ArrowDown | Key::Char('j') => {
+                    let old_sel = sel;
+                    if sel == !0 {
+                        sel = 0;
+                    } else {
+                        sel = (sel as u64 + 1).rem(self.items.len() as u64) as usize;
+                    }
+                    if checked && old_sel != sel {
+                        order.swap(old_sel, sel);
+                    }
+                }
+                Key::ArrowUp | Key::Char('k') => {
+                    let old_sel = sel;
+                    if sel == !0 {
+                        sel = self.items.len() - 1;
+                    } else {
+                        sel = ((sel as i64 - 1 + self.items.len() as i64)
+                            % (self.items.len() as i64)) as usize;
+                    }
+                    if checked && old_sel != sel {
+                        order.swap(old_sel, sel);
+                    }
+                }
+                Key::ArrowLeft | Key::Char('h') => {
+                    if self.paged {
+                        let old_sel = sel;
+                        let old_page = page;
+                        if page == 0 {
+                            page = pages - 1;
+                        } else {
+                            page -= 1;
+                        }
+                        sel = page * capacity;
+                        if checked {
+                            let indexes: Vec<_> = if old_page == 0 {
+                                let indexes1: Vec<_> = (0..=old_sel).rev().collect();
+                                let indexes2: Vec<_> = (sel..self.items.len()).rev().collect();
+                                [indexes1, indexes2].concat()
+                            } else {
+                                (sel..=old_sel).rev().collect()
+                            };
+                            for index in 0..(indexes.len() - 1) {
+                                order.swap(indexes[index], indexes[index + 1]);
+                            }
+                        }
+                    }
+                }
+                Key::ArrowRight | Key::Char('l') => {
+                    if self.paged {
+                        let old_sel = sel;
+                        let old_page = page;
+                        if page == pages - 1 {
+                            page = 0;
+                        } else {
+                            page += 1;
+                        }
+                        sel = page * capacity;
+                        if checked {
+                            let indexes: Vec<_> = if old_page == pages - 1 {
+                                let indexes1: Vec<_> = (old_sel..self.items.len()).collect();
+                                let indexes2: Vec<_> = vec![0];
+                                [indexes1, indexes2].concat()
+                            } else {
+                                (old_sel..=sel).collect()
+                            };
+                            for index in 0..(indexes.len() - 1) {
+                                order.swap(indexes[index], indexes[index + 1]);
+                            }
+                        }
+                    }
+                }
+                Key::Char(' ') => {
+                    checked = !checked;
+                }
+                Key::Enter => {
+                    if self.clear {
+                        render.clear()?;
+                    }
+                    if let Some(ref prompt) = self.prompt {
+                        let list: Vec<_> = order
+                            .iter()
+                            .enumerate()
+                            .map(|(_, item)| self.items[*item].as_str())
+                            .collect();
+                        render.multi_prompt_selection(prompt, &list[..])?;
+                    }
+                    return Ok(order);
                 }
                 _ => {}
             }
