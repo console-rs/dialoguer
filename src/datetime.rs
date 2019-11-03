@@ -95,6 +95,7 @@ impl <'a> DateTimeSelect<'a> {
         };
         let mut render = TermThemeRenderer::new(term, self.theme);
 
+        // Set vars for handling changing datetimes.
         let mut pos = 0;
         let max_pos = match &self.date_type {
             DateType::Date => 2,
