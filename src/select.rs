@@ -12,7 +12,7 @@ pub struct Select<'a> {
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
-    theme: &'a Theme,
+    theme: &'a dyn Theme,
     paged: bool,
 }
 
@@ -21,8 +21,14 @@ pub struct Checkboxes<'a> {
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
-    theme: &'a Theme,
+    theme: &'a dyn Theme,
     paged: bool,
+}
+
+impl<'a> Default for Select<'a> {
+    fn default() -> Select<'a> {
+        Select::new()
+    }
 }
 
 impl<'a> Select<'a> {
@@ -32,13 +38,13 @@ impl<'a> Select<'a> {
     }
 
     /// Same as `new` but with a specific theme.
-    pub fn with_theme(theme: &'a Theme) -> Select<'a> {
+    pub fn with_theme(theme: &'a dyn Theme) -> Select<'a> {
         Select {
             default: !0,
             items: vec![],
             prompt: None,
             clear: true,
-            theme: theme,
+            theme,
             paged: false,
         }
     }
@@ -103,10 +109,8 @@ impl<'a> Select<'a> {
 
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
-        self._interact_on(term, false)?.ok_or(io::Error::new(
-            io::ErrorKind::Other,
-            "Quit not allowed in this case",
-        ))
+        self._interact_on(term, false)?
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
     /// Like `interact_opt` but allows a specific terminal to be set.
@@ -117,10 +121,11 @@ impl<'a> Select<'a> {
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
         let mut page = 0;
-        let mut capacity = self.items.len();
-        if self.paged {
-            capacity = term.size().0 as usize - 1;
-        }
+        let capacity = if self.paged {
+            term.size().0 as usize - 1
+        } else {
+            self.items.len()
+        };
         let pages = (self.items.len() / capacity) + 1;
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
@@ -128,7 +133,12 @@ impl<'a> Select<'a> {
             render.prompt(prompt)?;
         }
         let mut size_vec = Vec::new();
-        for items in self.items.iter().flat_map(|i| i.split('\n')).collect::<Vec<_>>() {
+        for items in self
+            .items
+            .iter()
+            .flat_map(|i| i.split('\n'))
+            .collect::<Vec<_>>()
+        {
             let size = &items.len();
             size_vec.push(size.clone());
         }
@@ -178,7 +188,7 @@ impl<'a> Select<'a> {
                         if page == 0 {
                             page = pages - 1;
                         } else {
-                            page = page - 1;
+                            page -= 1;
                         }
                         sel = page * capacity;
                     }
@@ -188,7 +198,7 @@ impl<'a> Select<'a> {
                         if page == pages - 1 {
                             page = 0;
                         } else {
-                            page = page + 1;
+                            page -= 1;
                         }
                         sel = page * capacity;
                     }
@@ -213,6 +223,12 @@ impl<'a> Select<'a> {
     }
 }
 
+impl<'a> Default for Checkboxes<'a> {
+    fn default() -> Checkboxes<'a> {
+        Checkboxes::new()
+    }
+}
+
 impl<'a> Checkboxes<'a> {
     /// Creates a new checkbox object.
     pub fn new() -> Checkboxes<'static> {
@@ -220,12 +236,12 @@ impl<'a> Checkboxes<'a> {
     }
 
     /// Sets a theme other than the default one.
-    pub fn with_theme(theme: &'a Theme) -> Checkboxes<'a> {
+    pub fn with_theme(theme: &'a dyn Theme) -> Checkboxes<'a> {
         Checkboxes {
             items: vec![],
             clear: true,
             prompt: None,
-            theme: theme,
+            theme,
             paged: false,
         }
     }
@@ -276,10 +292,11 @@ impl<'a> Checkboxes<'a> {
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
         let mut page = 0;
-        let mut capacity = self.items.len();
-        if self.paged {
-            capacity = term.size().0 as usize - 1;
-        }
+        let capacity = if self.paged {
+            term.size().0 as usize - 1
+        } else {
+            self.items.len()
+        };
         let pages = (self.items.len() / capacity) + 1;
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
@@ -287,7 +304,12 @@ impl<'a> Checkboxes<'a> {
             render.prompt(prompt)?;
         }
         let mut size_vec = Vec::new();
-        for items in self.items.iter().flat_map(|i| i.split('\n')).collect::<Vec<_>>() {
+        for items in self
+            .items
+            .iter()
+            .flat_map(|i| i.split('\n'))
+            .collect::<Vec<_>>()
+        {
             let size = &items.len();
             size_vec.push(size.clone());
         }
@@ -331,7 +353,7 @@ impl<'a> Checkboxes<'a> {
                         if page == 0 {
                             page = pages - 1;
                         } else {
-                            page = page - 1;
+                            page -= 1;
                         }
                         sel = page * capacity;
                     }
@@ -341,7 +363,7 @@ impl<'a> Checkboxes<'a> {
                         if page == pages - 1 {
                             page = 0;
                         } else {
-                            page = page + 1;
+                            page += 1;
                         }
                         sel = page * capacity;
                     }
@@ -363,7 +385,7 @@ impl<'a> Checkboxes<'a> {
                         render.clear()?;
                     }
                     if let Some(ref prompt) = self.prompt {
-                        let mut selections: Vec<_> = checked
+                        let selections: Vec<_> = checked
                             .iter()
                             .enumerate()
                             .filter_map(|(idx, &checked)| {

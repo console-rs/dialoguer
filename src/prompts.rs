@@ -25,7 +25,7 @@ pub struct Confirmation<'a> {
     text: String,
     default: bool,
     show_default: bool,
-    theme: &'a Theme,
+    theme: &'a dyn Theme,
 }
 
 /// Renders a simple input prompt.
@@ -45,9 +45,9 @@ pub struct Input<'a, T> {
     default: Option<T>,
     show_default: bool,
     initial_text: Option<String>,
-    theme: &'a Theme,
+    theme: &'a dyn Theme,
     permit_empty: bool,
-    validator: Option<Box<Fn(&str) -> Option<String>>>,
+    validator: Option<Box<dyn Fn(&str) -> Option<String>>>,
 }
 /// Renders a password input prompt.
 ///
@@ -65,9 +65,15 @@ pub struct Input<'a, T> {
 /// ```
 pub struct PasswordInput<'a> {
     prompt: String,
-    theme: &'a Theme,
+    theme: &'a dyn Theme,
     allow_empty_password: bool,
     confirmation_prompt: Option<(String, String)>,
+}
+
+impl<'a> Default for Confirmation<'a> {
+    fn default() -> Confirmation<'a> {
+        Confirmation::new()
+    }
 }
 
 impl<'a> Confirmation<'a> {
@@ -77,7 +83,7 @@ impl<'a> Confirmation<'a> {
     }
 
     /// Sets a theme other than the default one.
-    pub fn with_theme(theme: &'a Theme) -> Confirmation<'a> {
+    pub fn with_theme(theme: &'a dyn Theme) -> Confirmation<'a> {
         Confirmation {
             text: "".into(),
             default: true,
@@ -145,6 +151,16 @@ impl<'a> Confirmation<'a> {
     }
 }
 
+impl<'a, T> Default for Input<'a, T>
+where
+    T: Clone + FromStr + Display,
+    T::Err: Display + Debug,
+{
+    fn default() -> Input<'a, T> {
+        Input::new()
+    }
+}
+
 impl<'a, T> Input<'a, T>
 where
     T: Clone + FromStr + Display,
@@ -156,7 +172,7 @@ where
     }
 
     /// Creates an input with a specific theme.
-    pub fn with_theme(theme: &'a Theme) -> Input<'a, T> {
+    pub fn with_theme(theme: &'a dyn Theme) -> Input<'a, T> {
         Input {
             prompt: "".into(),
             default: None,
@@ -280,6 +296,12 @@ where
     }
 }
 
+impl<'a> Default for PasswordInput<'a> {
+    fn default() -> PasswordInput<'a> {
+        PasswordInput::new()
+    }
+}
+
 impl<'a> PasswordInput<'a> {
     /// Creates a new input prompt.
     pub fn new() -> PasswordInput<'static> {
@@ -287,10 +309,10 @@ impl<'a> PasswordInput<'a> {
     }
 
     /// Creates the password input with a specific theme.
-    pub fn with_theme(theme: &'a Theme) -> PasswordInput<'a> {
+    pub fn with_theme(theme: &'a dyn Theme) -> PasswordInput<'a> {
         PasswordInput {
             prompt: "".into(),
-            theme: theme,
+            theme,
             allow_empty_password: false,
             confirmation_prompt: None,
         }
