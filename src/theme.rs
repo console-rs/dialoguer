@@ -123,7 +123,7 @@ pub trait Theme {
         )
     }
 
-    /// Given a prompt this formats out what the prompt should look like (multiline).
+    /// Formats datetime selection.
     fn format_datetime(&self, f: &mut fmt::Write, text: &Option<String>, datetime: &str) -> fmt::Result {
         // TODO: parse datetime into components, style whether components are selected or not
         // TODO: make format customizable
@@ -380,6 +380,7 @@ impl Theme for ColorfulTheme {
         }
     }
 
+    // TODO: Bug here where colors are not applied in the right order...
     fn format_datetime(
         &self,
         f: &mut fmt::Write,
@@ -390,7 +391,7 @@ impl Theme for ColorfulTheme {
             Some(prompt) => {
                 write!(
                     f,
-                    "{} {}",
+                    "{}: {}",
                     prompt,
                     self.values_style.apply_to(datetime)
                 )?;
