@@ -1,7 +1,7 @@
 use std::io;
 
 use theme::{get_default_theme, TermThemeRenderer, Theme};
-use chrono::{Timelike, Utc};
+use chrono::{Datelike, Timelike, Utc};
 use console::{Key, Term};
 
 // TODO: Add fields to set default time.
@@ -36,14 +36,24 @@ impl <'a> Datetime<'a> {
     /// Like `interact` but allows a specific terminal to be set.
     // TODO: rework this to handle logic for changing date.
     fn interact_on(&self, term: &Term) -> io::Result<String> {
-        let now = Utc::now();
-        let (is_pm, hour) = now.hour12();
+        let now = Utc::now()
+            .with_hour(0)
+            .unwrap()
+            .with_minute(0)
+            .unwrap()
+            .with_second(0)
+            .unwrap();
+        //let (is_pm, hour) = now.hour12();
         let date_val = format!(
-            "{:02}:{:02}:{:02} {}",
-            hour,
+            "{}-{}-{} {:02}:{:02}:{:02}, {:?}",
+            now.year(),
+            now.month(),
+            now.day(),
+            now.hour(),
             now.minute(),
             now.second(),
-            if is_pm { "PM" } else { "AM" }
+            now.weekday(),
+            //if is_pm { "PM" } else { "AM" }
         );
         let mut render = TermThemeRenderer::new(term, self.theme);
         loop {
