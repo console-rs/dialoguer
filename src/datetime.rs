@@ -5,7 +5,7 @@ use chrono::{DateTime, Duration, Datelike, Timelike, Utc};
 use console::{Key, Term, style};
 
 /// The possible types of datetime selections that can be made.
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum DateType {
     Date,
     Time,
@@ -17,6 +17,7 @@ pub enum DateType {
 /// prompt question is optional and not shown by default.
 /// weekday that is displayed can be turned off.
 /// date_type allows you to specify "date", "time" or "datetime"
+/// default starting time can be set if following rfc3339 format "%Y-%m-%dT%H:%M:%s%Z"
 ///
 /// Note: Date values can be changed by UP/DOWN/j/k or specifying numerical values.
 pub struct DateTimeSelect<'a> {
@@ -303,3 +304,45 @@ impl <'a> DateTimeSelect<'a> {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_defaults() {
+        let datetime_select = DateTimeSelect::new();
+        assert_eq!(datetime_select.prompt, None);
+        assert_eq!(datetime_select.weekday, true);
+        assert_eq!(datetime_select.date_type, DateType::DateTime);
+    }
+    #[test]
+    fn test_setting_proper_rfc3339_default() {
+        let mut datetime_select = DateTimeSelect::new();
+        datetime_select.default("2019-01-01T00:00:00-00:00");
+        assert_eq!(datetime_select.default, Some("2019-01-01T00:00:00-00:00".to_owned()));
+    }
+    #[test]
+    fn test_setting_prompt() {
+        let mut datetime_select = DateTimeSelect::new();
+        datetime_select.with_prompt("test");
+        assert_eq!(datetime_select.prompt, Some("test".to_owned()));
+    }
+    #[test]
+    fn test_setting_weekday() {
+        let mut datetime_select = DateTimeSelect::new();
+        datetime_select.weekday(false);
+        assert_eq!(datetime_select.weekday, false);
+    }
+    #[test]
+    fn test_setting_valid_date_type() {
+        let mut datetime_select = DateTimeSelect::new();
+        datetime_select.date_type("date");
+        assert_eq!(datetime_select.date_type, DateType::Date);
+    }
+    #[test]
+    #[should_panic]
+    fn test_setting_invalid_date_type() {
+        let mut datetime_select = DateTimeSelect::new();
+        datetime_select.date_type("timedate");
+    }
+}
