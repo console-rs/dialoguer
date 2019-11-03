@@ -128,7 +128,7 @@ pub trait Theme {
         // TODO: parse datetime into components, style whether components are selected or not
         // TODO: make format customizable
         match text {
-            Some(text) => write!(f, "{} {}", text, datetime),
+            Some(text) => write!(f, "{}: {}", text, datetime),
             None => write!(f, "{}", datetime),
         }
     }
@@ -195,6 +195,33 @@ impl Theme for CustomPromptCharacterTheme {
         write!(f, "{}{} ", prompt, self.prompt_character)?;
         for (idx, sel) in selections.iter().enumerate() {
             write!(f, "{}{}", if idx == 0 { "" } else { ", " }, sel)?;
+        }
+        Ok(())
+    }
+    /// Renders a prompt and datetime selector.
+    fn format_datetime(
+        &self,
+        f: &mut fmt::Write,
+        prompt: &Option<String>,
+        datetime: &str,
+    ) -> fmt::Result {
+        match prompt {
+            Some(prompt) => {
+                write!(
+                    f,
+                    "{}{} {}",
+                    prompt,
+                    self.prompt_character,
+                    datetime
+                )?;
+            },
+            None => {
+                write!(
+                    f,
+                    "{}",
+                    datetime
+                )?;
+            }
         }
         Ok(())
     }
@@ -319,7 +346,6 @@ impl Theme for ColorfulTheme {
         }
         Ok(())
     }
-
     fn format_selection(&self, f: &mut fmt::Write, text: &str, st: SelectionStyle) -> fmt::Result {
         match st {
             SelectionStyle::CheckboxUncheckedSelected => write!(
@@ -352,6 +378,32 @@ impl Theme for ColorfulTheme {
             ),
             SelectionStyle::MenuUnselected => write!(f, "  {}", self.inactive_style.apply_to(text)),
         }
+    }
+
+    fn format_datetime(
+        &self,
+        f: &mut fmt::Write,
+        prompt: &Option<String>,
+        datetime: &str,
+    ) -> fmt::Result {
+        match prompt {
+            Some(prompt) => {
+                write!(
+                    f,
+                    "{} {}",
+                    prompt,
+                    self.values_style.apply_to(datetime)
+                )?;
+            },
+            None => {
+                write!(
+                    f,
+                    "{}",
+                    self.values_style.apply_to(datetime)
+                )?;
+            }
+        }
+        Ok(())
     }
 }
 
