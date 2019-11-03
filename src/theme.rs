@@ -379,33 +379,6 @@ impl Theme for ColorfulTheme {
             SelectionStyle::MenuUnselected => write!(f, "  {}", self.inactive_style.apply_to(text)),
         }
     }
-
-    // TODO: Bug here where colors are not applied in the right order...
-    fn format_datetime(
-        &self,
-        f: &mut fmt::Write,
-        prompt: &Option<String>,
-        datetime: &str,
-    ) -> fmt::Result {
-        match prompt {
-            Some(prompt) => {
-                write!(
-                    f,
-                    "{}: {}",
-                    prompt,
-                    self.values_style.apply_to(datetime)
-                )?;
-            },
-            None => {
-                write!(
-                    f,
-                    "{}",
-                    self.values_style.apply_to(datetime)
-                )?;
-            }
-        }
-        Ok(())
-    }
 }
 
 /// Helper struct to conveniently render a theme ot a term.
