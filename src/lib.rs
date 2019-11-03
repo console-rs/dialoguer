@@ -25,7 +25,7 @@ pub use edit::Editor;
 pub use prompts::{Confirmation, Input, PasswordInput};
 pub use select::{Checkboxes, FuzzySelect, Select};
 pub use validate::Validator;
-pub use datetime::Datetime;
+pub use datetime::DateTimeSelect;
 
 mod edit;
 mod prompts;
