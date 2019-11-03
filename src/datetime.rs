@@ -4,6 +4,7 @@ use theme::{get_default_theme, TermThemeRenderer, Theme};
 use chrono::{DateTime, Duration, Datelike, Timelike, Utc};
 use console::{Key, Term, style};
 
+/// The possible types of datetime selections that can be made.
 #[derive(PartialEq)]
 pub enum DateType {
     Date,
@@ -11,6 +12,13 @@ pub enum DateType {
     DateTime,
 }
 
+/// Renders a datetime selection interactive text.
+///
+/// prompt question is optional and not shown by default.
+/// weekday that is displayed can be turned off.
+/// date_type allows you to specify "date", "time" or "datetime"
+///
+/// Note: Date values can be changed by UP/DOWN/j/k or specifying numerical values.
 pub struct DateTimeSelect<'a> {
     prompt: Option<String>,
     default: Option<String>,
@@ -34,7 +42,7 @@ impl <'a> DateTimeSelect<'a> {
             date_type: DateType::DateTime,
         }
     }
-    /// Sets the input prompt.
+    /// Sets the datetime prompt.
     pub fn with_prompt(&mut self, prompt: &str) -> &mut DateTimeSelect<'a> {
         self.prompt = Some(prompt.into());
         self
@@ -67,7 +75,7 @@ impl <'a> DateTimeSelect<'a> {
     }
     /// Like `interact` but allows a specific terminal to be set.
     fn interact_on(&self, term: &Term) -> io::Result<String> {
-        // Used as default if override not sent.
+        // Current date in UTC is used as default time if override not set.
         let now = Utc::now() 
             .with_hour(0)
             .unwrap()
@@ -95,6 +103,7 @@ impl <'a> DateTimeSelect<'a> {
         let mut digits: Vec<u32> = Vec::with_capacity(4);
 
         loop {
+            // Styling is added to highlight pos being changed.
             let date_str = match &self.date_type {
                 DateType::Date => {
                     format!(
@@ -184,7 +193,7 @@ impl <'a> DateTimeSelect<'a> {
                     };
                     digits = Vec::with_capacity(4);
                 },
-                // Increment date by 1.
+                // Increment datetime by 1.
                 Key::ArrowUp | Key::Char('j') => {
                     date_val = match (&self.date_type, pos) {
                         (DateType::Date, 0) => date_val.with_year(date_val.year() + 1).unwrap(),
@@ -217,7 +226,7 @@ impl <'a> DateTimeSelect<'a> {
                     };
                     digits = Vec::with_capacity(4);
                 },
-                // Decrement the date by 1.
+                // Decrement the datetime by 1.
                 Key::ArrowDown | Key::Char('k') => {
                     date_val = match (&self.date_type, pos) {
                         (DateType::Date, 0) => date_val.with_year(date_val.year() - 1).unwrap(),
@@ -263,7 +272,8 @@ impl <'a> DateTimeSelect<'a> {
                                 DateType::Time => panic!("Time not supported for 4 digits"),
                             };
                             digits = Vec::with_capacity(4);
-                        } else if (pos > 0 && digits.len() == 2) || (self.date_type == DateType::Time && pos == 0) {
+                        // Have 2 digits in any position, including 0 if hours.
+                        } else if digits.len() == 2 && (pos > 0  || self.date_type == DateType::Time) {
                             let num = digits[0] * 10 + digits[1];
                             date_val = match (&self.date_type, pos) {
                                 (DateType::Date, 1) => date_val.with_month(num).unwrap_or(date_val),
@@ -286,7 +296,6 @@ impl <'a> DateTimeSelect<'a> {
                         digits = Vec::with_capacity(4);
                     }
                 }
-                // TODO: Add cases for changing date_val.
                 _ => {}
             }
             render.clear()?;
