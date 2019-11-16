@@ -1,7 +1,7 @@
 use std::io;
 
 use theme::{get_default_theme, TermThemeRenderer, Theme};
-use chrono::{DateTime, Duration, Datelike, Timelike, Utc};
+use chrono::{DateTime, Duration, Datelike, FixedOffset, Timelike, Utc};
 use console::{Key, Term, style};
 
 /// The possible types of datetime selections that can be made.
@@ -18,6 +18,7 @@ pub enum DateType {
 /// weekday that is displayed can be turned off.
 /// date_type allows you to specify "date", "time" or "datetime"
 /// default starting time can be set if following rfc3339 format "%Y-%m-%dT%H:%M:%s%Z"
+/// min and max DateTime can be set to help with selection.
 ///
 /// Note: Date values can be changed by UP/DOWN/j/k or specifying numerical values.
 pub struct DateTimeSelect<'a> {
@@ -26,6 +27,8 @@ pub struct DateTimeSelect<'a> {
     theme: &'a Theme,
     weekday: bool,
     date_type: DateType,
+    min: &'a str,
+    max: &'a str,
 }
 
 impl <'a> DateTimeSelect<'a> {
@@ -41,6 +44,8 @@ impl <'a> DateTimeSelect<'a> {
             theme,
             weekday: true,
             date_type: DateType::DateTime,
+            min: "0000-01-01T00:00:00-00:00",
+            max: "9999-12-31T23:59:59-00:00",
         }
     }
     /// Sets the datetime prompt.
@@ -68,6 +73,26 @@ impl <'a> DateTimeSelect<'a> {
         };
         self
     }
+    /// Sets min value for Date or DateTime.
+    pub fn min(&mut self, val: &'a str) -> &mut DateTimeSelect<'a> {
+        self.min = val;
+        self
+    }
+    /// Sets max value for Date or DateTime.
+    pub fn max(&mut self, val: &'a str) -> &mut DateTimeSelect<'a> {
+        self.max = val;
+        self
+    }
+    fn check_date(&self, val: DateTime<FixedOffset>, min: &DateTime<FixedOffset>, max: &DateTime<FixedOffset>) -> DateTime<FixedOffset> {
+        let val = if val < *min {
+            min.clone()
+        } else if val > *max {
+            max.clone()
+        } else {
+            val
+        };
+        val
+    }
     /// Enables user interaction and returns the result.
     ///
     /// The dialog is rendered on stderr.
@@ -85,6 +110,9 @@ impl <'a> DateTimeSelect<'a> {
             .with_second(0)
             .unwrap();
 
+        let min_val = DateTime::parse_from_rfc3339(self.min).expect("date format must match rfc3339");
+        let max_val = DateTime::parse_from_rfc3339(self.max).expect("date format must match rfc3339");
+
         let mut date_val = match &self.default {
             Some(datetime) => {
                 DateTime::parse_from_rfc3339(datetime).expect("date format must match rfc3339")
@@ -93,6 +121,7 @@ impl <'a> DateTimeSelect<'a> {
                 DateTime::parse_from_rfc3339(&now.to_rfc3339()).expect("date format must match rfc3339")
             }
         };
+        date_val = self.check_date(date_val, &min_val, &max_val);
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         // Set vars for handling changing datetimes.
@@ -300,6 +329,7 @@ impl <'a> DateTimeSelect<'a> {
                 }
                 _ => {}
             }
+            date_val = self.check_date(date_val, &min_val, &max_val);
             render.clear()?;
         }
     }
