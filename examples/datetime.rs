@@ -1,6 +1,6 @@
 extern crate dialoguer;
 
-use dialoguer::{DateTimeSelect};
+use dialoguer::{DateTimeSelect, DateType};
 
 fn main() {
     let datetime = DateTimeSelect::new()
@@ -12,14 +12,14 @@ fn main() {
 
     let date = DateTimeSelect::new()
         .with_prompt("Pick a date")
-        .date_type("date")
+        .date_type(DateType::Date)
         .interact()
         .unwrap();
     println!("Date selected {}", date);
 
     let time = DateTimeSelect::new()
         .with_prompt("Pick a time")
-        .date_type("time")
+        .date_type(DateType::Time)
         .weekday(false)
         .interact()
         .unwrap();

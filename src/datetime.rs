@@ -5,7 +5,7 @@ use chrono::{DateTime, Duration, Datelike, Timelike, Utc};
 use console::{Key, Term, style};
 
 /// The possible types of datetime selections that can be made.
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum DateType {
     Date,
     Time,
@@ -59,13 +59,8 @@ impl <'a> DateTimeSelect<'a> {
         self
     }
     /// Sets date selector to date, time, or datetime format.
-    pub fn date_type(&mut self, val: &str) -> &mut DateTimeSelect<'a> {
-        self.date_type = match val {
-            "date" => DateType::Date,
-            "time" => DateType::Time,
-            "datetime" => DateType::DateTime,
-            _ => panic!("Must select from \"date\", \"time\", or \"datetime\" values for \"date_type\" method!")
-        };
+    pub fn date_type(&mut self, val: DateType) -> &mut DateTimeSelect<'a> {
+        self.date_type = val; 
         self
     }
     /// Enables user interaction and returns the result.
