@@ -362,13 +362,7 @@ mod tests {
     #[test]
     fn test_setting_valid_date_type() {
         let mut datetime_select = DateTimeSelect::new();
-        datetime_select.date_type("date");
+        datetime_select.date_type(DateType::Date);
         assert_eq!(datetime_select.date_type, DateType::Date);
-    }
-    #[test]
-    #[should_panic]
-    fn test_setting_invalid_date_type() {
-        let mut datetime_select = DateTimeSelect::new();
-        datetime_select.date_type("timedate");
     }
 }
