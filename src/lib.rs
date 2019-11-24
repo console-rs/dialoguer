@@ -24,7 +24,7 @@ extern crate regex;
 extern crate chrono;
 pub use edit::Editor;
 pub use prompts::{Confirmation, Input, PasswordInput};
-pub use select::{Checkboxes, FuzzySelect, Select};
+pub use select::{Checkboxes, FuzzySelect, OrderList, Select};
 pub use validate::Validator;
 pub use datetime::{DateTimeSelect, DateType};
 

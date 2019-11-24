@@ -9,9 +9,16 @@ fn main() {
         "Chocolate Muffin",
         "A Pile of sweet, sweet mustard",
     ];
+    let defaults = &[
+        false,
+        false,
+        true,
+        false,
+    ];
     let selections = Checkboxes::with_theme(&ColorfulTheme::default())
         .with_prompt("Pick your food")
         .items(&checkboxes[..])
+        .defaults(&defaults[..])
         .interact()
         .unwrap();
 
