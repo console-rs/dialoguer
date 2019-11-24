@@ -16,7 +16,7 @@ struct Config {
     cert: Option<String>,
 }
 
-fn init_config() -> Result<Option<Config>, Box<Error>> {
+fn init_config() -> Result<Option<Config>, Box<dyn Error>> {
     let theme = ColorfulTheme {
         values_style: Style::new().yellow().dim(),
         indicator_style: Style::new().yellow().bold(),
