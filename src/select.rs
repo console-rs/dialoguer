@@ -38,7 +38,7 @@ pub struct FuzzySelect<'a> {
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
-    theme: &'a Theme,
+    theme: &'a dyn Theme,
     paged: bool,
     offset: usize,
     lines_per_item: usize,
@@ -511,7 +511,7 @@ impl<'a> FuzzySelect<'a> {
     }
 
     /// Same as `new` but with a specific theme.
-    pub fn with_theme(theme: &'a Theme) -> FuzzySelect<'a> {
+    pub fn with_theme(theme: &'a dyn Theme) -> FuzzySelect<'a> {
         FuzzySelect {
             default: !0,
             items: vec![],

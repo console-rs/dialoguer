@@ -24,11 +24,13 @@ pub enum DateType {
 pub struct DateTimeSelect<'a> {
     prompt: Option<String>,
     default: Option<String>,
-    theme: &'a Theme,
+    theme: &'a dyn Theme,
     weekday: bool,
     date_type: DateType,
     min: &'a str,
     max: &'a str,
+    clear: bool,
+    show_match: bool,
 }
 
 impl <'a> DateTimeSelect<'a> {
@@ -37,7 +39,7 @@ impl <'a> DateTimeSelect<'a> {
     }
 
     /// Creates a datetime with a specific theme.
-    pub fn with_theme(theme: &'a Theme) -> DateTimeSelect<'a> {
+    pub fn with_theme(theme: &'a dyn Theme) -> DateTimeSelect<'a> {
         DateTimeSelect {
             prompt: None,
             default: None,
@@ -46,6 +48,8 @@ impl <'a> DateTimeSelect<'a> {
             date_type: DateType::DateTime,
             min: "0000-01-01T00:00:00-00:00",
             max: "9999-12-31T23:59:59-00:00",
+            clear: true,
+            show_match: false,
         }
     }
     /// Sets the datetime prompt.
@@ -76,6 +80,16 @@ impl <'a> DateTimeSelect<'a> {
     /// Sets max value for Date or DateTime.
     pub fn max(&mut self, val: &'a str) -> &mut DateTimeSelect<'a> {
         self.max = val;
+        self
+    }
+    /// Sets whether to clear inputs from terminal.
+    pub fn clear(&mut self, val: bool) -> &mut DateTimeSelect<'a> {
+        self.clear = val;
+        self
+    }
+    /// Sets whether to show match string or not.
+    pub fn show_match(&mut self, val: bool) -> &mut DateTimeSelect<'a> {
+        self.show_match = val;
         self
     }
     fn check_date(&self, val: DateTime<FixedOffset>, min: &DateTime<FixedOffset>, max: &DateTime<FixedOffset>) -> DateTime<FixedOffset> {
@@ -169,8 +183,26 @@ impl <'a> DateTimeSelect<'a> {
             // Render current state of datetime string.
             render.datetime(&self.prompt, &date_str)?;
 
+            // Display typed numbers if show_match is true.
+            if self.show_match {
+                let str_num: Vec<String> = digits
+                    .iter()
+                    .cloned()
+                    .map(|c| c.to_string())
+                    .collect();
+                let str_num: String = str_num.join("");
+                term.write_line(&str_num[..])?;
+            }
+
             match term.read_key()? {
                 Key::Enter => {
+                    // Clean up terminal.
+                    if self.clear {
+                        render.clear()?
+                    }
+                    if self.show_match {
+                        term.clear_last_lines(1)?;
+                    }
                     // Clean up formatting of returned string.
                     let date_str = match &self.date_type {
                         DateType::Date => {
@@ -326,6 +358,9 @@ impl <'a> DateTimeSelect<'a> {
             }
             date_val = self.check_date(date_val, &min_val, &max_val);
             render.clear()?;
+            if self.show_match {
+                term.clear_last_lines(1)?;
+            }
         }
     }
 }

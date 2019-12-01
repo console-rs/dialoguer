@@ -8,6 +8,7 @@ fn main() {
         .default("2019-01-01T00:00:00-08:00")
         .min("1970-01-01T00:00:00-08:00")
         .max("2030-06-30T00:00:00-08:00")
+        .show_match(true)
         .interact()
         .unwrap();
     println!("Datetime selected {}", datetime);

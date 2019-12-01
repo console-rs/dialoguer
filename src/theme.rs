@@ -128,7 +128,7 @@ pub trait Theme {
     }
 
     /// Formats datetime selection.
-    fn format_datetime(&self, f: &mut fmt::Write, text: &Option<String>, datetime: &str) -> fmt::Result {
+    fn format_datetime(&self, f: &mut dyn fmt::Write, text: &Option<String>, datetime: &str) -> fmt::Result {
         match text {
             Some(text) => write!(f, "{}: {}", text, datetime),
             None => write!(f, "{}", datetime),
@@ -203,7 +203,7 @@ impl Theme for CustomPromptCharacterTheme {
     /// Renders a prompt and datetime selector.
     fn format_datetime(
         &self,
-        f: &mut fmt::Write,
+        f: &mut dyn fmt::Write,
         prompt: &Option<String>,
         datetime: &str,
     ) -> fmt::Result {
