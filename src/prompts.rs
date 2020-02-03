@@ -276,14 +276,14 @@ where
                 }
             }
             render.clear()?;
-            if let Some(ref validator) = self.validator {
-                if let Some(err) = validator(&input) {
-                    render.error(&err)?;
-                    continue;
-                }
-            }
             match input.parse::<T>() {
                 Ok(value) => {
+                    if let Some(ref validator) = self.validator {
+                        if let Some(err) = validator(&input) {
+                            render.error(&err)?;
+                            continue;
+                        }
+                    }
                     render.single_prompt_selection(&self.prompt, &input)?;
                     return Ok(value);
                 }
