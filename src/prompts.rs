@@ -47,7 +47,7 @@ pub struct Input<'a, T> {
     initial_text: Option<String>,
     theme: &'a dyn Theme,
     permit_empty: bool,
-    validator: Option<Box<dyn Fn(&str) -> Option<String>>>,
+    validator: Option<Box<dyn Fn(&T) -> Option<String>>>,
 }
 /// Renders a password input prompt.
 ///
@@ -222,9 +222,14 @@ where
     }
 
     /// Registers a validator.
-    pub fn validate_with<V: Validator + 'static>(&mut self, validator: V) -> &mut Input<'a, T> {
+    // pub fn validate_with<V: Validator<T> + 'static>(&mut self, validator: V) -> &mut Input<'a, T>
+    pub fn validate_with<V>(&mut self, validator: V) -> &mut Input<'a, T>
+    where
+        V: Validator<T> + 'static,
+        T: 'static,
+    {
         let old_validator_func = self.validator.take();
-        self.validator = Some(Box::new(move |value: &str| -> Option<String> {
+        self.validator = Some(Box::new(move |value: &T| -> Option<String> {
             if let Some(old) = old_validator_func.as_ref() {
                 if let Some(err) = old(value) {
                     return Some(err);
@@ -279,7 +284,7 @@ where
             match input.parse::<T>() {
                 Ok(value) => {
                     if let Some(ref validator) = self.validator {
-                        if let Some(err) = validator(&input) {
+                        if let Some(err) = validator(&value) {
                             render.error(&err)?;
                             continue;
                         }
