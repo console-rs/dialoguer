@@ -21,10 +21,12 @@ extern crate tempfile;
 pub use edit::Editor;
 pub use prompts::{Confirmation, Input, PasswordInput};
 pub use select::{Checkboxes, OrderList, Select};
+pub use autocomplete::Autocomplete;
 pub use validate::Validator;
 
 mod edit;
 mod prompts;
 mod select;
+mod autocomplete;
 pub mod theme;
 mod validate;
