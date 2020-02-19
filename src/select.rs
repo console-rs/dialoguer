@@ -731,18 +731,18 @@ impl<'a> FuzzySelect<'a> {
                         render.single_prompt_selection(prompt, &filtered_list[sel])?;
                     }
                     return Ok(Some(filtered_list[sel].to_owned()));
-                }
+                },
                 Key::Backspace => {
                     search_term.pop();
-                }
+                },
                 Key::Char(key) => {
                     if self.ignore_casing {
                         search_term.push(key.to_lowercase().to_string().pop().unwrap());
-                    } else {
+                    } else { 
                         search_term.push(key);
                     }
                     sel = 0;
-                }
+                },
                 _ => {}
             }
             if filtered_list.len() > 0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
