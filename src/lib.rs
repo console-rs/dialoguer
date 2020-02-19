@@ -18,19 +18,18 @@
 //! * Editor launching
 //! * Menu fuzzy match selections
 //! * DateTime selections
+extern crate chrono;
 extern crate console;
 extern crate tempfile;
-extern crate regex;
-extern crate chrono;
+pub use datetime::{DateTimeSelect, DateType};
 pub use edit::Editor;
 pub use prompts::{Confirmation, Input, PasswordInput};
 pub use select::{Checkboxes, FuzzySelect, OrderList, Select};
 pub use validate::Validator;
-pub use datetime::{DateTimeSelect, DateType};
 
+mod datetime;
 mod edit;
 mod prompts;
 mod select;
 pub mod theme;
 mod validate;
-mod datetime;

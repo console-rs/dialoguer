@@ -6,8 +6,6 @@ use theme::{get_default_theme, SelectionStyle, TermThemeRenderer, Theme};
 
 use console::{Key, Term};
 
-use regex::Regex;
-
 /// Renders a selection menu.
 pub struct Select<'a> {
     default: usize,
@@ -318,7 +316,8 @@ impl<'a> Checkboxes<'a> {
 
     /// Sets a defaults for the menu
     pub fn defaults(&mut self, val: &[bool]) -> &mut Checkboxes<'a> {
-        self.defaults = val.to_vec()
+        self.defaults = val
+            .to_vec()
             .iter()
             .cloned()
             .chain(repeat(false))
@@ -462,13 +461,13 @@ impl<'a> Checkboxes<'a> {
                     if let Some(ref prompt) = self.prompt {
                         render.multi_prompt_selection(prompt, &[][..])?;
                     }
-                    return Ok(
-                        self.defaults.clone()
-                            .into_iter()
-                            .enumerate()
-                            .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
-                            .collect()
-                    );
+                    return Ok(self
+                        .defaults
+                        .clone()
+                        .into_iter()
+                        .enumerate()
+                        .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
+                        .collect());
                 }
                 Key::Enter => {
                     if self.clear {
@@ -644,16 +643,15 @@ impl<'a> FuzzySelect<'a> {
             size_vec.push(size.clone());
         }
         loop {
-            let regexp_str = format!(r"{}\w+", search_term); 
-            let re = Regex::new(&regexp_str).unwrap();
-
             let filtered_list: Vec<&String> = self
                 .items
                 .iter()
-                .filter(|item| if self.ignore_casing { 
-                    re.is_match(&item.to_lowercase())
-                } else {
-                    re.is_match(item)
+                .filter(|item| {
+                    if self.ignore_casing {
+                        item.to_lowercase().find(&search_term).is_some()
+                    } else {
+                        item.find(&search_term).is_some()
+                    }
                 })
                 .collect();
 
@@ -664,7 +662,7 @@ impl<'a> FuzzySelect<'a> {
             if self.show_match {
                 term.write_line(&search_term)?;
             }
-            
+
             for (idx, item) in filtered_list
                 .iter()
                 .enumerate()
