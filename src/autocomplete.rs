@@ -1,17 +1,14 @@
 use theme::{Theme, get_default_theme, TermThemeRenderer, SelectionStyle};
-use Validator;
 
 use std::io;
 use std::ops::Rem;
 
 use console::{Key, Term};
-use std::io::Write;
 
 
 pub struct Autocomplete<'a> {
     prompt: Option<String>,
     theme: &'a dyn Theme,
-    validator: Option<Box<dyn Fn(&str) -> Option<String>>>,
     items: Vec<String>,
     paged: bool,
     clear: bool,
@@ -34,7 +31,6 @@ impl<'a> Autocomplete<'a> {
             prompt: None,
             theme,
             paged: false,
-            validator: None,
             clear: true
         }
     }
@@ -73,23 +69,6 @@ impl<'a> Autocomplete<'a> {
     /// The default is to clear the menu.
     pub fn clear(&mut self, val: bool) -> &mut Autocomplete<'a> {
         self.clear = val;
-        self
-    }
-
-    /// Registers a validator.
-    pub fn validate_with<V: Validator + 'static>(&mut self, validator: V) -> &mut Autocomplete<'a> {
-        let old_validator_func = self.validator.take();
-        self.validator = Some(Box::new(move |value: &str| -> Option<String> {
-            if let Some(old) = old_validator_func.as_ref() {
-                if let Some(err) = old(value) {
-                    return Some(err);
-                }
-            }
-            match validator.validate(value) {
-                Ok(()) => None,
-                Err(err) => Some(err.to_string()),
-            }
-        }));
         self
     }
 
@@ -133,25 +112,13 @@ impl<'a> Autocomplete<'a> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = !0;
 
-        let mut size_vec = Vec::new();
-        for items in self
-            .items
-            .iter()
-            .flat_map(|i| i.split('\n'))
-            .collect::<Vec<_>>()
-            {
-                let size = &items.len();
-                size_vec.push(size.clone());
-            }
-
         let mut input = String::new();
-        if let Some(ref prompt) = self.prompt {
-            render.input_prompt(prompt, None)?;
-        }
         loop {
-            render.clear_preserve_prompt(&[input.len()]);
-            render.add_line();
-            term.write_line(&input);
+            if let Some(ref prompt) = self.prompt {
+                render.single_prompt_selection(prompt, &input)?;
+            } else {
+                render.prompt(&input)?;
+            }
 
             let filtered_items = if input.is_empty() {
                 self.items.clone()
@@ -162,6 +129,9 @@ impl<'a> Autocomplete<'a> {
                     .filter(|item| item.to_ascii_lowercase().contains(&input.to_ascii_lowercase())).collect()
             };
 
+            if sel != !0 && sel >= filtered_items.len() {
+                sel = 0;
+            }
 
             for (idx, item) in filtered_items
                 .iter()
@@ -228,9 +198,11 @@ impl<'a> Autocomplete<'a> {
                         render.clear()?;
                     }
                     if let Some(ref prompt) = self.prompt {
-                        render.single_prompt_selection(prompt, &self.items[sel])?;
+                        render.single_prompt_selection(prompt, &filtered_items[sel])?;
                     }
-                    return Ok(Some(sel));
+                    let selected_item = &filtered_items[sel];
+                    let index_in_all  = self.items.iter().position(|item| item == selected_item);
+                    return Ok(index_in_all);
                 }
                 Key::Char(chr) => {
                     input.push(chr)
@@ -243,7 +215,8 @@ impl<'a> Autocomplete<'a> {
             if sel != !0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
                 page = sel / capacity;
             }
-            render.clear_preserve_prompt(&size_vec)?;
+
+            render.clear()?;
         }
     }
 }

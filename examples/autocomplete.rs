@@ -13,7 +13,11 @@ fn main() {
     let selection = Autocomplete::with_theme(&ColorfulTheme::default())
         .with_prompt("Pick your flavor")
         .items(&items[..])
-        .interact()
+        .interact_opt()
         .unwrap();
-    println!("Enjoy your {}!", items[selection]);
+    if let Some(sel) = selection {
+        println!("Enjoy your {}!", items[sel]);
+    } else {
+        println!("Quitted.")
+    }
 }
