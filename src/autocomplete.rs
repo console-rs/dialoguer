@@ -104,7 +104,7 @@ impl<'a> Autocomplete<'a> {
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
         let mut page = 0;
         let capacity = if self.paged {
-            term.size().0 as usize - 1
+            term.size().0 as usize - 2
         } else {
             self.items.len()
         };
