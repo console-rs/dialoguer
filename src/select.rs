@@ -223,6 +223,13 @@ impl<'a> Select<'a> {
                     }
                     return Ok(Some(sel));
                 }
+
+                Key::Unknown => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::NotConnected,
+                        "Not a terminal",
+                    ))
+                }
                 _ => {}
             }
             if sel != !0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
@@ -271,7 +278,8 @@ impl<'a> Checkboxes<'a> {
 
     /// Sets a defaults for the menu
     pub fn defaults(&mut self, val: &[bool]) -> &mut Checkboxes<'a> {
-        self.defaults = val.to_vec()
+        self.defaults = val
+            .to_vec()
             .iter()
             .cloned()
             .chain(repeat(false))
@@ -416,13 +424,13 @@ impl<'a> Checkboxes<'a> {
                     if let Some(ref prompt) = self.prompt {
                         render.multi_prompt_selection(prompt, &[][..])?;
                     }
-                    return Ok(
-                        self.defaults.clone()
-                            .into_iter()
-                            .enumerate()
-                            .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
-                            .collect()
-                    );
+                    return Ok(self
+                        .defaults
+                        .clone()
+                        .into_iter()
+                        .enumerate()
+                        .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
+                        .collect());
                 }
                 Key::Enter => {
                     if self.clear {
@@ -447,6 +455,12 @@ impl<'a> Checkboxes<'a> {
                         .enumerate()
                         .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
                         .collect());
+                }
+                Key::Unknown => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::NotConnected,
+                        "Not a terminal",
+                    ))
                 }
                 _ => {}
             }
@@ -649,6 +663,12 @@ impl<'a> OrderList<'a> {
                         render.multi_prompt_selection(prompt, &list[..])?;
                     }
                     return Ok(order);
+                }
+                Key::Unknown => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::NotConnected,
+                        "Not a terminal",
+                    ))
                 }
                 _ => {}
             }
