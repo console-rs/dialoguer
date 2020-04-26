@@ -172,6 +172,9 @@ impl Theme for CustomPromptCharacterTheme {
         default: Option<&str>,
     ) -> fmt::Result {
         match default {
+            Some(default) if prompt.is_empty() => {
+                write!(f, "[{}]{} ", default, self.prompt_character)
+            }
             Some(default) => write!(f, "{} [{}]{} ", prompt, default, self.prompt_character),
             None => write!(f, "{}{} ", prompt, self.prompt_character),
         }
@@ -247,6 +250,9 @@ impl Theme for ColorfulTheme {
         default: Option<&str>,
     ) -> fmt::Result {
         match default {
+            Some(default) if prompt.is_empty() => {
+                write!(f, "[{}]: ", self.defaults_style.apply_to(default))
+            }
             Some(default) => write!(
                 f,
                 "{} [{}]: ",
@@ -267,11 +273,13 @@ impl Theme for ColorfulTheme {
         prompt: &str,
         default: Option<bool>,
     ) -> fmt::Result {
-        write!(f, "{}", &prompt)?;
+        if !prompt.is_empty() {
+            write!(f, "{} ", &prompt)?;
+        }
         match default {
             None => {}
-            Some(true) => write!(f, " {} ", self.defaults_style.apply_to("[Y/n]"))?,
-            Some(false) => write!(f, " {} ", self.defaults_style.apply_to("[y/N]"))?,
+            Some(true) => write!(f, "{} ", self.defaults_style.apply_to("[Y/n]"))?,
+            Some(false) => write!(f, "{} ", self.defaults_style.apply_to("[y/N]"))?,
         }
         Ok(())
     }
@@ -282,16 +290,17 @@ impl Theme for ColorfulTheme {
         prompt: &str,
         selection: bool,
     ) -> fmt::Result {
-        write!(
-            f,
-            "{} {}",
-            &prompt,
-            if selection {
-                self.yes_style.apply_to("yes")
-            } else {
-                self.no_style.apply_to("no")
-            }
-        )
+        let result = if selection {
+            self.yes_style.apply_to("yes")
+        } else {
+            self.no_style.apply_to("no")
+        };
+
+        if prompt.is_empty() {
+            write!(f, "{}", result)
+        } else {
+            write!(f, "{} {}", &prompt, result)
+        }
     }
 
     fn format_single_prompt_selection(
