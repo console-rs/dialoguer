@@ -208,7 +208,7 @@ impl<'a> Select<'a> {
                         if page == pages - 1 {
                             page = 0;
                         } else {
-                            page -= 1;
+                            page += 1;
                         }
                         sel = page * capacity;
                     }
