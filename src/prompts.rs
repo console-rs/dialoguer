@@ -224,6 +224,23 @@ where
     }
 
     /// Registers a validator.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use dialoguer::Input;
+    /// let mail: String = Input::new()
+    ///     .with_prompt("Enter email")
+    ///     .validate_with(|input: &str| -> Result<(), &str> {
+    ///         if input.contains('@') {
+    ///             Ok(())
+    ///         } else {
+    ///             Err("This is not a mail address")
+    ///         }
+    ///     })
+    ///     .interact()
+    ///     .unwrap();
+    /// ```
     pub fn validate_with<V: Validator + 'static>(&mut self, validator: V) -> &mut Input<'a, T> {
         let old_validator_func = self.validator.take();
         self.validator = Some(Box::new(move |value: &str| -> Option<String> {
