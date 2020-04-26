@@ -36,6 +36,7 @@ pub trait Theme {
         default: Option<&str>,
     ) -> fmt::Result {
         match default {
+            Some(default) if prompt.is_empty() => write!(f, "[{}]: ", default),
             Some(default) => write!(f, "{} [{}]: ", prompt, default),
             None => write!(f, "{}: ", prompt),
         }
@@ -53,11 +54,13 @@ pub trait Theme {
         prompt: &str,
         default: Option<bool>,
     ) -> fmt::Result {
-        write!(f, "{}", &prompt)?;
+        if !prompt.is_empty() {
+            write!(f, "{} ", &prompt)?;
+        }
         match default {
             None => {}
-            Some(true) => write!(f, " [Y/n] ")?,
-            Some(false) => write!(f, " [y/N] ")?,
+            Some(true) => write!(f, "[Y/n] ")?,
+            Some(false) => write!(f, "[y/N] ")?,
         }
         Ok(())
     }
@@ -69,7 +72,11 @@ pub trait Theme {
         prompt: &str,
         selection: bool,
     ) -> fmt::Result {
-        write!(f, "{} {}", &prompt, if selection { "yes" } else { "no" })
+        if prompt.is_empty() {
+            write!(f, "{}", if selection { "yes" } else { "no" })
+        } else {
+            write!(f, "{} {}", &prompt, if selection { "yes" } else { "no" })
+        }
     }
 
     /// Renders a prompt and a single selection made.
