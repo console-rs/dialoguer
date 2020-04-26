@@ -165,7 +165,7 @@ impl<'a> Select<'a> {
         let mut page = 0;
         let mut capacity = self.items.len();
         if self.paged {
-            capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
+            capacity = (term.size().1 as usize) / self.lines_per_item - self.offset;
         }
         let pages = (self.items.len() / capacity) + 1;
         let mut render = TermThemeRenderer::new(term, self.theme);
@@ -381,7 +381,7 @@ impl<'a> Checkboxes<'a> {
         let mut page = 0;
         let mut capacity = self.items.len();
         if self.paged {
-            capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
+            capacity = (term.size().1 as usize) / self.lines_per_item - self.offset;
         }
         let pages = (self.items.len() / capacity) + 1;
         let mut render = TermThemeRenderer::new(term, self.theme);
@@ -632,7 +632,7 @@ impl<'a> FuzzySelect<'a> {
         let mut capacity = self.items.len();
         let mut search_term = String::new();
         if self.paged {
-            capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
+            capacity = (term.size().1 as usize) / self.lines_per_item - self.offset;
         }
         if self.show_match {
             capacity -= 1;
@@ -663,7 +663,7 @@ impl<'a> FuzzySelect<'a> {
 
             capacity = filtered_list.len();
             if self.paged {
-                capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
+                capacity = (term.size().1 as usize) / self.lines_per_item - self.offset;
             }
             if self.show_match {
                 term.write_line(&search_term)?;
@@ -831,7 +831,7 @@ impl<'a> OrderList<'a> {
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
         let mut page = 0;
         let capacity = if self.paged {
-            term.size().0 as usize - 1
+            term.size().1 as usize - 1
         } else {
             self.items.len()
         };
