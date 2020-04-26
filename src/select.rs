@@ -200,6 +200,7 @@ impl<'a> Select<'a> {
                     },
                 )?;
             }
+            term.flush()?;
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
                     if sel == !0 {
@@ -212,6 +213,7 @@ impl<'a> Select<'a> {
                     if allow_quit {
                         if self.clear {
                             term.clear_last_lines(self.items.len())?;
+                            term.flush()?;
                         }
                         return Ok(None);
                     }
@@ -239,7 +241,7 @@ impl<'a> Select<'a> {
                         if page == pages - 1 {
                             page = 0;
                         } else {
-                            page -= 1;
+                            page += 1;
                         }
                         sel = page * capacity;
                     }
@@ -252,6 +254,7 @@ impl<'a> Select<'a> {
                     if let Some(ref prompt) = self.prompt {
                         render.single_prompt_selection(prompt, &self.items[sel])?;
                     }
+                    term.flush()?;
                     return Ok(Some(sel));
                 }
                 _ => {}
@@ -415,6 +418,7 @@ impl<'a> Checkboxes<'a> {
                     },
                 )?;
             }
+            term.flush()?;
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
                     if sel == !0 {
@@ -461,13 +465,14 @@ impl<'a> Checkboxes<'a> {
                     if let Some(ref prompt) = self.prompt {
                         render.multi_prompt_selection(prompt, &[][..])?;
                     }
-                    return Ok(self
-                        .defaults
-                        .clone()
-                        .into_iter()
-                        .enumerate()
-                        .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
-                        .collect());
+                    term.flush()?;
+                    return Ok(
+                        self.defaults.clone()
+                            .into_iter()
+                            .enumerate()
+                            .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
+                            .collect()
+                    );
                 }
                 Key::Enter => {
                     if self.clear {
@@ -487,6 +492,7 @@ impl<'a> Checkboxes<'a> {
                             .collect();
                         render.multi_prompt_selection(prompt, &selections[..])?;
                     }
+                    term.flush()?;
                     return Ok(checked
                         .into_iter()
                         .enumerate()
@@ -858,6 +864,7 @@ impl<'a> OrderList<'a> {
                     },
                 )?;
             }
+            term.flush()?;
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
                     let old_sel = sel;
@@ -945,6 +952,7 @@ impl<'a> OrderList<'a> {
                             .collect();
                         render.multi_prompt_selection(prompt, &list[..])?;
                     }
+                    term.flush()?;
                     return Ok(order);
                 }
                 _ => {}

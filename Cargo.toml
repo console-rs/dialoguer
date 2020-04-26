@@ -1,16 +1,17 @@
 [package]
 name = "dialoguer"
 description = "A command line prompting library."
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Armin Ronacher <armin.ronacher@active-4.com>"]
 keywords = ["cli", "menu", "prompt"]
 license = "MIT"
 homepage = "https://github.com/mitsuhiko/dialoguer"
+repository = "https://github.com/mitsuhiko/dialoguer"
 documentation = "https://docs.rs/dialoguer"
 readme = "README.md"
 
 [dependencies]
-console = ">=0.9.1, <1.0.0"
+console = "0.10"
 lazy_static = "1"
 tempfile = "3"
 chrono = "^0.4"
