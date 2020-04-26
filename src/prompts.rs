@@ -134,6 +134,7 @@ impl<'a> Confirmation<'a> {
                 None
             },
         )?;
+        term.flush()?;
         loop {
             let input = term.read_char()?;
             let rv = match input {
@@ -146,6 +147,7 @@ impl<'a> Confirmation<'a> {
             };
             term.clear_line()?;
             render.confirmation_prompt_selection(&self.text, rv)?;
+            term.flush()?;
             return Ok(rv);
         }
     }
@@ -259,6 +261,7 @@ where
                     None
                 },
             )?;
+            term.flush()?;
             let input = if let Some(initial_text) = self.initial_text.as_ref() {
                 term.read_line_initial_text(initial_text)?
             } else {
@@ -266,16 +269,16 @@ where
             };
             render.add_line();
             term.clear_line()?;
+            render.clear()?;
             if input.is_empty() {
-                render.clear()?;
                 if let Some(ref default) = self.default {
                     render.single_prompt_selection(&self.prompt, &default.to_string())?;
+                    term.flush()?;
                     return Ok(default.clone());
                 } else if !self.permit_empty {
                     continue;
                 }
             }
-            render.clear()?;
             if let Some(ref validator) = self.validator {
                 if let Some(err) = validator(&input) {
                     render.error(&err)?;
@@ -285,6 +288,7 @@ where
             match input.parse::<T>() {
                 Ok(value) => {
                     render.single_prompt_selection(&self.prompt, &input)?;
+                    term.flush()?;
                     return Ok(value);
                 }
                 Err(err) => {
@@ -361,12 +365,14 @@ impl<'a> PasswordInput<'a> {
                 if password == pw2 {
                     render.clear()?;
                     render.password_prompt_selection(&self.prompt)?;
+                    term.flush()?;
                     return Ok(password);
                 }
                 render.error(err)?;
             } else {
                 render.clear()?;
                 render.password_prompt_selection(&self.prompt)?;
+                term.flush()?;
                 return Ok(password);
             }
         }
@@ -375,6 +381,7 @@ impl<'a> PasswordInput<'a> {
     fn prompt_password(&self, render: &mut TermThemeRenderer, prompt: &str) -> io::Result<String> {
         loop {
             render.password_prompt(prompt)?;
+            render.term().flush()?;
             let input = render.term().read_secure_line()?;
             render.add_line();
             if !input.is_empty() || self.allow_empty_password {
