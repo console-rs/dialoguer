@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1
+
+### Bugfixes
+
+* `theme::ColorfulTheme` default styles are for stderr
+
 ## 0.6.0
 
 ### Breaking
