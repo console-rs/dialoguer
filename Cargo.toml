@@ -13,6 +13,3 @@ readme = "README.md"
 console = ">=0.9.1, <1.0.0"
 lazy_static = "1"
 tempfile = "3"
-
-[badges]
-travis-ci = { repository = "mitsuhiko/dialoguer", branch = "master" }
