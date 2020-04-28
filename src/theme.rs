@@ -139,6 +139,7 @@ pub trait Theme {
 pub struct SimpleTheme;
 
 impl Theme for SimpleTheme {}
+
 /// The default theme, with a custom prompt character in place of `:`
 pub struct CustomPromptCharacterTheme {
     prompt_character: char,
@@ -516,11 +517,4 @@ impl<'a> TermThemeRenderer<'a> {
         self.height = 0;
         Ok(())
     }
-}
-
-/// Returns the default theme.
-///
-/// (This returns the simple theme)
-pub(crate) fn get_default_theme() -> &'static dyn Theme {
-    &SimpleTheme
 }

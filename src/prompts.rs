@@ -3,7 +3,7 @@ use std::io;
 use std::str::FromStr;
 
 use console::Term;
-use theme::{get_default_theme, TermThemeRenderer, Theme};
+use theme::{SimpleTheme, TermThemeRenderer, Theme};
 use validate::Validator;
 
 /// Renders a simple confirmation prompt.
@@ -22,7 +22,7 @@ use validate::Validator;
 /// # Ok(()) } fn main() { test().unwrap(); }
 /// ```
 pub struct Confirmation<'a> {
-    text: String,
+    prompt: String,
     default: bool,
     show_default: bool,
     theme: &'a dyn Theme,
@@ -49,6 +49,7 @@ pub struct Input<'a, T> {
     permit_empty: bool,
     validator: Option<Box<dyn Fn(&str) -> Option<String>>>,
 }
+
 /// Renders a password input prompt.
 ///
 /// ## Example usage
@@ -79,13 +80,13 @@ impl<'a> Default for Confirmation<'a> {
 impl<'a> Confirmation<'a> {
     /// Creates the prompt with a specific text.
     pub fn new() -> Confirmation<'static> {
-        Confirmation::with_theme(get_default_theme())
+        Confirmation::with_theme(&SimpleTheme)
     }
 
     /// Sets a theme other than the default one.
     pub fn with_theme(theme: &'a dyn Theme) -> Confirmation<'a> {
         Confirmation {
-            text: "".into(),
+            prompt: "".into(),
             default: true,
             show_default: true,
             theme,
@@ -93,9 +94,16 @@ impl<'a> Confirmation<'a> {
     }
 
     /// Sets the confirmation text.
-    pub fn with_text(&mut self, text: &str) -> &mut Confirmation<'a> {
-        self.text = text.into();
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Confirmation<'a> {
+        self.prompt = prompt.into();
         self
+    }
+
+    /// Sets the confirmation text.
+    #[deprecated(note = "Use with_prompt() instead", since = "0.6.0")]
+    #[inline]
+    pub fn with_text(&mut self, text: &str) -> &mut Confirmation<'a> {
+        self.with_prompt(text)
     }
 
     /// Overrides the default.
@@ -127,14 +135,17 @@ impl<'a> Confirmation<'a> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         render.confirmation_prompt(
-            &self.text,
+            &self.prompt,
             if self.show_default {
                 Some(self.default)
             } else {
                 None
             },
         )?;
+
+        term.hide_cursor()?;
         term.flush()?;
+
         loop {
             let input = term.read_char()?;
             let rv = match input {
@@ -145,9 +156,12 @@ impl<'a> Confirmation<'a> {
                     continue;
                 }
             };
+
             term.clear_line()?;
-            render.confirmation_prompt_selection(&self.text, rv)?;
+            render.confirmation_prompt_selection(&self.prompt, rv)?;
+            term.show_cursor()?;
             term.flush()?;
+
             return Ok(rv);
         }
     }
@@ -170,7 +184,7 @@ where
 {
     /// Creates a new input prompt.
     pub fn new() -> Input<'static, T> {
-        Input::with_theme(get_default_theme())
+        Input::with_theme(&SimpleTheme)
     }
 
     /// Creates an input with a specific theme.
@@ -187,13 +201,13 @@ where
     }
 
     /// Sets the input prompt.
-    pub fn with_prompt(&mut self, prompt: &str) -> &mut Input<'a, T> {
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Input<'a, T> {
         self.prompt = prompt.into();
         self
     }
 
     /// Sets whether the default can be editable.
-    pub fn with_initial_text(&mut self, val: &str) -> &mut Input<'a, T> {
+    pub fn with_initial_text<S: Into<String>>(&mut self, val: S) -> &mut Input<'a, T> {
         self.initial_text = Some(val.into());
         self
     }
@@ -207,6 +221,7 @@ where
         self.default = Some(value);
         self
     }
+
     /// Enables or disables an empty input
     ///
     /// By default, if there is no default value set for the input, the user must input a non-empty string.
@@ -214,6 +229,7 @@ where
         self.permit_empty = val;
         self
     }
+
     /// Disables or enables the default value display.
     ///
     /// The default is to append `[default]` to the prompt to tell the
@@ -243,17 +259,20 @@ where
     /// ```
     pub fn validate_with<V: Validator + 'static>(&mut self, validator: V) -> &mut Input<'a, T> {
         let old_validator_func = self.validator.take();
+
         self.validator = Some(Box::new(move |value: &str| -> Option<String> {
             if let Some(old) = old_validator_func.as_ref() {
                 if let Some(err) = old(value) {
                     return Some(err);
                 }
             }
+
             match validator.validate(value) {
                 Ok(()) => None,
                 Err(err) => Some(err.to_string()),
             }
         }));
+
         self
     }
 
@@ -268,8 +287,10 @@ where
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
+
         loop {
             let default_string = self.default.as_ref().map(|x| x.to_string());
+
             render.input_prompt(
                 &self.prompt,
                 if self.show_default {
@@ -279,14 +300,17 @@ where
                 },
             )?;
             term.flush()?;
+
             let input = if let Some(initial_text) = self.initial_text.as_ref() {
                 term.read_line_initial_text(initial_text)?
             } else {
                 term.read_line()?
             };
+
             render.add_line();
             term.clear_line()?;
             render.clear()?;
+
             if input.is_empty() {
                 if let Some(ref default) = self.default {
                     render.single_prompt_selection(&self.prompt, &default.to_string())?;
@@ -296,6 +320,7 @@ where
                     continue;
                 }
             }
+
             match input.parse::<T>() {
                 Ok(value) => {
                     if let Some(ref validator) = self.validator {
@@ -304,8 +329,10 @@ where
                             continue;
                         }
                     }
+
                     render.single_prompt_selection(&self.prompt, &input)?;
                     term.flush()?;
+
                     return Ok(value);
                 }
                 Err(err) => {
@@ -326,7 +353,7 @@ impl<'a> Default for PasswordInput<'a> {
 impl<'a> PasswordInput<'a> {
     /// Creates a new input prompt.
     pub fn new() -> PasswordInput<'static> {
-        PasswordInput::with_theme(get_default_theme())
+        PasswordInput::with_theme(&SimpleTheme)
     }
 
     /// Creates the password input with a specific theme.
@@ -340,17 +367,17 @@ impl<'a> PasswordInput<'a> {
     }
 
     /// Sets the prompt.
-    pub fn with_prompt(&mut self, prompt: &str) -> &mut PasswordInput<'a> {
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut PasswordInput<'a> {
         self.prompt = prompt.into();
         self
     }
 
     /// Enables confirmation prompting.
-    pub fn with_confirmation(
-        &mut self,
-        prompt: &str,
-        mismatch_err: &str,
-    ) -> &mut PasswordInput<'a> {
+    pub fn with_confirmation<A, B>(&mut self, prompt: A, mismatch_err: B) -> &mut PasswordInput<'a>
+    where
+        A: Into<String>,
+        B: Into<String>,
+    {
         self.confirmation_prompt = Some((prompt.into(), mismatch_err.into()));
         self
     }
@@ -375,21 +402,26 @@ impl<'a> PasswordInput<'a> {
     pub fn interact_on(&self, term: &Term) -> io::Result<String> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         render.set_prompts_reset_height(false);
+
         loop {
             let password = self.prompt_password(&mut render, &self.prompt)?;
+
             if let Some((ref prompt, ref err)) = self.confirmation_prompt {
                 let pw2 = self.prompt_password(&mut render, &prompt)?;
+
                 if password == pw2 {
                     render.clear()?;
                     render.password_prompt_selection(&self.prompt)?;
                     term.flush()?;
                     return Ok(password);
                 }
+
                 render.error(err)?;
             } else {
                 render.clear()?;
                 render.password_prompt_selection(&self.prompt)?;
                 term.flush()?;
+
                 return Ok(password);
             }
         }
@@ -399,8 +431,11 @@ impl<'a> PasswordInput<'a> {
         loop {
             render.password_prompt(prompt)?;
             render.term().flush()?;
+
             let input = render.term().read_secure_line()?;
+
             render.add_line();
+
             if !input.is_empty() || self.allow_empty_password {
                 return Ok(input);
             }

@@ -4,7 +4,7 @@ use dialoguer::{Confirmation, Input};
 
 fn main() {
     if Confirmation::new()
-        .with_text("Do you want to continue?")
+        .with_prompt("Do you want to continue?")
         .interact()
         .unwrap()
     {

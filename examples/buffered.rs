@@ -18,7 +18,7 @@ fn main() {
 
     println!("All the following controls are run in a buffered terminal");
     Confirmation::with_theme(&theme)
-        .with_text("Do you want to continue?")
+        .with_prompt("Do you want to continue?")
         .interact_on(&term)
         .unwrap();
 

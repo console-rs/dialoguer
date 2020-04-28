@@ -27,7 +27,7 @@ fn init_config() -> Result<Option<Config>, Box<dyn Error>> {
     println!("Welcome to the setup wizard");
 
     if !Confirmation::with_theme(&theme)
-        .with_text("Do you want to continue?")
+        .with_prompt("Do you want to continue?")
         .interact()?
     {
         return Ok(None);
