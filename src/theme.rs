@@ -1,6 +1,5 @@
 //! Customizes the rendering of the elements.
-use std::fmt;
-use std::io;
+use std::{fmt, io};
 
 use console::{Style, Term};
 

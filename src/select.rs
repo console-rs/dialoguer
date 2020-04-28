@@ -1,8 +1,6 @@
-use std::io;
-use std::iter::repeat;
-use std::ops::Rem;
+use std::{io, iter::repeat, ops::Rem};
 
-use theme::{SelectionStyle, SimpleTheme, TermThemeRenderer, Theme};
+use crate::theme::{SelectionStyle, SimpleTheme, TermThemeRenderer, Theme};
 
 use console::{Key, Term};
 

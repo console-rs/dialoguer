@@ -1,10 +1,15 @@
-use std::fmt::{Debug, Display};
-use std::io;
-use std::str::FromStr;
+use std::{
+    fmt::{Debug, Display},
+    io,
+    str::FromStr,
+};
+
+use crate::{
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    validate::Validator,
+};
 
 use console::Term;
-use theme::{SimpleTheme, TermThemeRenderer, Theme};
-use validate::Validator;
 
 /// Renders a simple confirmation prompt.
 ///
