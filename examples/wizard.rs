@@ -5,7 +5,7 @@ use std::error::Error;
 use std::net::IpAddr;
 
 use console::Style;
-use dialoguer::{theme::ColorfulTheme, Confirmation, Input, Select};
+use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
 
 #[derive(Debug)]
 struct Config {
@@ -23,7 +23,7 @@ fn init_config() -> Result<Option<Config>, Box<dyn Error>> {
     };
     println!("Welcome to the setup wizard");
 
-    if !Confirmation::with_theme(&theme)
+    if !Confirm::with_theme(&theme)
         .with_prompt("Do you want to continue?")
         .interact()?
     {

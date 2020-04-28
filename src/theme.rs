@@ -17,8 +17,8 @@ pub trait Theme {
         write!(f, "error: {}", err)
     }
 
-    /// Formats a confirmation prompt.
-    fn format_confirmation_prompt(
+    /// Formats a confirm prompt.
+    fn format_confirm_prompt(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
@@ -35,8 +35,8 @@ pub trait Theme {
         Ok(())
     }
 
-    /// Formats a confirmation prompt after selection.
-    fn format_confirmation_prompt_selection(
+    /// Formats a confirm prompt after selection.
+    fn format_confirm_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
@@ -107,9 +107,9 @@ pub trait Theme {
         self.format_input_prompt_selection(f, prompt, sel)
     }
 
-    /// Formats a multiselect prompt.
+    /// Formats a multi select prompt.
     #[inline]
-    fn format_multiselect_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+    fn format_multi_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_prompt(f, prompt)
     }
 
@@ -119,8 +119,8 @@ pub trait Theme {
         self.format_prompt(f, prompt)
     }
 
-    /// Formats a multiselect prompt after selection.
-    fn format_multiselect_prompt_selection(
+    /// Formats a multi_select prompt after selection.
+    fn format_multi_select_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
@@ -141,7 +141,7 @@ pub trait Theme {
         prompt: &str,
         selections: &[&str],
     ) -> fmt::Result {
-        self.format_multiselect_prompt_selection(f, prompt, selections)
+        self.format_multi_select_prompt_selection(f, prompt, selections)
     }
 
     /// Formats a select prompt item.
@@ -154,8 +154,8 @@ pub trait Theme {
         write!(f, "{} {}", if active { ">" } else { " " }, text)
     }
 
-    /// Formats a multiselect prompt item.
-    fn format_multiselect_prompt_item(
+    /// Formats a multi select prompt item.
+    fn format_multi_select_prompt_item(
         &self,
         f: &mut dyn fmt::Write,
         text: &str,
@@ -255,8 +255,8 @@ impl Theme for CustomPromptCharacterTheme {
         write!(f, "{}{} {}", prompt, self.prompt_character, sel)
     }
 
-    /// Formats a multiselect prompt after selection.
-    fn format_multiselect_prompt_selection(
+    /// Formats a multi select prompt after selection.
+    fn format_multi_select_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
@@ -300,9 +300,9 @@ pub struct ColorfulTheme {
     pub active_item_prefix: StyledObject<String>,
     /// Inctive item in select prefix value and style
     pub inactive_item_prefix: StyledObject<String>,
-    /// Checked item in multiselect prefix value and style
+    /// Checked item in multi select prefix value and style
     pub checked_item_prefix: StyledObject<String>,
-    /// Unchecked item in multiselect prefix value and style
+    /// Unchecked item in multi select prefix value and style
     pub unchecked_item_prefix: StyledObject<String>,
     /// Picked item in sort prefix value and style
     pub picked_item_prefix: StyledObject<String>,
@@ -387,8 +387,8 @@ impl Theme for ColorfulTheme {
         }
     }
 
-    /// Formats a confirmation prompt.
-    fn format_confirmation_prompt(
+    /// Formats a confirm prompt.
+    fn format_confirm_prompt(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
@@ -422,8 +422,8 @@ impl Theme for ColorfulTheme {
         }
     }
 
-    /// Formats a confirmation prompt after selection.
-    fn format_confirmation_prompt_selection(
+    /// Formats a confirm prompt after selection.
+    fn format_confirm_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
@@ -480,8 +480,8 @@ impl Theme for ColorfulTheme {
         self.format_input_prompt_selection(f, prompt, "********")
     }
 
-    /// Formats a multiselect prompt after selection.
-    fn format_multiselect_prompt_selection(
+    /// Formats a multi select prompt after selection.
+    fn format_multi_select_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
@@ -531,8 +531,8 @@ impl Theme for ColorfulTheme {
         write!(f, "{} {}", details.0, details.1)
     }
 
-    /// Formats a multiselect prompt item.
-    fn format_multiselect_prompt_item(
+    /// Formats a multi select prompt item.
+    fn format_multi_select_prompt_item(
         &self,
         f: &mut dyn fmt::Write,
         text: &str,
@@ -662,16 +662,13 @@ impl<'a> TermThemeRenderer<'a> {
         self.write_formatted_line(|this, buf| this.theme.format_error(buf, err))
     }
 
-    pub fn confirmation_prompt(&mut self, prompt: &str, default: Option<bool>) -> io::Result<()> {
-        self.write_formatted_str(|this, buf| {
-            this.theme.format_confirmation_prompt(buf, prompt, default)
-        })
+    pub fn confirm_prompt(&mut self, prompt: &str, default: Option<bool>) -> io::Result<()> {
+        self.write_formatted_str(|this, buf| this.theme.format_confirm_prompt(buf, prompt, default))
     }
 
-    pub fn confirmation_prompt_selection(&mut self, prompt: &str, sel: bool) -> io::Result<()> {
+    pub fn confirm_prompt_selection(&mut self, prompt: &str, sel: bool) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
-            this.theme
-                .format_confirmation_prompt_selection(buf, prompt, sel)
+            this.theme.format_confirm_prompt_selection(buf, prompt, sel)
         })
     }
 
@@ -714,18 +711,18 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
-    pub fn multiselect_prompt(&mut self, prompt: &str) -> io::Result<()> {
-        self.write_formatted_prompt(|this, buf| this.theme.format_multiselect_prompt(buf, prompt))
+    pub fn multi_select_prompt(&mut self, prompt: &str) -> io::Result<()> {
+        self.write_formatted_prompt(|this, buf| this.theme.format_multi_select_prompt(buf, prompt))
     }
 
-    pub fn multiselect_prompt_selection(&mut self, prompt: &str, sel: &[&str]) -> io::Result<()> {
+    pub fn multi_select_prompt_selection(&mut self, prompt: &str, sel: &[&str]) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
             this.theme
-                .format_multiselect_prompt_selection(buf, prompt, sel)
+                .format_multi_select_prompt_selection(buf, prompt, sel)
         })
     }
 
-    pub fn multiselect_prompt_item(
+    pub fn multi_select_prompt_item(
         &mut self,
         text: &str,
         checked: bool,
@@ -733,7 +730,7 @@ impl<'a> TermThemeRenderer<'a> {
     ) -> io::Result<()> {
         self.write_formatted_line(|this, buf| {
             this.theme
-                .format_multiselect_prompt_item(buf, text, checked, active)
+                .format_multi_select_prompt_item(buf, text, checked, active)
         })
     }
 

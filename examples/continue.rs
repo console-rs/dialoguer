@@ -1,9 +1,9 @@
 extern crate dialoguer;
 
-use dialoguer::{Confirmation, Input};
+use dialoguer::{Confirm, Input};
 
 fn main() {
-    if Confirmation::new()
+    if Confirm::new()
         .with_prompt("Do you want to continue?")
         .interact()
         .unwrap()

@@ -1,23 +1,18 @@
 extern crate dialoguer;
 
-use dialoguer::{theme::ColorfulTheme, Checkboxes};
+use dialoguer::{theme::ColorfulTheme, MultiSelect};
 
 fn main() {
-    let checkboxes = &[
+    let multiselected = &[
         "Ice Cream",
         "Vanilla Cupcake",
         "Chocolate Muffin",
         "A Pile of sweet, sweet mustard",
     ];
-    let defaults = &[
-        false,
-        false,
-        true,
-        false,
-    ];
-    let selections = Checkboxes::with_theme(&ColorfulTheme::default())
+    let defaults = &[false, false, true, false];
+    let selections = MultiSelect::with_theme(&ColorfulTheme::default())
         .with_prompt("Pick your food")
-        .items(&checkboxes[..])
+        .items(&multiselected[..])
         .defaults(&defaults[..])
         .interact()
         .unwrap();
@@ -27,7 +22,7 @@ fn main() {
     } else {
         println!("You selected these things:");
         for selection in selections {
-            println!("  {}", checkboxes[selection]);
+            println!("  {}", multiselected[selection]);
         }
     }
 }

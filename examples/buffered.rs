@@ -2,9 +2,7 @@ extern crate console;
 extern crate dialoguer;
 
 use console::Term;
-use dialoguer::{
-    theme::ColorfulTheme, Checkboxes, Confirmation, Input, OrderList, PasswordInput, Select,
-};
+use dialoguer::{theme::ColorfulTheme, Confirm, Input, MultiSelect, Password, Select, Sort};
 
 fn main() {
     let items = &[
@@ -17,7 +15,7 @@ fn main() {
     let theme = ColorfulTheme::default();
 
     println!("All the following controls are run in a buffered terminal");
-    Confirmation::with_theme(&theme)
+    Confirm::with_theme(&theme)
         .with_prompt("Do you want to continue?")
         .interact_on(&term)
         .unwrap();
@@ -27,7 +25,7 @@ fn main() {
         .interact_on(&term)
         .unwrap();
 
-    PasswordInput::with_theme(&theme)
+    Password::with_theme(&theme)
         .with_prompt("Your password")
         .with_confirmation("Confirm", "Passwords do not match")
         .interact_on(&term)
@@ -39,13 +37,13 @@ fn main() {
         .interact_on(&term)
         .unwrap();
 
-    Checkboxes::with_theme(&theme)
+    MultiSelect::with_theme(&theme)
         .with_prompt("Pick some items")
         .items(items)
         .interact_on(&term)
         .unwrap();
 
-    OrderList::with_theme(&theme)
+    Sort::with_theme(&theme)
         .with_prompt("Order these items")
         .items(items)
         .interact_on(&term)
