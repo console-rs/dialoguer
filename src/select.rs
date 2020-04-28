@@ -1,6 +1,6 @@
 use std::{io, iter::repeat, ops::Rem};
 
-use crate::theme::{SelectionStyle, SimpleTheme, TermThemeRenderer, Theme};
+use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::{Key, Term};
 
@@ -144,7 +144,7 @@ impl<'a> Select<'a> {
         let mut sel = self.default;
 
         if let Some(ref prompt) = self.prompt {
-            render.prompt(prompt)?;
+            render.select_prompt(prompt)?;
         }
 
         let mut size_vec = Vec::new();
@@ -167,14 +167,7 @@ impl<'a> Select<'a> {
                 .skip(page * capacity)
                 .take(capacity)
             {
-                render.selection(
-                    item,
-                    if sel == idx {
-                        SelectionStyle::MenuSelected
-                    } else {
-                        SelectionStyle::MenuUnselected
-                    },
-                )?;
+                render.select_prompt_item(item, sel == idx)?;
             }
 
             term.hide_cursor()?;
@@ -236,7 +229,7 @@ impl<'a> Select<'a> {
                     }
 
                     if let Some(ref prompt) = self.prompt {
-                        render.single_prompt_selection(prompt, &self.items[sel])?;
+                        render.select_prompt_selection(prompt, &self.items[sel])?;
                     }
 
                     term.show_cursor()?;
@@ -369,7 +362,7 @@ impl<'a> Checkboxes<'a> {
         let mut sel = 0;
 
         if let Some(ref prompt) = self.prompt {
-            render.prompt(prompt)?;
+            render.multiselect_prompt(prompt)?;
         }
 
         let mut size_vec = Vec::new();
@@ -394,15 +387,7 @@ impl<'a> Checkboxes<'a> {
                 .skip(page * capacity)
                 .take(capacity)
             {
-                render.selection(
-                    item,
-                    match (checked[idx], sel == idx) {
-                        (true, true) => SelectionStyle::CheckboxCheckedSelected,
-                        (true, false) => SelectionStyle::CheckboxCheckedUnselected,
-                        (false, true) => SelectionStyle::CheckboxUncheckedSelected,
-                        (false, false) => SelectionStyle::CheckboxUncheckedUnselected,
-                    },
-                )?;
+                render.multiselect_prompt_item(item, checked[idx], sel == idx)?;
             }
 
             term.hide_cursor()?;
@@ -455,7 +440,7 @@ impl<'a> Checkboxes<'a> {
                     }
 
                     if let Some(ref prompt) = self.prompt {
-                        render.multi_prompt_selection(prompt, &[][..])?;
+                        render.multiselect_prompt_selection(prompt, &[][..])?;
                     }
 
                     term.show_cursor()?;
@@ -487,7 +472,7 @@ impl<'a> Checkboxes<'a> {
                             })
                             .collect();
 
-                        render.multi_prompt_selection(prompt, &selections[..])?;
+                        render.multiselect_prompt_selection(prompt, &selections[..])?;
                     }
 
                     term.show_cursor()?;
@@ -594,7 +579,7 @@ impl<'a> OrderList<'a> {
         let mut sel = 0;
 
         if let Some(ref prompt) = self.prompt {
-            render.prompt(prompt)?;
+            render.sort_prompt(prompt)?;
         }
 
         let mut size_vec = Vec::new();
@@ -614,14 +599,7 @@ impl<'a> OrderList<'a> {
                 .skip(page * capacity)
                 .take(capacity)
             {
-                render.selection(
-                    &self.items[*item],
-                    match (sel == idx, checked) {
-                        (true, true) => SelectionStyle::CheckboxCheckedSelected,
-                        (true, false) => SelectionStyle::CheckboxUncheckedSelected,
-                        (false, _) => SelectionStyle::CheckboxUncheckedUnselected,
-                    },
-                )?;
+                render.sort_prompt_item(&self.items[*item], checked, sel == idx)?;
             }
 
             term.hide_cursor()?;
@@ -726,7 +704,7 @@ impl<'a> OrderList<'a> {
                             .enumerate()
                             .map(|(_, item)| self.items[*item].as_str())
                             .collect();
-                        render.multi_prompt_selection(prompt, &list[..])?;
+                        render.sort_prompt_selection(prompt, &list[..])?;
                     }
 
                     term.show_cursor()?;

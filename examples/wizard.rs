@@ -19,9 +19,6 @@ struct Config {
 fn init_config() -> Result<Option<Config>, Box<dyn Error>> {
     let theme = ColorfulTheme {
         values_style: Style::new().yellow().dim(),
-        indicator_style: Style::new().yellow().bold(),
-        yes_style: Style::new().yellow().dim(),
-        no_style: Style::new().yellow().dim(),
         ..ColorfulTheme::default()
     };
     println!("Welcome to the setup wizard");

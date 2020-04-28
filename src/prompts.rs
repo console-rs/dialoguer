@@ -120,8 +120,8 @@ impl<'a> Confirmation<'a> {
     /// Disables or enables the default value display.
     ///
     /// The default is to append `[y/n]` to the prompt to tell the
-    /// user which keys to press.  This also renders the default choice
-    /// in uppercase.  The default is selected on enter.
+    /// user which keys to press. This also renders the default choice
+    /// in uppercase. The default is selected on enter.
     pub fn show_default(&mut self, val: bool) -> &mut Confirmation<'a> {
         self.show_default = val;
         self
@@ -318,7 +318,7 @@ where
 
             if input.is_empty() {
                 if let Some(ref default) = self.default {
-                    render.single_prompt_selection(&self.prompt, &default.to_string())?;
+                    render.input_prompt_selection(&self.prompt, &default.to_string())?;
                     term.flush()?;
                     return Ok(default.clone());
                 } else if !self.permit_empty {
@@ -335,7 +335,7 @@ where
                         }
                     }
 
-                    render.single_prompt_selection(&self.prompt, &input)?;
+                    render.input_prompt_selection(&self.prompt, &input)?;
                     term.flush()?;
 
                     return Ok(value);

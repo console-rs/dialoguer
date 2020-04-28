@@ -1,47 +1,18 @@
 //! Customizes the rendering of the elements.
 use std::{fmt, io};
 
-use console::{Style, Term};
-
-/// Rendering style for a selected item
-#[derive(Debug, Clone, Copy)]
-pub enum SelectionStyle {
-    /// Renders an unchecked but selected checkbox
-    CheckboxUncheckedSelected,
-    /// Renders an unchecked and unselected checkbox
-    CheckboxUncheckedUnselected,
-    /// Renders a checked but selected checkbox
-    CheckboxCheckedSelected,
-    /// Renders a checked and unselected checkbox
-    CheckboxCheckedUnselected,
-    /// Renders a selected menu item
-    MenuSelected,
-    /// Renders un unselected menu item
-    MenuUnselected,
-}
+use console::{style, Style, StyledObject, Term};
 
 /// Implements a theme for dialoguer.
 pub trait Theme {
-    /// Given a prompt this formats out what the prompt should look like (multiline).
+    /// Formats a prompt.
+    #[inline]
     fn format_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         write!(f, "{}:", prompt)
     }
 
-    /// Given a prompt this formats out what the prompt should look like (singleline).
-    fn format_singleline_prompt(
-        &self,
-        f: &mut dyn fmt::Write,
-        prompt: &str,
-        default: Option<&str>,
-    ) -> fmt::Result {
-        match default {
-            Some(default) if prompt.is_empty() => write!(f, "[{}]: ", default),
-            Some(default) => write!(f, "{} [{}]: ", prompt, default),
-            None => write!(f, "{}: ", prompt),
-        }
-    }
-
     /// Formats out an error.
+    #[inline]
     fn format_error(&self, f: &mut dyn fmt::Write, err: &str) -> fmt::Result {
         write!(f, "error: {}", err)
     }
@@ -64,7 +35,7 @@ pub trait Theme {
         Ok(())
     }
 
-    /// Formats a confirmation prompt.
+    /// Formats a confirmation prompt after selection.
     fn format_confirmation_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
@@ -78,8 +49,23 @@ pub trait Theme {
         }
     }
 
-    /// Renders a prompt and a single selection made.
-    fn format_single_prompt_selection(
+    /// Formats an input prompt.
+    fn format_input_prompt(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        default: Option<&str>,
+    ) -> fmt::Result {
+        match default {
+            Some(default) if prompt.is_empty() => write!(f, "[{}]: ", default),
+            Some(default) => write!(f, "{} [{}]: ", prompt, default),
+            None => write!(f, "{}: ", prompt),
+        }
+    }
+
+    /// Formats an input prompt after selection.
+    #[inline]
+    fn format_input_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
@@ -88,8 +74,53 @@ pub trait Theme {
         write!(f, "{}: {}", prompt, sel)
     }
 
-    /// Renders a prompt and multiple selections,
-    fn format_multi_prompt_selection(
+    /// Formats a password prompt.
+    #[inline]
+    fn format_password_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        self.format_input_prompt(f, prompt, None)
+    }
+
+    /// Formats a password prompt after selection.
+    #[inline]
+    fn format_password_prompt_selection(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+    ) -> fmt::Result {
+        self.format_input_prompt_selection(f, prompt, "[hidden]")
+    }
+
+    /// Formats a select prompt.
+    #[inline]
+    fn format_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        self.format_prompt(f, prompt)
+    }
+
+    /// Formats a select prompt after selection.
+    #[inline]
+    fn format_select_prompt_selection(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        sel: &str,
+    ) -> fmt::Result {
+        self.format_input_prompt_selection(f, prompt, sel)
+    }
+
+    /// Formats a multiselect prompt.
+    #[inline]
+    fn format_multiselect_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        self.format_prompt(f, prompt)
+    }
+
+    /// Formats a sort prompt.
+    #[inline]
+    fn format_sort_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        self.format_prompt(f, prompt)
+    }
+
+    /// Formats a multiselect prompt after selection.
+    fn format_multiselect_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
@@ -102,32 +133,63 @@ pub trait Theme {
         Ok(())
     }
 
-    /// Renders a prompt and multiple selections,
-    fn format_password_prompt_selection(
+    /// Formats a sort prompt after selection.
+    #[inline]
+    fn format_sort_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
+        selections: &[&str],
     ) -> fmt::Result {
-        self.format_single_prompt_selection(f, prompt, "[hidden]")
+        self.format_multiselect_prompt_selection(f, prompt, selections)
     }
 
-    /// Formats a selection.
-    fn format_selection(
+    /// Formats a select prompt item.
+    fn format_select_prompt_item(
         &self,
         f: &mut dyn fmt::Write,
         text: &str,
-        style: SelectionStyle,
+        active: bool,
+    ) -> fmt::Result {
+        write!(f, "{} {}", if active { ">" } else { " " }, text)
+    }
+
+    /// Formats a multiselect prompt item.
+    fn format_multiselect_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        checked: bool,
+        active: bool,
     ) -> fmt::Result {
         write!(
             f,
-            "{}{}",
-            match style {
-                SelectionStyle::CheckboxUncheckedSelected => "> [ ] ",
-                SelectionStyle::CheckboxUncheckedUnselected => "  [ ] ",
-                SelectionStyle::CheckboxCheckedSelected => "> [x] ",
-                SelectionStyle::CheckboxCheckedUnselected => "  [x] ",
-                SelectionStyle::MenuSelected => "> ",
-                SelectionStyle::MenuUnselected => "  ",
+            "{} {}",
+            match (checked, active) {
+                (true, true) => "> [x]",
+                (true, false) => "  [x]",
+                (false, true) => "> [ ]",
+                (false, false) => "  [ ]",
+            },
+            text
+        )
+    }
+
+    /// Formats a sort prompt item.
+    fn format_sort_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        picked: bool,
+        active: bool,
+    ) -> fmt::Result {
+        write!(
+            f,
+            "{} {}",
+            match (picked, active) {
+                (true, true) => "> [x]",
+                (false, true) => "> [ ]",
+                (_, false) => "  [ ]",
             },
             text
         )
@@ -143,6 +205,7 @@ impl Theme for SimpleTheme {}
 pub struct CustomPromptCharacterTheme {
     prompt_character: char,
 }
+
 impl CustomPromptCharacterTheme {
     /// Creates a theme, the prompt character for which is customized
     pub fn new(character: char) -> CustomPromptCharacterTheme {
@@ -151,6 +214,7 @@ impl CustomPromptCharacterTheme {
         }
     }
 }
+
 impl Default for CustomPromptCharacterTheme {
     fn default() -> Self {
         CustomPromptCharacterTheme {
@@ -158,14 +222,15 @@ impl Default for CustomPromptCharacterTheme {
         }
     }
 }
+
 impl Theme for CustomPromptCharacterTheme {
-    /// Given a prompt this formats out what the prompt should look like (multiline).
+    /// Formats a prompt.
     fn format_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         write!(f, "{}{}", prompt, self.prompt_character)
     }
 
-    /// Given a prompt this formats out what the prompt should look like (singleline).
-    fn format_singleline_prompt(
+    /// Formats an input prompt.
+    fn format_input_prompt(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
@@ -179,8 +244,9 @@ impl Theme for CustomPromptCharacterTheme {
             None => write!(f, "{}{} ", prompt, self.prompt_character),
         }
     }
-    /// Renders a prompt and a single selection made.
-    fn format_single_prompt_selection(
+
+    /// Formats an input prompt after selection.
+    fn format_input_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
@@ -189,8 +255,8 @@ impl Theme for CustomPromptCharacterTheme {
         write!(f, "{}{} {}", prompt, self.prompt_character, sel)
     }
 
-    /// Renders a prompt and multiple selections,
-    fn format_multi_prompt_selection(
+    /// Formats a multiselect prompt after selection.
+    fn format_multiselect_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
@@ -203,70 +269,125 @@ impl Theme for CustomPromptCharacterTheme {
         Ok(())
     }
 }
+
 /// A colorful theme
 pub struct ColorfulTheme {
-    /// The style for default values in prompts and similar
+    /// The style for default values
     pub defaults_style: Style,
-    /// The style for errors indicators
+    /// The style for prompt
+    pub prompt_style: Style,
+    /// Prompt prefix value and style
+    pub prompt_prefix: StyledObject<String>,
+    /// Prompt suffix value and style
+    pub prompt_suffix: StyledObject<String>,
+    /// Prompt on success prefix value and style
+    pub success_prefix: StyledObject<String>,
+    /// Prompt on success suffix value and style
+    pub success_suffix: StyledObject<String>,
+    /// Error prefix value and style
+    pub error_prefix: StyledObject<String>,
+    /// The style for error message
     pub error_style: Style,
-    /// The style for user interface indicators
-    pub indicator_style: Style,
-    /// The style for inactive elements
-    pub inactive_style: Style,
-    /// The style for active elements
-    pub active_style: Style,
-    /// The style for values indicating "yes"
-    pub yes_style: Style,
-    /// The style for values indicating "no"
-    pub no_style: Style,
-    /// The style for values embedded in prompts
+    /// The style for hints
+    pub hint_style: Style,
+    /// The style for values on prompt success
     pub values_style: Style,
+    /// The style for active items
+    pub active_item_style: Style,
+    /// The style for inactive items
+    pub inactive_item_style: Style,
+    /// Active item in select prefix value and style
+    pub active_item_prefix: StyledObject<String>,
+    /// Inctive item in select prefix value and style
+    pub inactive_item_prefix: StyledObject<String>,
+    /// Checked item in multiselect prefix value and style
+    pub checked_item_prefix: StyledObject<String>,
+    /// Unchecked item in multiselect prefix value and style
+    pub unchecked_item_prefix: StyledObject<String>,
+    /// Picked item in sort prefix value and style
+    pub picked_item_prefix: StyledObject<String>,
+    /// Unpicked item in sort prefix value and style
+    pub unpicked_item_prefix: StyledObject<String>,
 }
 
 impl Default for ColorfulTheme {
     fn default() -> ColorfulTheme {
         ColorfulTheme {
-            defaults_style: Style::new().dim(),
+            defaults_style: Style::new().cyan(),
+            prompt_style: Style::new().bold(),
+            prompt_prefix: style("?".to_string()).yellow(),
+            prompt_suffix: style("›".to_string()).black().bright(),
+            success_prefix: style("✔".to_string()).green(),
+            success_suffix: style("·".to_string()).black().bright(),
+            error_prefix: style("✘".to_string()).red(),
             error_style: Style::new().red(),
-            indicator_style: Style::new().cyan().bold(),
-            inactive_style: Style::new().dim(),
-            active_style: Style::new(),
-            yes_style: Style::new().green(),
-            no_style: Style::new().green(),
-            values_style: Style::new().cyan(),
+            hint_style: Style::new().black().bright(),
+            values_style: Style::new().green(),
+            active_item_style: Style::new().cyan(),
+            inactive_item_style: Style::new(),
+            active_item_prefix: style("❯".to_string()).green(),
+            inactive_item_prefix: style(" ".to_string()),
+            checked_item_prefix: style("✔".to_string()).green(),
+            unchecked_item_prefix: style("✔".to_string()).black(),
+            picked_item_prefix: style("❯".to_string()).green(),
+            unpicked_item_prefix: style(" ".to_string()),
         }
     }
 }
 
 impl Theme for ColorfulTheme {
+    /// Formats a prompt.
     fn format_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
-        write!(f, "{}:", prompt)
+        if !prompt.is_empty() {
+            write!(
+                f,
+                "{} {} ",
+                &self.prompt_prefix,
+                self.prompt_style.apply_to(prompt)
+            )?;
+        }
+
+        write!(f, "{}", &self.prompt_suffix)
     }
 
-    fn format_singleline_prompt(
+    /// Formats an error
+    fn format_error(&self, f: &mut dyn fmt::Write, err: &str) -> fmt::Result {
+        write!(
+            f,
+            "{} {}",
+            &self.error_prefix,
+            self.error_style.apply_to(err)
+        )
+    }
+
+    /// Formats an input prompt.
+    fn format_input_prompt(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
         default: Option<&str>,
     ) -> fmt::Result {
+        if !prompt.is_empty() {
+            write!(
+                f,
+                "{} {} ",
+                &self.prompt_prefix,
+                self.prompt_style.apply_to(prompt)
+            )?;
+        }
+
         match default {
-            Some(default) if prompt.is_empty() => {
-                write!(f, "[{}]: ", self.defaults_style.apply_to(default))
-            }
             Some(default) => write!(
                 f,
-                "{} [{}]: ",
-                prompt,
-                self.defaults_style.apply_to(default)
+                "{} {} ",
+                self.hint_style.apply_to(&format!("({})", default)),
+                &self.prompt_suffix
             ),
-            None => write!(f, "{}: ", prompt),
+            None => write!(f, "{} ", &self.prompt_suffix),
         }
     }
 
-    fn format_error(&self, f: &mut dyn fmt::Write, err: &str) -> fmt::Result {
-        write!(f, "{}: {}", self.error_style.apply_to("error"), err)
-    }
-
+    /// Formats a confirmation prompt.
     fn format_confirmation_prompt(
         &self,
         f: &mut dyn fmt::Write,
@@ -274,51 +395,109 @@ impl Theme for ColorfulTheme {
         default: Option<bool>,
     ) -> fmt::Result {
         if !prompt.is_empty() {
-            write!(f, "{} ", &prompt)?;
+            write!(
+                f,
+                "{} {} ",
+                &self.prompt_prefix,
+                self.prompt_style.apply_to(prompt)
+            )?;
         }
+
         match default {
-            None => {}
-            Some(true) => write!(f, "{} ", self.defaults_style.apply_to("[Y/n]"))?,
-            Some(false) => write!(f, "{} ", self.defaults_style.apply_to("[y/N]"))?,
+            None => write!(f, "{}", &self.prompt_suffix),
+            Some(true) => write!(
+                f,
+                "{} {} {}",
+                self.hint_style.apply_to("(Y/n)"),
+                &self.prompt_suffix,
+                self.defaults_style.apply_to("yes")
+            ),
+            Some(false) => write!(
+                f,
+                "{} {} {}",
+                self.hint_style.apply_to("(y/N)"),
+                &self.prompt_suffix,
+                self.defaults_style.apply_to("no")
+            ),
         }
-        Ok(())
     }
 
+    /// Formats a confirmation prompt after selection.
     fn format_confirmation_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
         selection: bool,
     ) -> fmt::Result {
-        let result = if selection {
-            self.yes_style.apply_to("yes")
-        } else {
-            self.no_style.apply_to("no")
-        };
-
-        if prompt.is_empty() {
-            write!(f, "{}", result)
-        } else {
-            write!(f, "{} {}", &prompt, result)
+        if !prompt.is_empty() {
+            write!(
+                f,
+                "{} {} ",
+                &self.success_prefix,
+                self.prompt_style.apply_to(prompt)
+            )?;
         }
+
+        write!(
+            f,
+            "{} {}",
+            &self.success_suffix,
+            self.values_style
+                .apply_to(if selection { "yes" } else { "no" })
+        )
     }
 
-    fn format_single_prompt_selection(
+    /// Formats an input prompt after selection.
+    fn format_input_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
         sel: &str,
     ) -> fmt::Result {
-        write!(f, "{}: {}", prompt, self.values_style.apply_to(sel))
+        if !prompt.is_empty() {
+            write!(
+                f,
+                "{} {} ",
+                &self.success_prefix,
+                self.prompt_style.apply_to(prompt)
+            )?;
+        }
+
+        write!(
+            f,
+            "{} {}",
+            &self.success_suffix,
+            self.values_style.apply_to(sel)
+        )
     }
 
-    fn format_multi_prompt_selection(
+    /// Formats a password prompt after selection.
+    fn format_password_prompt_selection(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+    ) -> fmt::Result {
+        self.format_input_prompt_selection(f, prompt, "********")
+    }
+
+    /// Formats a multiselect prompt after selection.
+    fn format_multiselect_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
         selections: &[&str],
     ) -> fmt::Result {
-        write!(f, "{}: ", prompt)?;
+        if !prompt.is_empty() {
+            write!(
+                f,
+                "{} {} ",
+                &self.success_prefix,
+                self.prompt_style.apply_to(prompt)
+            )?;
+        }
+
+        write!(f, "{} ", &self.success_suffix)?;
+
         for (idx, sel) in selections.iter().enumerate() {
             write!(
                 f,
@@ -327,46 +506,85 @@ impl Theme for ColorfulTheme {
                 self.values_style.apply_to(sel)
             )?;
         }
+
         Ok(())
     }
 
-    fn format_selection(
+    /// Formats a select prompt item.
+    fn format_select_prompt_item(
         &self,
         f: &mut dyn fmt::Write,
         text: &str,
-        st: SelectionStyle,
+        active: bool,
     ) -> fmt::Result {
-        match st {
-            SelectionStyle::CheckboxUncheckedSelected => write!(
-                f,
-                "{} [ ] {}",
-                self.indicator_style.apply_to(">"),
-                self.active_style.apply_to(text)
+        let details = match active {
+            true => (
+                &self.active_item_prefix,
+                self.active_item_style.apply_to(text),
             ),
-            SelectionStyle::CheckboxUncheckedUnselected => {
-                write!(f, "  [ ] {}", self.inactive_style.apply_to(text))
-            }
-            SelectionStyle::CheckboxCheckedSelected => write!(
-                f,
-                "{} [{}] {}",
-                self.indicator_style.apply_to(">"),
-                self.indicator_style.apply_to("x"),
-                self.active_style.apply_to(text),
+            false => (
+                &self.inactive_item_prefix,
+                self.inactive_item_style.apply_to(text),
             ),
-            SelectionStyle::CheckboxCheckedUnselected => write!(
-                f,
-                "  [{}] {}",
-                self.indicator_style.apply_to("x"),
-                self.inactive_style.apply_to(text)
+        };
+
+        write!(f, "{} {}", details.0, details.1)
+    }
+
+    /// Formats a multiselect prompt item.
+    fn format_multiselect_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        checked: bool,
+        active: bool,
+    ) -> fmt::Result {
+        let details = match (checked, active) {
+            (true, true) => (
+                &self.checked_item_prefix,
+                self.active_item_style.apply_to(text),
             ),
-            SelectionStyle::MenuSelected => write!(
-                f,
-                "{} {}",
-                self.indicator_style.apply_to(">"),
-                self.active_style.apply_to(text)
+            (true, false) => (
+                &self.checked_item_prefix,
+                self.inactive_item_style.apply_to(text),
             ),
-            SelectionStyle::MenuUnselected => write!(f, "  {}", self.inactive_style.apply_to(text)),
-        }
+            (false, true) => (
+                &self.unchecked_item_prefix,
+                self.active_item_style.apply_to(text),
+            ),
+            (false, false) => (
+                &self.unchecked_item_prefix,
+                self.inactive_item_style.apply_to(text),
+            ),
+        };
+
+        write!(f, "{} {}", details.0, details.1)
+    }
+
+    /// Formats a sort prompt item.
+    fn format_sort_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        picked: bool,
+        active: bool,
+    ) -> fmt::Result {
+        let details = match (picked, active) {
+            (true, true) => (
+                &self.picked_item_prefix,
+                self.active_item_style.apply_to(text),
+            ),
+            (false, true) => (
+                &self.unpicked_item_prefix,
+                self.active_item_style.apply_to(text),
+            ),
+            (_, false) => (
+                &self.unpicked_item_prefix,
+                self.inactive_item_style.apply_to(text),
+            ),
+        };
+
+        write!(f, "{} {}", details.0, details.1)
     }
 }
 
@@ -444,23 +662,6 @@ impl<'a> TermThemeRenderer<'a> {
         self.write_formatted_line(|this, buf| this.theme.format_error(buf, err))
     }
 
-    pub fn prompt(&mut self, prompt: &str) -> io::Result<()> {
-        self.write_formatted_prompt(|this, buf| this.theme.format_prompt(buf, prompt))
-    }
-
-    pub fn input_prompt(&mut self, prompt: &str, default: Option<&str>) -> io::Result<()> {
-        self.write_formatted_str(|this, buf| {
-            this.theme.format_singleline_prompt(buf, prompt, default)
-        })
-    }
-
-    pub fn password_prompt(&mut self, prompt: &str) -> io::Result<()> {
-        self.write_formatted_str(|this, buf| {
-            write!(buf, "\r")?;
-            this.theme.format_singleline_prompt(buf, prompt, None)
-        })
-    }
-
     pub fn confirmation_prompt(&mut self, prompt: &str, default: Option<bool>) -> io::Result<()> {
         self.write_formatted_str(|this, buf| {
             this.theme.format_confirmation_prompt(buf, prompt, default)
@@ -474,16 +675,20 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
-    pub fn single_prompt_selection(&mut self, prompt: &str, sel: &str) -> io::Result<()> {
+    pub fn input_prompt(&mut self, prompt: &str, default: Option<&str>) -> io::Result<()> {
+        self.write_formatted_str(|this, buf| this.theme.format_input_prompt(buf, prompt, default))
+    }
+
+    pub fn input_prompt_selection(&mut self, prompt: &str, sel: &str) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
-            this.theme.format_single_prompt_selection(buf, prompt, sel)
+            this.theme.format_input_prompt_selection(buf, prompt, sel)
         })
     }
 
-    pub fn multi_prompt_selection(&mut self, prompt: &str, selections: &[&str]) -> io::Result<()> {
-        self.write_formatted_prompt(|this, buf| {
-            this.theme
-                .format_multi_prompt_selection(buf, prompt, selections)
+    pub fn password_prompt(&mut self, prompt: &str) -> io::Result<()> {
+        self.write_formatted_str(|this, buf| {
+            write!(buf, "\r")?;
+            this.theme.format_password_prompt(buf, prompt)
         })
     }
 
@@ -493,8 +698,60 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
-    pub fn selection(&mut self, text: &str, style: SelectionStyle) -> io::Result<()> {
-        self.write_formatted_line(|this, buf| this.theme.format_selection(buf, text, style))
+    pub fn select_prompt(&mut self, prompt: &str) -> io::Result<()> {
+        self.write_formatted_prompt(|this, buf| this.theme.format_select_prompt(buf, prompt))
+    }
+
+    pub fn select_prompt_selection(&mut self, prompt: &str, sel: &str) -> io::Result<()> {
+        self.write_formatted_prompt(|this, buf| {
+            this.theme.format_select_prompt_selection(buf, prompt, sel)
+        })
+    }
+
+    pub fn select_prompt_item(&mut self, text: &str, active: bool) -> io::Result<()> {
+        self.write_formatted_line(|this, buf| {
+            this.theme.format_select_prompt_item(buf, text, active)
+        })
+    }
+
+    pub fn multiselect_prompt(&mut self, prompt: &str) -> io::Result<()> {
+        self.write_formatted_prompt(|this, buf| this.theme.format_multiselect_prompt(buf, prompt))
+    }
+
+    pub fn multiselect_prompt_selection(&mut self, prompt: &str, sel: &[&str]) -> io::Result<()> {
+        self.write_formatted_prompt(|this, buf| {
+            this.theme
+                .format_multiselect_prompt_selection(buf, prompt, sel)
+        })
+    }
+
+    pub fn multiselect_prompt_item(
+        &mut self,
+        text: &str,
+        checked: bool,
+        active: bool,
+    ) -> io::Result<()> {
+        self.write_formatted_line(|this, buf| {
+            this.theme
+                .format_multiselect_prompt_item(buf, text, checked, active)
+        })
+    }
+
+    pub fn sort_prompt(&mut self, prompt: &str) -> io::Result<()> {
+        self.write_formatted_prompt(|this, buf| this.theme.format_sort_prompt(buf, prompt))
+    }
+
+    pub fn sort_prompt_selection(&mut self, prompt: &str, sel: &[&str]) -> io::Result<()> {
+        self.write_formatted_prompt(|this, buf| {
+            this.theme.format_sort_prompt_selection(buf, prompt, sel)
+        })
+    }
+
+    pub fn sort_prompt_item(&mut self, text: &str, picked: bool, active: bool) -> io::Result<()> {
+        self.write_formatted_line(|this, buf| {
+            this.theme
+                .format_sort_prompt_item(buf, text, picked, active)
+        })
     }
 
     pub fn clear(&mut self) -> io::Result<()> {
