@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2
+
+### Enhancements
+
+* Updating some docs
+
 ## 0.6.1
 
 ### Bugfixes

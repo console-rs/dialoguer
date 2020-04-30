@@ -4,7 +4,7 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::{Key, Term};
 
-/// Renders a list to order.
+/// Renders a sort prompt.
 pub struct Sort<'a> {
     items: Vec<String>,
     prompt: Option<String>,
@@ -20,12 +20,12 @@ impl<'a> Default for Sort<'a> {
 }
 
 impl<'a> Sort<'a> {
-    /// Creates a new sort object.
+    /// Creates a sort prompt.
     pub fn new() -> Sort<'static> {
         Sort::with_theme(&SimpleTheme)
     }
 
-    /// Sets a theme other than the default one.
+    /// Creates a sort prompt with a specific theme.
     pub fn with_theme(theme: &'a dyn Theme) -> Sort<'a> {
         Sort {
             items: vec![],
@@ -42,9 +42,9 @@ impl<'a> Sort<'a> {
         self
     }
 
-    /// Sets the clear behavior of the checkbox menu.
+    /// Sets the clear behavior of the menu.
     ///
-    /// The default is to clear the checkbox menu.
+    /// The default is to clear the menu.
     pub fn clear(&mut self, val: bool) -> &mut Sort<'a> {
         self.clear = val;
         self

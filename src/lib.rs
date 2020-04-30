@@ -13,8 +13,8 @@
 //! * Confirmation prompts
 //! * Input prompts (regular and password)
 //! * Input validation
-//! * Menu selections
-//! * Checkboxes
+//! * Selections prompts (single and multi)
+//! * Other kind of prompts
 //! * Editor launching
 pub use edit::Editor;
 pub use prompts::{

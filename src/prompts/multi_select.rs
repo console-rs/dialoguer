@@ -4,7 +4,7 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::{Key, Term};
 
-/// Renders a multi select checkbox menu.
+/// Renders a multi select prompt.
 pub struct MultiSelect<'a> {
     defaults: Vec<bool>,
     items: Vec<String>,
@@ -21,12 +21,12 @@ impl<'a> Default for MultiSelect<'a> {
 }
 
 impl<'a> MultiSelect<'a> {
-    /// Creates a new multi select object.
+    /// Creates a multi select prompt.
     pub fn new() -> MultiSelect<'static> {
         MultiSelect::with_theme(&SimpleTheme)
     }
 
-    /// Sets a theme other than the default one.
+    /// Creates a multi select prompt with a specific theme.
     pub fn with_theme(theme: &'a dyn Theme) -> MultiSelect<'a> {
         MultiSelect {
             items: vec![],
@@ -44,15 +44,15 @@ impl<'a> MultiSelect<'a> {
         self
     }
 
-    /// Sets the clear behavior of the checkbox menu.
+    /// Sets the clear behavior of the menu.
     ///
-    /// The default is to clear the checkbox menu.
+    /// The default is to clear the menu.
     pub fn clear(&mut self, val: bool) -> &mut MultiSelect<'a> {
         self.clear = val;
         self
     }
 
-    /// Sets a defaults for the menu
+    /// Sets a defaults for the menu.
     pub fn defaults(&mut self, val: &[bool]) -> &mut MultiSelect<'a> {
         self.defaults = val
             .to_vec()

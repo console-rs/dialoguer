@@ -32,12 +32,12 @@ impl<'a> Default for Password<'a> {
 }
 
 impl<'a> Password<'a> {
-    /// Creates a new input prompt.
+    /// Creates a password input prompt.
     pub fn new() -> Password<'static> {
         Password::with_theme(&SimpleTheme)
     }
 
-    /// Creates the password input with a specific theme.
+    /// Creates a password input prompt with a specific theme.
     pub fn with_theme(theme: &'a dyn Theme) -> Password<'a> {
         Password {
             prompt: "".into(),
@@ -47,7 +47,7 @@ impl<'a> Password<'a> {
         }
     }
 
-    /// Sets the prompt.
+    /// Sets the password input prompt.
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Password<'a> {
         self.prompt = prompt.into();
         self

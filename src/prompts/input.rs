@@ -11,7 +11,7 @@ use crate::{
 
 use console::Term;
 
-/// Renders a simple input prompt.
+/// Renders an input prompt.
 ///
 /// ## Example usage
 ///
@@ -48,12 +48,12 @@ where
     T: Clone + FromStr + Display,
     T::Err: Display + Debug,
 {
-    /// Creates a new input prompt.
+    /// Creates an input prompt.
     pub fn new() -> Input<'static, T> {
         Input::with_theme(&SimpleTheme)
     }
 
-    /// Creates an input with a specific theme.
+    /// Creates an input prompt with a specific theme.
     pub fn with_theme(theme: &'a dyn Theme) -> Input<'a, T> {
         Input {
             prompt: "".into(),

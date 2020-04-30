@@ -4,7 +4,7 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::{Key, Term};
 
-/// Renders a selection menu.
+/// Renders a select prompt.
 pub struct Select<'a> {
     default: usize,
     items: Vec<String>,
@@ -21,12 +21,12 @@ impl<'a> Default for Select<'a> {
 }
 
 impl<'a> Select<'a> {
-    /// Creates the prompt with a specific text.
+    /// Creates a select prompt.
     pub fn new() -> Select<'static> {
         Select::with_theme(&SimpleTheme)
     }
 
-    /// Same as `new` but with a specific theme.
+    /// Creates a select prompt with a specific theme.
     pub fn with_theme(theme: &'a dyn Theme) -> Select<'a> {
         Select {
             default: !0,
@@ -72,7 +72,7 @@ impl<'a> Select<'a> {
         self
     }
 
-    /// Prefaces the menu with a prompt.
+    /// Sets the select prompt.
     ///
     /// When a prompt is set the system also prints out a confirmation after
     /// the selection.

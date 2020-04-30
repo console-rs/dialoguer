@@ -4,7 +4,7 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::Term;
 
-/// Renders a simple Confirm prompt.
+/// Renders a confirm prompt.
 ///
 /// ## Example usage
 ///
@@ -33,12 +33,12 @@ impl<'a> Default for Confirm<'a> {
 }
 
 impl<'a> Confirm<'a> {
-    /// Creates the prompt with a specific text.
+    /// Creates a confirm prompt.
     pub fn new() -> Confirm<'static> {
         Confirm::with_theme(&SimpleTheme)
     }
 
-    /// Sets a theme other than the default one.
+    /// Creates a confirm prompt with a specific theme.
     pub fn with_theme(theme: &'a dyn Theme) -> Confirm<'a> {
         Confirm {
             prompt: "".into(),
@@ -48,13 +48,12 @@ impl<'a> Confirm<'a> {
         }
     }
 
-    /// Sets the Confirm text.
+    /// Sets the confirm prompt.
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Confirm<'a> {
         self.prompt = prompt.into();
         self
     }
 
-    /// Sets the Confirm text.
     #[deprecated(note = "Use with_prompt() instead", since = "0.6.0")]
     #[inline]
     pub fn with_text(&mut self, text: &str) -> &mut Confirm<'a> {
