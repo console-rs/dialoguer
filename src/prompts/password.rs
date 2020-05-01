@@ -3,6 +3,7 @@ use std::io;
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::Term;
+use secrecy::{ExposeSecret, SecretString};
 
 /// Renders a password input prompt.
 ///
@@ -88,9 +89,9 @@ impl<'a> Password<'a> {
             let password = self.prompt_password(&mut render, &self.prompt)?;
 
             if let Some((ref prompt, ref err)) = self.confirmation_prompt {
-                let pw2 = self.prompt_password(&mut render, &prompt)?;
+                let pw2 = SecretString::new(self.prompt_password(&mut render, &prompt)?);
 
-                if password == pw2 {
+                if &password == pw2.expose_secret() {
                     render.clear()?;
                     render.password_prompt_selection(&self.prompt)?;
                     term.flush()?;
