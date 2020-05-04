@@ -86,16 +86,16 @@ impl<'a> Password<'a> {
         render.set_prompts_reset_height(false);
 
         loop {
-            let password = self.prompt_password(&mut render, &self.prompt)?;
+            let password = Zeroizing::new(self.prompt_password(&mut render, &self.prompt)?);
 
             if let Some((ref prompt, ref err)) = self.confirmation_prompt {
                 let pw2 = Zeroizing::new(self.prompt_password(&mut render, &prompt)?);
 
-                if password == *pw2 {
+                if *password == *pw2 {
                     render.clear()?;
                     render.password_prompt_selection(&self.prompt)?;
                     term.flush()?;
-                    return Ok(password);
+                    return Ok((*password).clone());
                 }
 
                 render.error(err)?;
@@ -104,7 +104,7 @@ impl<'a> Password<'a> {
                 render.password_prompt_selection(&self.prompt)?;
                 term.flush()?;
 
-                return Ok(password);
+                return Ok((*password).clone());
             }
         }
     }
