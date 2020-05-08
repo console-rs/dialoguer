@@ -9,7 +9,7 @@ use crate::{
     validate::Validator,
 };
 
-use console::Term;
+use console::{Key, Term};
 
 /// Renders an input prompt.
 ///
@@ -140,6 +140,104 @@ where
         }));
 
         self
+    }
+
+    /// Enables the user to enter a printable ascii sequence and returns the result.
+    ///
+    /// The dialog is rendered on stderr.
+    pub fn interact_text(&self) -> io::Result<T> {
+        self.interact_text_on(&Term::stderr())
+    }
+
+    /// Like `interact_text` but allows a specific terminal to be set.
+    pub fn interact_text_on(&self, term: &Term) -> io::Result<T> {
+        let mut render = TermThemeRenderer::new(term, self.theme);
+
+        loop {
+            let default_string = self.default.as_ref().map(|x| x.to_string());
+
+            render.input_prompt(
+                &self.prompt,
+                if self.show_default {
+                    default_string.as_ref().map(|x| x.as_str())
+                } else {
+                    None
+                },
+            )?;
+            term.flush()?;
+
+            // Read input by keystroke so that we can suppress ascii control characters
+            if !term.is_term() {
+                return Ok("".to_owned().parse::<T>().unwrap());
+            }
+
+            let mut chars: Vec<char> = Vec::new();
+            if let Some(initial) = self.initial_text.as_ref() {
+                term.write_str(initial)?;
+                chars = initial.chars().collect();
+            }
+            loop {
+                match term.read_key()? {
+                    Key::Backspace => {
+                        if chars.pop().is_some() {
+                            term.clear_chars(1)?;
+                        }
+                        term.flush()?;
+                    }
+                    Key::Char(chr) => {
+                        if !chr.is_ascii_control() {
+                            chars.push(chr);
+                            let mut bytes_char = [0; 4];
+                            chr.encode_utf8(&mut bytes_char);
+                            term.write_str(chr.encode_utf8(&mut bytes_char))?;
+                            term.flush()?;
+                        }
+                    }
+                    Key::Enter => break,
+                    Key::Unknown => {
+                        return Err(io::Error::new(
+                            io::ErrorKind::NotConnected,
+                            "Not a terminal",
+                        ))
+                    }
+                    _ => (),
+                }
+            }
+            let input = chars.iter().collect::<String>();
+
+            term.clear_line()?;
+            render.clear()?;
+
+            if chars.is_empty() {
+                if let Some(ref default) = self.default {
+                    render.input_prompt_selection(&self.prompt, &default.to_string())?;
+                    term.flush()?;
+                    return Ok(default.clone());
+                } else if !self.permit_empty {
+                    continue;
+                }
+            }
+
+            match input.parse::<T>() {
+                Ok(value) => {
+                    if let Some(ref validator) = self.validator {
+                        if let Some(err) = validator(&input) {
+                            render.error(&err)?;
+                            continue;
+                        }
+                    }
+
+                    render.input_prompt_selection(&self.prompt, &input)?;
+                    term.flush()?;
+
+                    return Ok(value);
+                }
+                Err(err) => {
+                    render.error(&err.to_string())?;
+                    continue;
+                }
+            }
+        }
     }
 
     /// Enables user interaction and returns the result.
