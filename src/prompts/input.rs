@@ -146,7 +146,7 @@ where
     ///
     /// The dialog is rendered on stderr.
     pub fn interact_text(&self) -> io::Result<T> {
-        self.get_text_on(&Term::stderr())
+        self.interact_text_on(&Term::stderr())
     }
 
     /// Like `interact_text` but allows a specific terminal to be set.
