@@ -145,12 +145,12 @@ where
     /// Enables the user to enter a printable ascii sequence and returns the result.
     ///
     /// The dialog is rendered on stderr.
-    pub fn get_text(&self) -> io::Result<T> {
+    pub fn interact_text(&self) -> io::Result<T> {
         self.get_text_on(&Term::stderr())
     }
 
-    /// Like `get_text` but allows a specific terminal to be set.
-    pub fn get_text_on(&self, term: &Term) -> io::Result<T> {
+    /// Like `interact_text` but allows a specific terminal to be set.
+    pub fn interact_text_on(&self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
