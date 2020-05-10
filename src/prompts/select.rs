@@ -57,7 +57,7 @@ impl<'a> Select<'a> {
     /// Creates a select prompt builder with a specific theme.
     ///
     /// ## Examples
-    ///```rust,no_run  
+    /// ```rust,no_run  
     /// use dialoguer::{
     ///     Select,
     ///     theme::ColorfulTheme
@@ -71,7 +71,7 @@ impl<'a> Select<'a> {
     /// 
     ///     Ok(())
     /// }
-    ///```
+    /// ```
     pub fn with_theme(theme: &'a dyn Theme) -> Select<'a> {
         Select {
             default: !0,
@@ -114,7 +114,7 @@ impl<'a> Select<'a> {
     /// use dialoguer::Select;
     ///
     /// fn main() -> std::io::Result<()> {
-    ///     let selection : usize = Select::new()
+    ///     let selection: usize = Select::new()
     ///         .item("Item 1")
     ///         .item("Item 2")
     ///         .interact()?;
@@ -135,11 +135,11 @@ impl<'a> Select<'a> {
     ///
     /// fn main() -> std::io::Result<()> {
     ///     let items = vec!["Item 1", "Item 2"];
-    ///     let selection2 : usize = Select::new()
+    ///     let selection: usize = Select::new()
     ///         .items(&items)
     ///         .interact()?;
     ///     
-    ///     println!("{}", items[selection2]);
+    ///     println!("{}", items[selection]);
     ///     
     ///     Ok(())
     /// }
@@ -176,18 +176,18 @@ impl<'a> Select<'a> {
     }
 
     /// Enables user interaction and returns the result.
+    ///
     /// Similar to [interact_on](#method.interact_on) except for the fact that it does not allow selection of the terminal.
     /// The dialog is rendered on stderr.
-    /// 
     /// Result contains index of a selected item.
     pub fn interact(&self) -> io::Result<usize> {
         self.interact_on(&Term::stderr())
     }
 
-    /// Enables user interaction and returns the result. 
+    /// Enables user interaction and returns the result.
+    ///
     /// This method is similar to [interact_on_opt](#method.interact_on_opt) except for the fact that it does not allow selection of the terminal. 
     /// The dialog is rendered on stderr.
-    /// 
     /// Result contains `Some(index)` if user selected one of items or `None` if user cancelled with 'Esc' or 'q'.
     pub fn interact_opt(&self) -> io::Result<Option<usize>> {
         self.interact_on_opt(&Term::stderr())
