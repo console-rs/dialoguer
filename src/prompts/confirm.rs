@@ -12,7 +12,7 @@ use console::Term;
 /// # fn test() -> Result<(), Box<std::error::Error>> {
 /// use dialoguer::Confirm;
 ///
-/// if Confirm::new().with_text("Do you want to continue?").interact()? {
+/// if Confirm::new().with_prompt("Do you want to continue?").interact()? {
 ///     println!("Looks like you want to continue");
 /// } else {
 ///     println!("nevermind then :(");
