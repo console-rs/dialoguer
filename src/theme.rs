@@ -239,6 +239,8 @@ pub struct ColorfulTheme {
     pub picked_item_prefix: StyledObject<String>,
     /// Unpicked item in sort prefix value and style
     pub unpicked_item_prefix: StyledObject<String>,
+    /// Show the selections from certain prompts inline
+    pub inline_selections: bool,
 }
 
 impl Default for ColorfulTheme {
@@ -262,6 +264,7 @@ impl Default for ColorfulTheme {
             unchecked_item_prefix: style("✔".to_string()).for_stderr().black(),
             picked_item_prefix: style("❯".to_string()).for_stderr().green(),
             unpicked_item_prefix: style(" ".to_string()).for_stderr(),
+            inline_selections: true,
         }
     }
 }
@@ -429,13 +432,15 @@ impl Theme for ColorfulTheme {
 
         write!(f, "{} ", &self.success_suffix)?;
 
-        for (idx, sel) in selections.iter().enumerate() {
-            write!(
-                f,
-                "{}{}",
-                if idx == 0 { "" } else { ", " },
-                self.values_style.apply_to(sel)
-            )?;
+        if self.inline_selections {
+            for (idx, sel) in selections.iter().enumerate() {
+                write!(
+                    f,
+                    "{}{}",
+                    if idx == 0 { "" } else { ", " },
+                    self.values_style.apply_to(sel)
+                )?;
+            }
         }
 
         Ok(())

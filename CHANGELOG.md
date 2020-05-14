@@ -1,14 +1,23 @@
 # Changelog
 
+## master
+
+### Enhancements
+
+* More secure password prompt
+* More documentation
+* Added `interact_text` method for input prompt
+* Added `inline_selections` to `ColorfulTheme`
+
+### Breaking
+
+* Removed `theme::CustomPromptCharacterTheme`
+
 ## 0.6.2
 
 ### Enhancements
 
 * Updating some docs
-
-### Breaking
-
-* Removed `theme::CustomPromptCharacterTheme`
 
 ## 0.6.1
 
