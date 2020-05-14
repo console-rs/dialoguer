@@ -6,6 +6,10 @@
 
 * Updating some docs
 
+### Breaking
+
+* Removed `theme::CustomPromptCharacterTheme`
+
 ## 0.6.1
 
 ### Bugfixes
