@@ -39,6 +39,21 @@ impl<'a> Confirm<'a> {
     }
 
     /// Creates a confirm prompt with a specific theme.
+    /// 
+    /// ## Examples
+    /// ```rust,no_run
+    /// use dialoguer::{
+    ///     Confirm,
+    ///     theme::ColorfulTheme
+    /// };
+    /// 
+    /// # fn main() -> std::io::Result<()> {
+    /// let proceed = Confirm::with_theme(&ColorfulTheme::default())
+    ///     .with_prompt("Do you wish to continue?")
+    ///     .interact()?;
+    /// #    Ok(())
+    /// # }
+    /// ```
     pub fn with_theme(theme: &'a dyn Theme) -> Confirm<'a> {
         Confirm {
             prompt: "".into(),
@@ -60,13 +75,16 @@ impl<'a> Confirm<'a> {
         self.with_prompt(text)
     }
 
-    /// Overrides the default.
+    /// Overrides the default output if user pushes enter key without inputing any character.
+    /// Character corresponding to the default choice (e.g `Y` if default is `true`) will be uppercased in the displayed prompt.
+    /// 
+    /// The default output is true.
     pub fn default(&mut self, val: bool) -> &mut Confirm<'a> {
         self.default = val;
         self
     }
 
-    /// Disables or enables the default value display.
+    /// Disables or enables display of options user can choose from.
     ///
     /// The default is to append `[y/n]` to the prompt to tell the
     /// user which keys to press. This also renders the default choice
@@ -78,13 +96,29 @@ impl<'a> Confirm<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// If the user confirms the result is `true`, `false` otherwise.
+    /// If the user confirms the result is `true`, `false` if declines or default (configured in [default](#method.default)) if pushes enter.
+    /// Otherwise function discards input waiting for valid one.
+    /// 
     /// The dialog is rendered on stderr.
     pub fn interact(&self) -> io::Result<bool> {
         self.interact_on(&Term::stderr())
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
+    /// Like [interact](#method.interact) but allows a specific terminal to be set.
+    /// 
+    /// ## Examples 
+    /// 
+    /// ```rust,nor_run
+    /// use dialoguer::Confirm;
+    /// use console::Term;
+    /// 
+    /// # fn main() -> std::io::Result<()> {
+    /// let proceed = Confirm::new()
+    ///     .with_prompt("Do you wish to continue?")
+    ///     .interact_on(&Term::stderr())?;
+    /// #   Ok(())
+    /// # }
+    /// ```
     pub fn interact_on(&self, term: &Term) -> io::Result<bool> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 

@@ -5,6 +5,16 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 use console::{Key, Term};
 
 /// Renders a multi select prompt.
+/// 
+/// ## Example usage
+/// ```rust,no_run
+/// use dialoguer::MultiSelect;
+/// 
+/// let items = vec![("Option 1", true), ("Option 2", false)];
+/// let chosen : Vec<usize> = MultiSelect::new()
+///     .items(&items)
+///     .interact()?;
+/// ```
 pub struct MultiSelect<'a> {
     defaults: Vec<bool>,
     items: Vec<String>,
@@ -112,7 +122,7 @@ impl<'a> MultiSelect<'a> {
         self.interact_on(&Term::stderr())
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
+    /// Like [interact](#method.interact) but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
         let mut page = 0;
 
