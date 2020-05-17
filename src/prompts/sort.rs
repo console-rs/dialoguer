@@ -10,6 +10,8 @@ use console::{Key, Term};
 /// 
 /// ## Example usage
 /// ```rust,no_run
+/// use dialoguer::Sort;
+///
 /// let items_to_order = vec!["Item 1", "Item 2", "Item 3"];
 /// let ordered = Sort::new()
 ///     .with_prompt("Order the items")

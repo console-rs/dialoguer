@@ -12,7 +12,7 @@ use console::{Key, Term};
 /// 
 /// let items = vec![("Option 1", true), ("Option 2", false)];
 /// let chosen : Vec<usize> = MultiSelect::new()
-///     .items_checked(&items)
+///     .items(&items)
 ///     .interact()?;
 /// ```
 pub struct MultiSelect<'a> {

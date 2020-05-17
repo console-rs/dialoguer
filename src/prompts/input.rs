@@ -13,22 +13,22 @@ use console::{Key, Term};
 
 /// Renders an input prompt.
 ///
-/// Format of rendered prompt is `prompt` [`default`]: `initial_text`
-/// 
 /// ## Example usage
 ///
 /// ```rust,no_run
+/// use dialoguer::Input;
+///
 /// let input : String = Input::new()
 ///     .with_prompt("Tea or coffee?")
 ///     .with_initial_text("Yes")
 ///     .default("No".into())
-///     .interact()?;
+///     .interact_text()?;
 /// ```
 /// It can also be used with turbofish notation:
 /// 
 /// ```rust,no_run
 /// let input = Input::<String>::new()
-///     .interact()?;
+///     .interact_text()?;
 /// ```
 pub struct Input<'a, T> {
     prompt: String,
@@ -79,7 +79,7 @@ where
         self
     }
 
-    /// Sets initial text that user can accept of erease.
+    /// Sets initial text that user can accept or erase.
     pub fn with_initial_text<S: Into<String>>(&mut self, val: S) -> &mut Input<'a, T> {
         self.initial_text = Some(val.into());
         self
