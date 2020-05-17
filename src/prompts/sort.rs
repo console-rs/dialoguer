@@ -5,6 +5,17 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 use console::{Key, Term};
 
 /// Renders a sort prompt.
+/// 
+/// Returns list of indices in original items list sorted according to user input.
+/// 
+/// ## Example usage
+/// ```rust,no_run
+/// let items_to_order = vec!["Item 1", "Item 2", "Item 3"];
+/// let ordered = Sort::new()
+///     .with_prompt("Order the items")
+///     .items(&items_to_order)
+///     .interact()?;
+/// ```
 pub struct Sort<'a> {
     items: Vec<String>,
     prompt: Option<String>,
@@ -44,7 +55,7 @@ impl<'a> Sort<'a> {
 
     /// Sets the clear behavior of the menu.
     ///
-    /// The default is to clear the menu.
+    /// The default is to clear the menu after user interaction.
     pub fn clear(&mut self, val: bool) -> &mut Sort<'a> {
         self.clear = val;
         self
@@ -81,7 +92,7 @@ impl<'a> Sort<'a> {
         self.interact_on(&Term::stderr())
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
+    /// Like [interact](#method.interact) but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
         let mut page = 0;
 
