@@ -132,7 +132,12 @@ impl<'a> MultiSelect<'a> {
             self.items.len()
         };
 
-        let pages = (self.items.len() / capacity) + 1;
+        let pages = if capacity == 0 {
+            return Ok(vec![]);
+        } else {
+            (self.items.len() / capacity) + 1
+        };
+
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
 
