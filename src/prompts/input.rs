@@ -153,12 +153,15 @@ where
 
     /// Enables the user to enter a printable ascii sequence and returns the result.
     ///
+    /// Its difference from [`interact`](#method.interact) is that it only allows ascii characters, backspace and enter keys,
+    /// while [`interact`](#method.interact) allows virtually any character to be used e.g arrow keys.
+    /// 
     /// The dialog is rendered on stderr.
     pub fn interact_text(&self) -> io::Result<T> {
         self.interact_text_on(&Term::stderr())
     }
 
-    /// Like `interact_text` but allows a specific terminal to be set.
+    /// Like [`interact_text`](#method.interact_text) but allows a specific terminal to be set.
     pub fn interact_text_on(&self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
@@ -251,13 +254,17 @@ where
 
     /// Enables user interaction and returns the result.
     ///
+    /// Allows any characters as input, including e.g arrow keys.
+    /// Some of the keys might have undesired behavior.
+    /// For more limited version, see [`interact_text`](#method.interact_text).
+    /// 
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
     pub fn interact(&self) -> io::Result<T> {
         self.interact_on(&Term::stderr())
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
+    /// Like [`interact`](#method.interact) but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
