@@ -5,7 +5,7 @@ use std::error::Error;
 use std::net::IpAddr;
 
 use console::Style;
-use dialoguer::{theme::ColorfulTheme, Confirmation, Input, Select};
+use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
 
 #[derive(Debug)]
 struct Config {
@@ -19,15 +19,12 @@ struct Config {
 fn init_config() -> Result<Option<Config>, Box<dyn Error>> {
     let theme = ColorfulTheme {
         values_style: Style::new().yellow().dim(),
-        indicator_style: Style::new().yellow().bold(),
-        yes_style: Style::new().yellow().dim(),
-        no_style: Style::new().yellow().dim(),
         ..ColorfulTheme::default()
     };
     println!("Welcome to the setup wizard");
 
-    if !Confirmation::with_theme(&theme)
-        .with_text("Do you want to continue?")
+    if !Confirm::with_theme(&theme)
+        .with_prompt("Do you want to continue?")
         .interact()?
     {
         return Ok(None);

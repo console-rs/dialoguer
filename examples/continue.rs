@@ -1,10 +1,10 @@
 extern crate dialoguer;
 
-use dialoguer::{Confirmation, Input};
+use dialoguer::{Confirm, Input};
 
 fn main() {
-    if Confirmation::new()
-        .with_text("Do you want to continue?")
+    if Confirm::new()
+        .with_prompt("Do you want to continue?")
         .interact()
         .unwrap()
     {
@@ -14,6 +14,6 @@ fn main() {
         return;
     }
 
-    let input: String = Input::new().with_prompt("Your name").interact().unwrap();
+    let input: String = Input::new().with_prompt("Your name").interact_text().unwrap();
     println!("Hello {}!", input);
 }

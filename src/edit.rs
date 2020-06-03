@@ -1,13 +1,14 @@
-use std::env;
-use std::ffi::{OsStr, OsString};
-use std::fs;
-use std::io;
-use std::io::{Read, Write};
-use std::process;
+use std::{
+    env,
+    ffi::{OsStr, OsString},
+    fs, io,
+    io::{Read, Write},
+    process,
+};
 
-/// Launches the default editor edit a string.
+/// Launches the default editor to edit a string.
 ///
-/// Example:
+/// ## Example
 ///
 /// ```rust,no_run
 /// # fn test() -> Result<(), Box<std::error::Error>> {

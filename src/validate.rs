@@ -1,5 +1,10 @@
 //! Provides validation for text inputs
 use std::fmt::{Debug, Display};
+
+/// Trait for input validators.
+///
+/// A generic implementation for `Fn(&str) -> Result<(), E>` is provided
+/// to facilitate development.
 pub trait Validator<T> {
     type Err: Debug + Display;
 
