@@ -25,7 +25,7 @@ use console::{Key, Term};
 ///     .interact_text()?;
 /// ```
 /// It can also be used with turbofish notation:
-/// 
+///
 /// ```rust,no_run
 /// let input = Input::<String>::new()
 ///     .interact_text()?;
@@ -37,7 +37,7 @@ pub struct Input<'a, T> {
     initial_text: Option<String>,
     theme: &'a dyn Theme,
     permit_empty: bool,
-    validator: Option<Box<dyn Fn(&str) -> Option<String>>>,
+    validator: Option<Box<dyn Fn(&T) -> Option<String>>>,
 }
 
 impl<'a, T> Default for Input<'a, T>
@@ -107,8 +107,8 @@ where
     ///
     /// The default behaviour is to append [`default`] to the prompt to tell the
     /// user what is the default value.
-    /// 
-    /// This method does not affect existance of default value, only its display in the prompt! 
+    ///
+    /// This method does not affect existance of default value, only its display in the prompt!
     pub fn show_default(&mut self, val: bool) -> &mut Input<'a, T> {
         self.show_default = val;
         self
@@ -132,10 +132,14 @@ where
     ///     .interact()
     ///     .unwrap();
     /// ```
-    pub fn validate_with<V: Validator + 'static>(&mut self, validator: V) -> &mut Input<'a, T> {
+    pub fn validate_with<V>(&mut self, validator: V) -> &mut Input<'a, T>
+    where
+        V: Validator<T> + 'static,
+        T: 'static,
+    {
         let old_validator_func = self.validator.take();
 
-        self.validator = Some(Box::new(move |value: &str| -> Option<String> {
+        self.validator = Some(Box::new(move |value: &T| -> Option<String> {
             if let Some(old) = old_validator_func.as_ref() {
                 if let Some(err) = old(value) {
                     return Some(err);
@@ -155,7 +159,7 @@ where
     ///
     /// Its difference from [`interact`](#method.interact) is that it only allows ascii characters, backspace and enter keys,
     /// while [`interact`](#method.interact) allows virtually any character to be used e.g arrow keys.
-    /// 
+    ///
     /// The dialog is rendered on stderr.
     pub fn interact_text(&self) -> io::Result<T> {
         self.interact_text_on(&Term::stderr())
@@ -233,7 +237,7 @@ where
             match input.parse::<T>() {
                 Ok(value) => {
                     if let Some(ref validator) = self.validator {
-                        if let Some(err) = validator(&input) {
+                        if let Some(err) = validator(&value) {
                             render.error(&err)?;
                             continue;
                         }
@@ -257,7 +261,7 @@ where
     /// Allows any characters as input, including e.g arrow keys.
     /// Some of the keys might have undesired behavior.
     /// For more limited version, see [`interact_text`](#method.interact_text).
-    /// 
+    ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
     pub fn interact(&self) -> io::Result<T> {
@@ -304,7 +308,7 @@ where
             match input.parse::<T>() {
                 Ok(value) => {
                     if let Some(ref validator) = self.validator {
-                        if let Some(err) = validator(&input) {
+                        if let Some(err) = validator(&value) {
                             render.error(&err)?;
                             continue;
                         }
