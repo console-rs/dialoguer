@@ -37,6 +37,7 @@ pub struct Select<'a> {
     default: usize,
     items: Vec<String>,
     prompt: Option<String>,
+    prompt_confirmation: bool,
     clear: bool,
     theme: &'a dyn Theme,
     paged: bool,
@@ -77,6 +78,7 @@ impl<'a> Select<'a> {
             default: !0,
             items: vec![],
             prompt: None,
+            prompt_confirmation: true,
             clear: true,
             theme,
             paged: false,
@@ -172,6 +174,21 @@ impl<'a> Select<'a> {
     /// ```
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Select<'a> {
         self.prompt = Some(prompt.into());
+        self
+    }
+
+    /// Disables the select prompt confirmation.
+    ///
+    /// When a prompt is set the system does not print a confirmation after
+    /// the selection. Useful for creating cli-menu with directory display shown below.
+    ///? Main menu > Submenu ›
+    ///❯ Back
+    /// SubSubmenu
+    /// OtherPrompt
+    /// Settings
+    ///
+    pub fn with_no_prompt_confirmation(&mut self) -> &mut Select<'a> {
+        self.prompt_confirmation = false;
         self
     }
 
@@ -342,7 +359,7 @@ impl<'a> Select<'a> {
                     }
 
                     if let Some(ref prompt) = self.prompt {
-                        render.select_prompt_selection(prompt, &self.items[sel])?;
+                        if self.prompt_confirmation{render.select_prompt_selection(prompt, &self.items[sel])?;}
                     }
 
                     term.show_cursor()?;
