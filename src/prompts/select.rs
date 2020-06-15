@@ -38,7 +38,7 @@ pub struct Select<'a> {
     items: Vec<String>,
     prompt: Option<String>,
     prompt_confirmation: bool,
-    on_render: Box<dyn FnMut() + 'a>,
+    on_render: Box<dyn FnMut(usize) -> () + 'a>,
     clear: bool,
     theme: &'a dyn Theme,
     paged: bool,
@@ -80,7 +80,7 @@ impl<'a> Select<'a> {
             items: vec![],
             prompt: None,
             prompt_confirmation: true,
-            on_render: Box::new(||()),
+            on_render: Box::new(|i|()),
             clear: true,
             theme,
             paged: false,
@@ -213,7 +213,7 @@ impl<'a> Select<'a> {
     ///
     ///     Ok(())
     /// }
-    pub fn set_on_render(&mut self, f: impl FnMut() -> () + 'a) -> &mut Select<'a> {
+    pub fn set_on_render(&mut self, f: impl FnMut(usize) -> () + 'a) -> &mut Select<'a> {
         self.on_render = Box::new(f);
         self
     }
@@ -403,7 +403,7 @@ impl<'a> Select<'a> {
 
             render.clear_preserve_prompt(&size_vec)?;
 
-            (self.on_render)();
+            (self.on_render)(sel);
         }
     }
 }

@@ -11,7 +11,7 @@ fn main() {
     ];
 
     let selection = Select::with_theme(&ColorfulTheme::default())
-        .set_on_render(|| println!("An render update occurred {}"))
+        .set_on_render(|index| println!("An render update occurred {}",index))
         .with_prompt("Pick your flavor")
         .default(0)
         .items(&selections[..])
