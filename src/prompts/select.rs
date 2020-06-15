@@ -38,6 +38,7 @@ pub struct Select<'a> {
     items: Vec<String>,
     prompt: Option<String>,
     prompt_confirmation: bool,
+    on_render: Box<dyn FnMut() + 'a>,
     clear: bool,
     theme: &'a dyn Theme,
     paged: bool,
@@ -79,6 +80,7 @@ impl<'a> Select<'a> {
             items: vec![],
             prompt: None,
             prompt_confirmation: true,
+            on_render: Box::new(||()),
             clear: true,
             theme,
             paged: false,
@@ -192,12 +194,36 @@ impl<'a> Select<'a> {
         self
     }
 
+    /// Calls a method when the selector updates/renders
+    ///
+    /// When a method is set the system calls this method is called every
+    /// time a render update occurs.
+    ///
+    /// ## Examples
+    /// ```rust,no_run
+    /// use dialoguer::Select;
+    ///
+    /// fn main() -> std::io::Result<()> {
+    ///     let selection = Select::new()
+    ///         .set_on_render(|| println!("An render update occurred"))
+    ///         .with_prompt("Which option do you prefer?")
+    ///         .item("Option A")
+    ///         .item("Option B")
+    ///         .interact()?;
+    ///
+    ///     Ok(())
+    /// }
+    pub fn set_on_render(&mut self, f: impl FnMut() -> () + 'a) -> &mut Select<'a> {
+        self.on_render = Box::new(f);
+        self
+    }
+
     /// Enables user interaction and returns the result.
     ///
     /// Similar to [interact_on](#method.interact_on) except for the fact that it does not allow selection of the terminal.
     /// The dialog is rendered on stderr.
     /// Result contains index of a selected item.
-    pub fn interact(&self) -> io::Result<usize> {
+    pub fn interact(&mut self) -> io::Result<usize> {
         self.interact_on(&Term::stderr())
     }
 
@@ -206,7 +232,7 @@ impl<'a> Select<'a> {
     /// This method is similar to [interact_on_opt](#method.interact_on_opt) except for the fact that it does not allow selection of the terminal. 
     /// The dialog is rendered on stderr.
     /// Result contains `Some(index)` if user selected one of items or `None` if user cancelled with 'Esc' or 'q'.
-    pub fn interact_opt(&self) -> io::Result<Option<usize>> {
+    pub fn interact_opt(&mut self) -> io::Result<Option<usize>> {
         self.interact_on_opt(&Term::stderr())
     }
 
@@ -228,7 +254,7 @@ impl<'a> Select<'a> {
     ///     Ok(())
     /// }
     ///``` 
-    pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
+    pub fn interact_on(&mut self, term: &Term) -> io::Result<usize> {
         self._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
@@ -255,12 +281,12 @@ impl<'a> Select<'a> {
     /// }
     /// ```
     #[inline]
-    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<usize>> {
+    pub fn interact_on_opt(&mut self, term: &Term) -> io::Result<Option<usize>> {
         self._interact_on(term, true)
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
+    fn _interact_on(&mut self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
         let mut page = 0;
 
         let capacity = if self.paged {
@@ -374,7 +400,10 @@ impl<'a> Select<'a> {
                 page = sel / capacity;
             }
 
+
             render.clear_preserve_prompt(&size_vec)?;
+
+            (self.on_render)();
         }
     }
 }
