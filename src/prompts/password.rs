@@ -19,10 +19,12 @@ use zeroize::Zeroizing;
 /// println!("Length of the password is: {}", password.len());
 /// # Ok(()) } fn main() { test().unwrap(); }
 /// ```
+
 pub struct Password<'a> {
     prompt: String,
     theme: &'a dyn Theme,
     allow_empty_password: bool,
+    on_render: Box<dyn FnMut(String) -> () + 'a>,
     confirmation_prompt: Option<(String, String)>,
 }
 
@@ -43,6 +45,7 @@ impl<'a> Password<'a> {
         Password {
             prompt: "".into(),
             theme,
+            on_render: Box::new(|_zs|()),
             allow_empty_password: false,
             confirmation_prompt: None,
         }
@@ -72,28 +75,36 @@ impl<'a> Password<'a> {
         self
     }
 
+    pub fn set_on_render(&mut self, f: impl FnMut(String) -> () + 'a) -> &mut Password<'a> {
+        self.on_render = Box::new(f);
+        self
+    }
+
     /// Enables user interaction and returns the result.
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
-    pub fn interact(&self) -> io::Result<String> {
+    pub fn interact(&mut self) -> io::Result<String> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    pub fn interact_on(&self, term: &Term) -> io::Result<String> {
-        let mut render = TermThemeRenderer::new(term, self.theme);
+    pub fn interact_on(&mut self, term: &Term) -> io::Result<String> {
+        /*let mut render = TermThemeRenderer::new(term, self.theme);
         render.set_prompts_reset_height(false);
 
+        let s = self;
         loop {
-            let password = Zeroizing::new(self.prompt_password(&mut render, &self.prompt)?);
+            let o = s.prompt_password(&mut render, &s.prompt.clone())?;
+            let password = Zeroizing::new(o.clone());
 
-            if let Some((ref prompt, ref err)) = self.confirmation_prompt {
-                let pw2 = Zeroizing::new(self.prompt_password(&mut render, &prompt)?);
+            if let Some((ref prompt, ref err)) = s.confirmation_prompt {
+                let o2 = s.prompt_password(&mut render, &prompt.clone())?;
+                let pw2 = Zeroizing::new(o2.clone());
 
                 if *password == *pw2 {
                     render.clear()?;
-                    render.password_prompt_selection(&self.prompt)?;
+                    render.password_prompt_selection(&s.prompt.clone())?;
                     term.flush()?;
                     return Ok((*password).clone());
                 }
@@ -101,25 +112,28 @@ impl<'a> Password<'a> {
                 render.error(err)?;
             } else {
                 render.clear()?;
-                render.password_prompt_selection(&self.prompt)?;
+                render.password_prompt_selection(&s.prompt.clone())?;
                 term.flush()?;
 
                 return Ok((*password).clone());
             }
-        }
+        }*/
+        Ok(String::from("Meh"))
     }
 
-    fn prompt_password(&self, render: &mut TermThemeRenderer, prompt: &str) -> io::Result<String> {
+    fn prompt_password(&mut self, render: &mut TermThemeRenderer, prompt: &str) -> io::Result<String> {
         loop {
             render.password_prompt(prompt)?;
             render.term().flush()?;
 
             let input = render.term().read_secure_line()?;
 
+            (self.on_render)(input.clone());
+
             render.add_line();
 
             if !input.is_empty() || self.allow_empty_password {
-                return Ok(input);
+                return Ok(input.clone());
             }
         }
     }

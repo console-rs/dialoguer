@@ -23,6 +23,7 @@ pub struct Confirm<'a> {
     prompt: String,
     default: bool,
     show_default: bool,
+    on_render: Box<dyn FnMut(bool) -> () + 'a>,
     theme: &'a dyn Theme,
 }
 
@@ -59,6 +60,7 @@ impl<'a> Confirm<'a> {
             prompt: "".into(),
             default: true,
             show_default: true,
+            on_render: Box::new(|_b|()),
             theme,
         }
     }
@@ -94,13 +96,18 @@ impl<'a> Confirm<'a> {
         self
     }
 
+    pub fn set_on_render(&mut self, f: impl FnMut(bool) -> () + 'a) -> &mut Confirm<'a> {
+        self.on_render = Box::new(f);
+        self
+    }
+
     /// Enables user interaction and returns the result.
     ///
     /// If the user confirms the result is `true`, `false` if declines or default (configured in [default](#method.default)) if pushes enter.
     /// Otherwise function discards input waiting for valid one.
     /// 
     /// The dialog is rendered on stderr.
-    pub fn interact(&self) -> io::Result<bool> {
+    pub fn interact(&mut self) -> io::Result<bool> {
         self.interact_on(&Term::stderr())
     }
 
@@ -119,7 +126,7 @@ impl<'a> Confirm<'a> {
     /// #   Ok(())
     /// # }
     /// ```
-    pub fn interact_on(&self, term: &Term) -> io::Result<bool> {
+    pub fn interact_on(&mut self, term: &Term) -> io::Result<bool> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         render.confirm_prompt(
@@ -144,6 +151,8 @@ impl<'a> Confirm<'a> {
                     continue;
                 }
             };
+
+            (self.on_render)(rv);
 
             term.clear_line()?;
             render.confirm_prompt_selection(&self.prompt, rv)?;

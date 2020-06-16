@@ -35,6 +35,7 @@ pub struct Input<'a, T> {
     default: Option<T>,
     show_default: bool,
     initial_text: Option<String>,
+    on_render: Box<dyn FnMut(String) -> () + 'a>,
     theme: &'a dyn Theme,
     permit_empty: bool,
     validator: Option<Box<dyn Fn(&T) -> Option<String>>>,
@@ -67,6 +68,7 @@ where
             default: None,
             show_default: true,
             initial_text: None,
+            on_render: Box::new(|_s|()),
             theme,
             permit_empty: false,
             validator: None,
@@ -111,6 +113,11 @@ where
     /// This method does not affect existance of default value, only its display in the prompt!
     pub fn show_default(&mut self, val: bool) -> &mut Input<'a, T> {
         self.show_default = val;
+        self
+    }
+
+    pub fn set_on_render(&mut self, f: impl FnMut(String) -> () + 'a) -> &mut Input<'a,T> {
+        self.on_render = Box::new(f);
         self
     }
 
@@ -161,12 +168,12 @@ where
     /// while [`interact`](#method.interact) allows virtually any character to be used e.g arrow keys.
     ///
     /// The dialog is rendered on stderr.
-    pub fn interact_text(&self) -> io::Result<T> {
+    pub fn interact_text(&mut self) -> io::Result<T> {
         self.interact_text_on(&Term::stderr())
     }
 
     /// Like [`interact_text`](#method.interact_text) but allows a specific terminal to be set.
-    pub fn interact_text_on(&self, term: &Term) -> io::Result<T> {
+    pub fn interact_text_on(&mut self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
@@ -220,6 +227,8 @@ where
                 }
             }
             let input = chars.iter().collect::<String>();
+
+            (self.on_render)(input.clone());
 
             term.clear_line()?;
             render.clear()?;

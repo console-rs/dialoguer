@@ -19,6 +19,7 @@ pub struct MultiSelect<'a> {
     defaults: Vec<bool>,
     items: Vec<String>,
     prompt: Option<String>,
+    on_render: Box<dyn FnMut(Vec<&str>) -> () + 'a>,
     clear: bool,
     theme: &'a dyn Theme,
     paged: bool,
@@ -43,6 +44,7 @@ impl<'a> MultiSelect<'a> {
             defaults: vec![],
             clear: true,
             prompt: None,
+            on_render: Box::new(|_vs|()),
             theme,
             paged: false,
         }
@@ -114,16 +116,21 @@ impl<'a> MultiSelect<'a> {
         self
     }
 
+    pub fn set_on_render(&mut self, f: impl FnMut(Vec<&str>) -> () + 'a) -> &mut MultiSelect<'a> {
+        self.on_render = Box::new(f);
+        self
+    }
+
     /// Enables user interaction and returns the result.
     ///
     /// The user can select the items with the space bar and on enter
     /// the selected items will be returned.
-    pub fn interact(&self) -> io::Result<Vec<usize>> {
+    pub fn interact(&mut self) -> io::Result<Vec<usize>> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
-    pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
+    pub fn interact_on(&mut self, term: &Term) -> io::Result<Vec<usize>> {
         let mut page = 0;
 
         let capacity = if self.paged {
@@ -240,12 +247,13 @@ impl<'a> MultiSelect<'a> {
                     }
 
                     if let Some(ref prompt) = self.prompt {
+                        let items = self.items.clone();
                         let selections: Vec<_> = checked
                             .iter()
                             .enumerate()
                             .filter_map(|(idx, &checked)| {
                                 if checked {
-                                    Some(self.items[idx].as_str())
+                                    Some(items[idx].as_str())
                                 } else {
                                     None
                                 }
@@ -272,6 +280,22 @@ impl<'a> MultiSelect<'a> {
             }
 
             render.clear_preserve_prompt(&size_vec)?;
+
+            let items = self.items.clone();
+
+            (self.on_render)(
+                checked
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(idx, &checked)| {
+                        if checked {
+                            Some(items[idx].as_str())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            );
         }
     }
 }

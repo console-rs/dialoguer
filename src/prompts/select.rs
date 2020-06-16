@@ -37,7 +37,6 @@ pub struct Select<'a> {
     default: usize,
     items: Vec<String>,
     prompt: Option<String>,
-    prompt_confirmation: bool,
     on_render: Box<dyn FnMut(usize) -> () + 'a>,
     clear: bool,
     theme: &'a dyn Theme,
@@ -79,8 +78,7 @@ impl<'a> Select<'a> {
             default: !0,
             items: vec![],
             prompt: None,
-            prompt_confirmation: true,
-            on_render: Box::new(|i|()),
+            on_render: Box::new(|_i|()),
             clear: true,
             theme,
             paged: false,
@@ -179,21 +177,6 @@ impl<'a> Select<'a> {
         self
     }
 
-    /// Disables the select prompt confirmation.
-    ///
-    /// When a prompt is set the system does not print a confirmation after
-    /// the selection. Useful for creating cli-menu with directory display shown below.
-    ///? Main menu > Submenu ›
-    ///❯ Back
-    /// SubSubmenu
-    /// OtherPrompt
-    /// Settings
-    ///
-    pub fn with_no_prompt_confirmation(&mut self) -> &mut Select<'a> {
-        self.prompt_confirmation = false;
-        self
-    }
-
     /// Calls a method when the selector updates/renders
     ///
     /// When a method is set the system calls this method is called every
@@ -205,7 +188,7 @@ impl<'a> Select<'a> {
     ///
     /// fn main() -> std::io::Result<()> {
     ///     let selection = Select::new()
-    ///         .set_on_render(|| println!("An render update occurred"))
+    ///         .set_on_render(|i| println!("An render update occurred with selection index of {}",i))
     ///         .with_prompt("Which option do you prefer?")
     ///         .item("Option A")
     ///         .item("Option B")
@@ -213,6 +196,7 @@ impl<'a> Select<'a> {
     ///
     ///     Ok(())
     /// }
+    ///```
     pub fn set_on_render(&mut self, f: impl FnMut(usize) -> () + 'a) -> &mut Select<'a> {
         self.on_render = Box::new(f);
         self
@@ -385,7 +369,7 @@ impl<'a> Select<'a> {
                     }
 
                     if let Some(ref prompt) = self.prompt {
-                        if self.prompt_confirmation{render.select_prompt_selection(prompt, &self.items[sel])?;}
+                        render.select_prompt_selection(prompt, &self.items[sel])?;
                     }
 
                     term.show_cursor()?;
@@ -399,7 +383,6 @@ impl<'a> Select<'a> {
             if sel != !0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
                 page = sel / capacity;
             }
-
 
             render.clear_preserve_prompt(&size_vec)?;
 
