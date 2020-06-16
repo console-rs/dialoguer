@@ -56,9 +56,9 @@ impl<'a> Password<'a> {
 
     /// Enables confirmation prompting.
     pub fn with_confirmation<A, B>(&mut self, prompt: A, mismatch_err: B) -> &mut Password<'a>
-    where
-        A: Into<String>,
-        B: Into<String>,
+        where
+            A: Into<String>,
+            B: Into<String>,
     {
         self.confirmation_prompt = Some((prompt.into(), mismatch_err.into()));
         self
