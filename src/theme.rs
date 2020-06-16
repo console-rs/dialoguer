@@ -294,6 +294,33 @@ impl Theme for ColorfulTheme {
         )
     }
 
+    /// Formats an input prompt.
+    fn format_input_prompt(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        default: Option<&str>,
+    ) -> fmt::Result {
+        if !prompt.is_empty() {
+            write!(
+                f,
+                "{} {} ",
+                &self.prompt_prefix,
+                self.prompt_style.apply_to(prompt)
+            )?;
+        }
+
+        match default {
+            Some(default) => write!(
+                f,
+                "{} {} ",
+                self.hint_style.apply_to(&format!("({})", default)),
+                &self.prompt_suffix
+            ),
+            None => write!(f, "{} ", &self.prompt_suffix),
+        }
+    }
+
     /// Formats a confirm prompt.
     fn format_confirm_prompt(
         &self,
@@ -352,33 +379,6 @@ impl Theme for ColorfulTheme {
             self.values_style
                 .apply_to(if selection { "yes" } else { "no" })
         )
-    }
-
-    /// Formats an input prompt.
-    fn format_input_prompt(
-        &self,
-        f: &mut dyn fmt::Write,
-        prompt: &str,
-        default: Option<&str>,
-    ) -> fmt::Result {
-        if !prompt.is_empty() {
-            write!(
-                f,
-                "{} {} ",
-                &self.prompt_prefix,
-                self.prompt_style.apply_to(prompt)
-            )?;
-        }
-
-        match default {
-            Some(default) => write!(
-                f,
-                "{} {} ",
-                self.hint_style.apply_to(&format!("({})", default)),
-                &self.prompt_suffix
-            ),
-            None => write!(f, "{} ", &self.prompt_suffix),
-        }
     }
 
     /// Formats an input prompt after selection.
