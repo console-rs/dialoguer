@@ -21,6 +21,7 @@ use console::{Key, Term};
 pub struct Sort<'a> {
     items: Vec<String>,
     prompt: Option<String>,
+    on_render: Box<dyn FnMut(Vec<&str>) -> () + 'a>,
     clear: bool,
     theme: &'a dyn Theme,
     paged: bool,
@@ -44,6 +45,7 @@ impl<'a> Sort<'a> {
             items: vec![],
             clear: true,
             prompt: None,
+            on_render: Box::new(|_vs|()),
             theme,
             paged: false,
         }
@@ -86,16 +88,21 @@ impl<'a> Sort<'a> {
         self
     }
 
+    pub fn set_on_render(&mut self, f: impl FnMut(Vec<&str>) -> () + 'a) -> &mut Sort<'a> {
+        self.on_render = Box::new(f);
+        self
+    }
+
     /// Enables user interaction and returns the result.
     ///
     /// The user can order the items with the space bar and the arrows.
     /// On enter the ordered list will be returned.
-    pub fn interact(&self) -> io::Result<Vec<usize>> {
+    pub fn interact(&mut self) -> io::Result<Vec<usize>> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
-    pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
+    pub fn interact_on(&mut self, term: &Term) -> io::Result<Vec<usize>> {
         let mut page = 0;
 
         let capacity = if self.paged {
@@ -229,10 +236,11 @@ impl<'a> Sort<'a> {
                     }
 
                     if let Some(ref prompt) = self.prompt {
+                        let items = self.items.clone();
                         let list: Vec<_> = order
                             .iter()
                             .enumerate()
-                            .map(|(_, item)| self.items[*item].as_str())
+                            .map(|(_, item)| items[*item].as_str())
                             .collect();
                         render.sort_prompt_selection(prompt, &list[..])?;
                     }
@@ -250,6 +258,14 @@ impl<'a> Sort<'a> {
             }
 
             render.clear_preserve_prompt(&size_vec)?;
+
+            let items = self.items.clone();
+            let list: Vec<_> = order
+                .iter()
+                .enumerate()
+                .map(|(_, item)| items[*item].as_str())
+                .collect();
+            (self.on_render)(list);
         }
     }
 }
