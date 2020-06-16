@@ -70,7 +70,7 @@ fn main() {
     println!("  {}", list[sorted[sorted.len() - 1]]);
 
     let password = Password::with_theme(&ColorfulTheme::default())
-        .set_on_render(|pw| println!("An render update occurred password is {:?}", pw))
+        //.set_on_render(|pw| println!("An render update occurred password is {:?}", pw))
         .with_prompt("Password")
         .with_confirmation("Repeat password", "Error: the passwords don't match.")
         .interact()
