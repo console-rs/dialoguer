@@ -24,6 +24,7 @@ pub struct Confirm<'a> {
     default: bool,
     show_default: bool,
     on_render: Box<dyn FnMut(bool) -> () + 'a>,
+    wait_for_newline: bool,
     theme: &'a dyn Theme,
 }
 
@@ -61,6 +62,7 @@ impl<'a> Confirm<'a> {
             default: true,
             show_default: true,
             on_render: Box::new(|_b|()),
+            wait_for_newline: false,
             theme,
         }
     }
@@ -77,6 +79,19 @@ impl<'a> Confirm<'a> {
         self.with_prompt(text)
     }
 
+    /// Sets when to react to user input.
+    ///
+    /// When `false` (default), we check on each user keystroke immediately as
+    /// it is typed. Valid inputs can be one of 'y', 'n', or a newline to accept
+    /// the default.
+    ///
+    /// When `true`, the user must type their choice and hit the Enter key before
+    /// proceeding. Valid inputs can be "yes", "no", "y", "n", or an empty string
+    /// to accept the default.
+    pub fn wait_for_newline(&mut self, wait: bool) -> &mut Confirm<'a> {
+        self.wait_for_newline = wait;
+        self
+    }
     /// Overrides the default output if user pushes enter key without inputing any character.
     /// Character corresponding to the default choice (e.g `Y` if default is `true`) will be uppercased in the displayed prompt.
     /// 
@@ -129,37 +144,64 @@ impl<'a> Confirm<'a> {
     pub fn interact_on(&mut self, term: &Term) -> io::Result<bool> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
-        render.confirm_prompt(
-            &self.prompt,
-            if self.show_default {
-                Some(self.default)
-            } else {
-                None
-            },
-        )?;
+        let default = if self.show_default {
+            Some(self.default)
+        } else {
+            None
+        };
+        render.confirm_prompt(&self.prompt, default)?;
 
         term.hide_cursor()?;
         term.flush()?;
 
-        loop {
-            let input = term.read_char()?;
-            let rv = match input {
-                'y' | 'Y' => true,
-                'n' | 'N' => false,
-                '\n' | '\r' => self.default,
-                _ => {
-                    continue;
-                }
-            };
+        if self.wait_for_newline {
+            // Waits for user input and for the user to hit the Enter key
+            // before validation.
+            let mut input_buf = String::new();
+            loop {
+                io::stdin().read_line(&mut input_buf)?;
+                let rv = match &*input_buf.trim_end().to_lowercase() {
+                    "y" | "yes" => true,
+                    "n" | "no" => false,
+                    "" => self.default,
+                    _ => {
+                        // On invalid input re-render the user prompt.
+                        render.confirm_prompt(&self.prompt, default)?;
+                        input_buf.clear();
+                        continue;
+                    }
+                };
 
-            (self.on_render)(rv);
+                term.show_cursor()?;
+                term.flush()?;
+              
+                (self.on_render)(rv);
 
-            term.clear_line()?;
-            render.confirm_prompt_selection(&self.prompt, rv)?;
-            term.show_cursor()?;
-            term.flush()?;
+                return Ok(rv);
+            }
+        } else {
+            // Default behavior: matches continuously on every keystroke,
+            // and does not wait for user to hit the Enter key.
+            loop {
+                let input = term.read_char()?;
+                let rv = match input {
+                    'y' | 'Y' => true,
+                    'n' | 'N' => false,
+                    '\n' | '\r' => self.default,
+                    _ => {
+                        continue;
+                    }
+                };
 
-            return Ok(rv);
+                term.clear_line()?;
+                render.confirm_prompt_selection(&self.prompt, rv)?;
+                term.show_cursor()?;
+                term.flush()?;
+              
+                (self.on_render)(rv);
+
+                return Ok(rv);
+            }
         }
     }
 }
