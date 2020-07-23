@@ -3,11 +3,10 @@ extern crate dialoguer;
 use dialoguer::Confirm;
 
 fn main() {
-    println!("with confirm");
+    println!("disable default");
     if Confirm::new()
         .with_prompt("continue?")
-        .confirm(true)
-        .wait_for_newline(true)
+        .disable_default(true)
         .interact()
         .unwrap()
     {
@@ -18,10 +17,9 @@ fn main() {
 
     println!();
 
-    println!("without confirm");
+    println!("enable default");
     if Confirm::new()
         .with_prompt("continue?")
-        .wait_for_newline(true)
         .interact()
         .unwrap()
     {

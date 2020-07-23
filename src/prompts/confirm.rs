@@ -23,7 +23,7 @@ pub struct Confirm<'a> {
     prompt: String,
     default: bool,
     show_default: bool,
-    confirm: bool,
+    disable_default: bool,
     wait_for_newline: bool,
     theme: &'a dyn Theme,
 }
@@ -61,7 +61,7 @@ impl<'a> Confirm<'a> {
             prompt: "".into(),
             default: true,
             show_default: true,
-            confirm: false,
+            disable_default: false,
             wait_for_newline: false,
             theme,
         }
@@ -116,8 +116,8 @@ impl<'a> Confirm<'a> {
     /// When `false` (default), the user can input a newline to select the default.
     ///
     /// When `true`, the user must input a letter - a newline will do nothing.
-    pub fn confirm(&mut self, val: bool) -> &mut Confirm<'a> {
-        self.confirm = val;
+    pub fn disable_default(&mut self, val: bool) -> &mut Confirm<'a> {
+        self.disable_default = val;
         self
     }
 
@@ -168,7 +168,7 @@ impl<'a> Confirm<'a> {
                 let rv = match &*input_buf.trim_end().to_lowercase() {
                     "y" | "yes" => true,
                     "n" | "no" => false,
-                    "" if !self.confirm => self.default,
+                    "" if !self.disable_default => self.default,
                     _ => {
                         // On invalid input re-render the user prompt.
                         render.confirm_prompt(&self.prompt, default)?;
@@ -190,7 +190,7 @@ impl<'a> Confirm<'a> {
                 let rv = match input {
                     'y' | 'Y' => true,
                     'n' | 'N' => false,
-                    '\n' | '\r' if !self.confirm => self.default,
+                    '\n' | '\r' if !self.disable_default => self.default,
                     _ => {
                         continue;
                     }
