@@ -1,6 +1,7 @@
 use std::{
     fmt::{Debug, Display},
     io,
+    iter,
     str::FromStr,
 };
 
@@ -192,22 +193,35 @@ where
                 term.write_str(initial)?;
                 chars = initial.chars().collect();
             }
+            let mut position = 0;
             loop {
                 match term.read_key()? {
                     Key::Backspace => {
                         if chars.pop().is_some() {
                             term.clear_chars(1)?;
+                            position -= 1;
                         }
                         term.flush()?;
                     }
-                    Key::Char(chr) => {
-                        if !chr.is_ascii_control() {
-                            chars.push(chr);
-                            let mut bytes_char = [0; 4];
-                            chr.encode_utf8(&mut bytes_char);
-                            term.write_str(chr.encode_utf8(&mut bytes_char))?;
-                            term.flush()?;
-                        }
+                    Key::Char(chr) if !chr.is_ascii_control() => {
+                        chars.insert(position, chr);
+                        position += 1;
+                        let tail: String = iter::once(&chr)
+                            .chain(chars[position..].iter())
+                            .collect();
+                        term.write_str(&tail)?;
+                        term.move_cursor_left(tail.len() - 1)?;
+                        term.flush()?;
+                    }
+                    Key::ArrowLeft if position > 0 => {
+                        term.move_cursor_left(1)?;
+                        position -= 1;
+                        term.flush()?;
+                    }
+                    Key::ArrowRight if position < chars.len() => {
+                        term.move_cursor_right(1)?;
+                        position += 1;
+                        term.flush()?;
                     }
                     Key::Enter => break,
                     Key::Unknown => {
