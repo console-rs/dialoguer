@@ -16,6 +16,8 @@
 //! * Selections prompts (single and multi)
 //! * Other kind of prompts
 //! * Editor launching
+
+pub use console;
 pub use edit::Editor;
 pub use prompts::{
     confirm::Confirm, input::Input, multi_select::MultiSelect, password::Password, select::Select,
