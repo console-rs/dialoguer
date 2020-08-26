@@ -20,7 +20,7 @@
 pub use console;
 pub use edit::Editor;
 pub use prompts::{
-    confirm::Confirm, input::Input, multi_select::MultiSelect, password::Password, select::Select,
+    confirm::Confirm, input::Input, fuzzy::FuzzySelect, multi_select::MultiSelect, password::Password, select::Select,
     sort::Sort,
 };
 pub use validate::Validator;
