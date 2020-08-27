@@ -144,10 +144,6 @@ impl<'a> FuzzySelect<'a> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
-        if let Some(ref prompt) = self.prompt {
-            render.select_prompt(prompt)?;
-        }
-
         let mut size_vec = Vec::new();
         for items in self.items.iter().as_slice() {
             let size = &items.len();
@@ -158,15 +154,8 @@ impl<'a> FuzzySelect<'a> {
         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
 
         loop {
-            // TODO: resolve
-            // if !search_term.is_empty() {
-            //     render.clear_preserve_prompt(&size_vec)?;
-            //     match &self.prompt {
-            //         Some(prompt) => render.select_prompt(&format!("{}: {}", prompt, search_term))?,
-            //         None => render.select_prompt(&format!("> {}", search_term))?,
-            //     };
-            // }
-            // ENDTODO
+            render.clear()?;
+            render.fuzzy_prompt(self.prompt.as_deref(), &search_term)?;
 
             // Maps all items to a tuple of item and its match score.
             let mut filtered_list = self.items.iter()
@@ -258,7 +247,6 @@ impl<'a> FuzzySelect<'a> {
             if filtered_list.len() > 0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
                 page = sel / capacity;
             }
-            render.clear_preserve_prompt(&size_vec)?;
         }
     }
 }
