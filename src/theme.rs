@@ -197,7 +197,7 @@ pub trait Theme {
 
     /// Formats a fuzzy search prompt.
     #[inline]
-    fn format_fuzzy_prompt(
+    fn format_fuzzy_select_prompt(
         &self,
         f: &mut dyn fmt::Write,
         prompt: Option<&str>,
@@ -538,7 +538,7 @@ impl Theme for ColorfulTheme {
     }
 
     /// Formats an input prompt after selection.
-    fn format_fuzzy_prompt(
+    fn format_fuzzy_select_prompt(
         &self,
         f: &mut dyn fmt::Write,
         prompt: Option<&str>,
@@ -648,9 +648,10 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
-    pub fn fuzzy_prompt(&mut self, prompt: Option<&str>, search_term: &str) -> io::Result<()> {
+    #[cfg(feature = "fuzzy-select")]
+    pub fn fuzzy_select_prompt(&mut self, prompt: Option<&str>, search_term: &str) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
-            this.theme.format_fuzzy_prompt(buf, prompt, search_term)
+            this.theme.format_fuzzy_select_prompt(buf, prompt, search_term)
         })
     }
 

@@ -16,7 +16,10 @@ readme = "README.md"
 
 [dependencies]
 console = "0.11.2"
+fuzzy-matcher = { version = "0.3.5", optional = true }
 lazy_static = "1"
 tempfile = "3"
 zeroize = "0.9.3"
-fuzzy-matcher = "0.3.5"
+
+[features]
+fuzzy-select = ["fuzzy-matcher"]
