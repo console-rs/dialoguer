@@ -9,7 +9,7 @@ use console::Term;
 /// ## Example usage
 ///
 /// ```rust,no_run
-/// # fn test() -> Result<(), Box<std::error::Error>> {
+/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
 /// use dialoguer::Confirm;
 ///
 /// if Confirm::new().with_prompt("Do you want to continue?").interact()? {
@@ -41,14 +41,14 @@ impl<'a> Confirm<'a> {
     }
 
     /// Creates a confirm prompt with a specific theme.
-    /// 
+    ///
     /// ## Examples
     /// ```rust,no_run
     /// use dialoguer::{
     ///     Confirm,
     ///     theme::ColorfulTheme
     /// };
-    /// 
+    ///
     /// # fn main() -> std::io::Result<()> {
     /// let proceed = Confirm::with_theme(&ColorfulTheme::default())
     ///     .with_prompt("Do you wish to continue?")
@@ -94,7 +94,7 @@ impl<'a> Confirm<'a> {
     }
     /// Overrides the default output if user pushes enter key without inputing any character.
     /// Character corresponding to the default choice (e.g `Y` if default is `true`) will be uppercased in the displayed prompt.
-    /// 
+    ///
     /// The default output is true.
     pub fn default(&mut self, val: bool) -> &mut Confirm<'a> {
         self.default = val;
@@ -125,20 +125,20 @@ impl<'a> Confirm<'a> {
     ///
     /// If the user confirms the result is `true`, `false` if declines or default (configured in [default](#method.default)) if pushes enter.
     /// Otherwise function discards input waiting for valid one.
-    /// 
+    ///
     /// The dialog is rendered on stderr.
     pub fn interact(&self) -> io::Result<bool> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
-    /// 
-    /// ## Examples 
-    /// 
-    /// ```rust,nor_run
+    ///
+    /// ## Examples
+    ///
+    /// ```rust,no_run
     /// use dialoguer::Confirm;
     /// use console::Term;
-    /// 
+    ///
     /// # fn main() -> std::io::Result<()> {
     /// let proceed = Confirm::new()
     ///     .with_prompt("Do you wish to continue?")

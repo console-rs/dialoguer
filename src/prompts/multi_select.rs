@@ -5,15 +5,18 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 use console::{Key, Term};
 
 /// Renders a multi select prompt.
-/// 
+///
 /// ## Example usage
 /// ```rust,no_run
+/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
 /// use dialoguer::MultiSelect;
-/// 
-/// let items = vec![("Option 1", true), ("Option 2", false)];
+///
+/// let items = vec!["Option 1", "Option 2"];
 /// let chosen : Vec<usize> = MultiSelect::new()
 ///     .items(&items)
 ///     .interact()?;
+/// # Ok(())
+/// # }
 /// ```
 pub struct MultiSelect<'a> {
     defaults: Vec<bool>,
