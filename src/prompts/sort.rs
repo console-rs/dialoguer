@@ -5,18 +5,21 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 use console::{Key, Term};
 
 /// Renders a sort prompt.
-/// 
+///
 /// Returns list of indices in original items list sorted according to user input.
-/// 
+///
 /// ## Example usage
 /// ```rust,no_run
 /// use dialoguer::Sort;
 ///
+/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
 /// let items_to_order = vec!["Item 1", "Item 2", "Item 3"];
 /// let ordered = Sort::new()
 ///     .with_prompt("Order the items")
 ///     .items(&items_to_order)
 ///     .interact()?;
+/// # Ok(())
+/// # }
 /// ```
 pub struct Sort<'a> {
     items: Vec<String>,

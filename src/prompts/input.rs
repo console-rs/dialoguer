@@ -1,7 +1,6 @@
 use std::{
     fmt::{Debug, Display},
-    io,
-    iter,
+    io, iter,
     str::FromStr,
 };
 
@@ -19,17 +18,24 @@ use console::{Key, Term};
 /// ```rust,no_run
 /// use dialoguer::Input;
 ///
+/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
 /// let input : String = Input::new()
 ///     .with_prompt("Tea or coffee?")
 ///     .with_initial_text("Yes")
 ///     .default("No".into())
 ///     .interact_text()?;
+/// # Ok(())
+/// # }
 /// ```
 /// It can also be used with turbofish notation:
 ///
 /// ```rust,no_run
+/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
+/// # use dialoguer::Input;
 /// let input = Input::<String>::new()
 ///     .interact_text()?;
+/// # Ok(())
+/// # }
 /// ```
 pub struct Input<'a, T> {
     prompt: String,
@@ -38,7 +44,7 @@ pub struct Input<'a, T> {
     initial_text: Option<String>,
     theme: &'a dyn Theme,
     permit_empty: bool,
-    validator: Option<Box<dyn Fn(&T) -> Option<String>>>,
+    validator: Option<Box<dyn Fn(&T) -> Option<String> + 'a>>,
 }
 
 impl<'a, T> Default for Input<'a, T>
@@ -57,7 +63,7 @@ where
     T::Err: Display + Debug,
 {
     /// Creates an input prompt.
-    pub fn new() -> Input<'static, T> {
+    pub fn new() -> Input<'a, T> {
         Input::with_theme(&SimpleTheme)
     }
 
@@ -123,7 +129,7 @@ where
     /// # use dialoguer::Input;
     /// let mail: String = Input::new()
     ///     .with_prompt("Enter email")
-    ///     .validate_with(|input: &str| -> Result<(), &str> {
+    ///     .validate_with(|input: &String| -> Result<(), &str> {
     ///         if input.contains('@') {
     ///             Ok(())
     ///         } else {
@@ -135,8 +141,8 @@ where
     /// ```
     pub fn validate_with<V>(&mut self, validator: V) -> &mut Input<'a, T>
     where
-        V: Validator<T> + 'static,
-        T: 'static,
+        V: Validator<T> + 'a,
+        T: 'a,
     {
         let old_validator_func = self.validator.take();
 
@@ -206,9 +212,8 @@ where
                     Key::Char(chr) if !chr.is_ascii_control() => {
                         chars.insert(position, chr);
                         position += 1;
-                        let tail: String = iter::once(&chr)
-                            .chain(chars[position..].iter())
-                            .collect();
+                        let tail: String =
+                            iter::once(&chr).chain(chars[position..].iter()).collect();
                         term.write_str(&tail)?;
                         term.move_cursor_left(tail.len() - 1)?;
                         term.flush()?;
