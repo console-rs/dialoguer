@@ -269,7 +269,7 @@ impl<'a> Select<'a> {
             .collect::<Vec<_>>()
         {
             let size = &items.len();
-            size_vec.push(size.clone());
+            size_vec.push(*size);
         }
 
         loop {

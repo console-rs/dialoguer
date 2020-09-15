@@ -119,7 +119,7 @@ impl<'a> Sort<'a> {
 
         for items in self.items.iter().as_slice() {
             let size = &items.len();
-            size_vec.push(size.clone());
+            size_vec.push(*size);
         }
 
         let mut order: Vec<_> = (0..self.items.len()).collect();

@@ -182,7 +182,7 @@ where
             render.input_prompt(
                 &self.prompt,
                 if self.show_default {
-                    default_string.as_ref().map(|x| x.as_str())
+                    default_string.as_deref()
                 } else {
                     None
                 },
@@ -297,7 +297,7 @@ where
             render.input_prompt(
                 &self.prompt,
                 if self.show_default {
-                    default_string.as_ref().map(|x| x.as_str())
+                    default_string.as_deref()
                 } else {
                     None
                 },
