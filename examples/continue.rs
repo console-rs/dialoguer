@@ -1,5 +1,3 @@
-extern crate dialoguer;
-
 use dialoguer::{Confirm, Input};
 
 fn main() {
@@ -14,6 +12,9 @@ fn main() {
         return;
     }
 
-    let input: String = Input::new().with_prompt("Your name").interact_text().unwrap();
+    let input: String = Input::new()
+        .with_prompt("Your name")
+        .interact_text()
+        .unwrap();
     println!("Hello {}!", input);
 }

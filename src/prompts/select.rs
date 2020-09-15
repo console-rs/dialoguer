@@ -5,31 +5,31 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 use console::{Key, Term};
 
 /// Renders a select prompt.
-/// 
-/// User can select from one or more options. 
+///
+/// User can select from one or more options.
 /// Interaction returns index of an item selected in the order they appear in `item` invocation or `items` slice.
-/// 
+///
 /// ## Examples
-/// 
+///
 /// ```rust,no_run
 /// use dialoguer::{
 ///     Select,
 ///     theme::ColorfulTheme
 /// };
 /// use console::Term;
-/// 
+///
 /// fn main() -> std::io::Result<()> {
 ///     let items = vec!["Item 1", "item 2"];
 ///     let selection = Select::with_theme(&ColorfulTheme::default())
 ///         .items(&items)
 ///         .default(0)
 ///         .interact_on_opt(&Term::stderr())?;
-/// 
+///
 ///     match selection {
 ///         Some(index) => println!("User selected item : {}", items[index]),
 ///         None => println!("User did not select anything")
 ///     }
-/// 
+///
 ///     Ok(())
 /// }
 /// ```
@@ -68,7 +68,7 @@ impl<'a> Select<'a> {
     ///         .item("Option A")
     ///         .item("Option B")
     ///         .interact()?;
-    /// 
+    ///
     ///     Ok(())
     /// }
     /// ```
@@ -84,7 +84,7 @@ impl<'a> Select<'a> {
     }
 
     /// Enables or disables paging
-    /// 
+    ///
     /// Paging is disabled by default
     pub fn paged(&mut self, val: bool) -> &mut Select<'a> {
         self.paged = val;
@@ -100,7 +100,7 @@ impl<'a> Select<'a> {
     }
 
     /// Sets initial selected element when select menu is rendered
-    /// 
+    ///
     /// Element is indicated by the index at which it appears in `item` method invocation or `items` slice.
     pub fn default(&mut self, val: usize) -> &mut Select<'a> {
         self.default = val;
@@ -108,7 +108,7 @@ impl<'a> Select<'a> {
     }
 
     /// Add a single item to the selector.
-    /// 
+    ///
     /// ## Examples
     /// ```rust,no_run
     /// use dialoguer::Select;
@@ -128,7 +128,7 @@ impl<'a> Select<'a> {
     }
 
     /// Adds multiple items to the selector.
-    /// 
+    ///
     /// ## Examples
     /// ```rust,no_run
     /// use dialoguer::Select;
@@ -155,18 +155,18 @@ impl<'a> Select<'a> {
     ///
     /// When a prompt is set the system also prints out a confirmation after
     /// the selection.
-    /// 
+    ///
     /// ## Examples
     /// ```rust,no_run
     /// use dialoguer::Select;
-    /// 
+    ///
     /// fn main() -> std::io::Result<()> {
     ///     let selection = Select::new()
     ///         .with_prompt("Which option do you prefer?")
     ///         .item("Option A")
     ///         .item("Option B")
     ///         .interact()?;
-    /// 
+    ///
     ///     Ok(())
     /// }
     /// ```
@@ -186,7 +186,7 @@ impl<'a> Select<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// This method is similar to [interact_on_opt](#method.interact_on_opt) except for the fact that it does not allow selection of the terminal. 
+    /// This method is similar to [interact_on_opt](#method.interact_on_opt) except for the fact that it does not allow selection of the terminal.
     /// The dialog is rendered on stderr.
     /// Result contains `Some(index)` if user selected one of items or `None` if user cancelled with 'Esc' or 'q'.
     pub fn interact_opt(&self) -> io::Result<Option<usize>> {
@@ -194,46 +194,46 @@ impl<'a> Select<'a> {
     }
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
-    /// 
+    ///
     /// ## Examples
     ///```rust,no_run
     /// use dialoguer::Select;
     /// use console::Term;
-    /// 
+    ///
     /// fn main() -> std::io::Result<()> {
     ///     let selection = Select::new()
     ///         .item("Option A")
     ///         .item("Option B")
     ///         .interact_on(&Term::stderr())?;
-    /// 
+    ///
     ///     println!("User selected option at index {}", selection);
-    /// 
+    ///
     ///     Ok(())
     /// }
-    ///``` 
+    ///```
     pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
         self._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
     /// Like [interact_opt](#method.interact_opt) but allows a specific terminal to be set.
-    /// 
+    ///
     /// ## Examples
     /// ```rust,no_run
     /// use dialoguer::Select;
     /// use console::Term;
-    /// 
+    ///
     /// fn main() -> std::io::Result<()> {
     ///     let selection = Select::new()
     ///         .item("Option A")
     ///         .item("Option B")
     ///         .interact_on_opt(&Term::stdout())?;
-    /// 
+    ///
     ///     match selection {
     ///         Some(position) => println!("User selected option at index {}", position),
     ///         None => println!("User did not select anything")
     ///     }
-    /// 
+    ///
     ///     Ok(())
     /// }
     /// ```
@@ -269,7 +269,7 @@ impl<'a> Select<'a> {
             .collect::<Vec<_>>()
         {
             let size = &items.len();
-            size_vec.push(size.clone());
+            size_vec.push(*size);
         }
 
         loop {

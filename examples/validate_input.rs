@@ -1,5 +1,3 @@
-extern crate dialoguer;
-
 use dialoguer::Input;
 
 fn main() {

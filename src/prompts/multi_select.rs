@@ -157,7 +157,7 @@ impl<'a> MultiSelect<'a> {
             .collect::<Vec<_>>()
         {
             let size = &items.len();
-            size_vec.push(size.clone());
+            size_vec.push(*size);
         }
 
         let mut checked: Vec<bool> = self.defaults.clone();
