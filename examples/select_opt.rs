@@ -1,5 +1,3 @@
-extern crate dialoguer;
-
 use dialoguer::{theme::ColorfulTheme, Select};
 
 fn main() {

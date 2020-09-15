@@ -1,6 +1,3 @@
-extern crate console;
-extern crate dialoguer;
-
 use std::error::Error;
 use std::net::IpAddr;
 

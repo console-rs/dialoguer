@@ -1,5 +1,3 @@
-extern crate dialoguer;
-
 use dialoguer::Confirm;
 
 fn main() {
@@ -18,11 +16,7 @@ fn main() {
     println!();
 
     println!("enable default");
-    if Confirm::new()
-        .with_prompt("continue?")
-        .interact()
-        .unwrap()
-    {
+    if Confirm::new().with_prompt("continue?").interact().unwrap() {
         println!("continuing");
     } else {
         println!("exiting");
