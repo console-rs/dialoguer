@@ -8,6 +8,7 @@ authors = [
 	"Pavan Kumar Sunkara <pavan.sss1991@gmail.com>"
 ]
 keywords = ["cli", "menu", "prompt"]
+categories = ["command-line-interface"]
 license = "MIT"
 homepage = "https://github.com/mitsuhiko/dialoguer"
 repository = "https://github.com/mitsuhiko/dialoguer"
