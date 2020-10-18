@@ -14,5 +14,19 @@ fn main() {
         .items(&selections[..])
         .interact()
         .unwrap();
+
     println!("Enjoy your {}!", selections[selection]);
+
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Optionally pick your flavor")
+        .default(0)
+        .items(&selections[..])
+        .interact_opt()
+        .unwrap();
+
+    if let Some(selection) = selection {
+        println!("Enjoy your {}!", selections[selection]);
+    } else {
+        println!("You didn't select anything!");
+    }
 }

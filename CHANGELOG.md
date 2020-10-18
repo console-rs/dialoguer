@@ -4,6 +4,8 @@
 
 ### Enhancements
 
+* Added `wait_for_newline` to `Confirm`
+* Added `disable_default` to `Confirm`
 * More secure password prompt
 * More documentation
 * Added `interact_text` method for input prompt
@@ -12,6 +14,7 @@
 ### Breaking
 
 * Removed `theme::CustomPromptCharacterTheme`
+* `Input` validators now take the input type `T` as arg
 
 ## 0.6.2
 
