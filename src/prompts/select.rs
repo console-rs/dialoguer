@@ -57,12 +57,12 @@ impl<'a> Select<'a> {
     /// Creates a select prompt builder with a specific theme.
     ///
     /// ## Examples
-    /// ```rust,no_run  
+    /// ```rust,no_run
     /// use dialoguer::{
     ///     Select,
     ///     theme::ColorfulTheme
     /// };
-    ///  
+    ///
     /// fn main() -> std::io::Result<()> {
     ///     let selection = Select::with_theme(&ColorfulTheme::default())
     ///         .item("Option A")
@@ -118,7 +118,7 @@ impl<'a> Select<'a> {
     ///         .item("Item 1")
     ///         .item("Item 2")
     ///         .interact()?;
-    ///     
+    ///
     ///     Ok(())
     /// }
     /// ```
@@ -138,9 +138,9 @@ impl<'a> Select<'a> {
     ///     let selection: usize = Select::new()
     ///         .items(&items)
     ///         .interact()?;
-    ///     
+    ///
     ///     println!("{}", items[selection]);
-    ///     
+    ///
     ///     Ok(())
     /// }
     /// ```
@@ -245,6 +245,13 @@ impl<'a> Select<'a> {
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
         let mut page = 0;
+
+        if self.items.is_empty() {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Empty list of items given to `Select`",
+            ));
+        }
 
         let capacity = if self.paged {
             term.size().0 as usize - 1

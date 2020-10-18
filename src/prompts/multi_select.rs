@@ -129,6 +129,13 @@ impl<'a> MultiSelect<'a> {
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
         let mut page = 0;
 
+        if self.items.is_empty() {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Empty list of items given to `MultiSelect`",
+            ));
+        }
+
         let capacity = if self.paged {
             term.size().0 as usize - 1
         } else {

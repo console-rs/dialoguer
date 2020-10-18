@@ -164,7 +164,7 @@ where
 
     /// Enables the user to enter a printable ascii sequence and returns the result.
     ///
-    /// Its difference from [`interact`](#method.interact) is that it only allows ascii characters, backspace and enter keys,
+    /// Its difference from [`interact`](#method.interact) is that it only allows ascii characters for string,
     /// while [`interact`](#method.interact) allows virtually any character to be used e.g arrow keys.
     ///
     /// The dialog is rendered on stderr.
