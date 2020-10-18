@@ -190,7 +190,7 @@ where
             term.flush()?;
 
             // Read input by keystroke so that we can suppress ascii control characters
-            if !term.is_term() {
+            if !term.features().is_attended() {
                 return Ok("".to_owned().parse::<T>().unwrap());
             }
 
