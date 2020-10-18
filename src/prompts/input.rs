@@ -195,18 +195,28 @@ where
             }
 
             let mut chars: Vec<char> = Vec::new();
+            let mut position = 0;
+
             if let Some(initial) = self.initial_text.as_ref() {
                 term.write_str(initial)?;
                 chars = initial.chars().collect();
+                position = chars.len();
             }
-            let mut position = 0;
+
             loop {
                 match term.read_key()? {
-                    Key::Backspace => {
-                        if chars.pop().is_some() {
-                            term.clear_chars(1)?;
-                            position -= 1;
+                    Key::Backspace if position > 0 => {
+                        position -= 1;
+                        chars.remove(position);
+                        term.clear_chars(1)?;
+
+                        let tail: String = chars[position..].iter().collect();
+
+                        if !tail.is_empty() {
+                            term.write_str(&tail)?;
+                            term.move_cursor_left(tail.len())?;
                         }
+
                         term.flush()?;
                     }
                     Key::Char(chr) if !chr.is_ascii_control() => {
