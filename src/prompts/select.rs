@@ -259,7 +259,8 @@ impl<'a> Select<'a> {
             self.items.len()
         };
 
-        let pages = (self.items.len() / capacity) + 1;
+        let pages = (self.items.len() as f64 / capacity as f64).ceil() as usize;
+
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
