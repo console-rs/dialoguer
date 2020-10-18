@@ -28,7 +28,7 @@ pub trait Theme {
             write!(f, "{} ", &prompt)?;
         }
         match default {
-            None => {}
+            None => write!(f, "[y/n] ")?,
             Some(true) => write!(f, "[Y/n] ")?,
             Some(false) => write!(f, "[y/N] ")?,
         }
@@ -338,18 +338,23 @@ impl Theme for ColorfulTheme {
         }
 
         match default {
-            None => write!(f, "{}", &self.prompt_suffix),
+            None => write!(
+                f,
+                "{} {}",
+                self.hint_style.apply_to("(y/n)"),
+                &self.prompt_suffix
+            ),
             Some(true) => write!(
                 f,
                 "{} {} {}",
-                self.hint_style.apply_to("(Y/n)"),
+                self.hint_style.apply_to("(y/n)"),
                 &self.prompt_suffix,
                 self.defaults_style.apply_to("yes")
             ),
             Some(false) => write!(
                 f,
                 "{} {} {}",
-                self.hint_style.apply_to("(y/N)"),
+                self.hint_style.apply_to("(y/n)"),
                 &self.prompt_suffix,
                 self.defaults_style.apply_to("no")
             ),
