@@ -19,4 +19,7 @@ readme = "README.md"
 console = "0.13.0"
 lazy_static = "1"
 tempfile = "3"
+# `zeroize` of version "0.9.3" is used because it doesn't
+# depend on `alloc` crate which is unstable for rustc 1.32.0
+# which is currently the minimum supported version for `dialoguer`.
 zeroize = { version = "0.9.3", default-features = false, features = ["std"] }
