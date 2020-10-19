@@ -19,4 +19,4 @@ readme = "README.md"
 console = "0.13.0"
 lazy_static = "1"
 tempfile = "3"
-zeroize = "0.9.3"
+zeroize = { version = "0.9.3", default-features = false, features = ["std"] }
