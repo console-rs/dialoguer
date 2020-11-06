@@ -209,6 +209,6 @@ impl<'a> Confirm<'a> {
         term.show_cursor()?;
         term.flush()?;
 
-        return Ok(rv);
+        Ok(rv)
     }
 }
