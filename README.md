@@ -1,6 +1,6 @@
 # dialoguer
 
-[![Build Status](https://travis-ci.org/mitsuhiko/dialoguer.svg?branch=master)](https://travis-ci.org/mitsuhiko/dialoguer)
+[![Build Status](https://github.com/mitsuhiko/dialoguer/workflows/CI/badge.svg)](https://github.com/mitsuhiko/dialoguer/actions?query=branch%3Amaster)
 [![Latest version](https://img.shields.io/crates/v/dialoguer.svg)](https://crates.io/crates/dialoguer)
 [![Documentation](https://docs.rs/dialoguer/badge.svg)](https://docs.rs/dialoguer)
 
