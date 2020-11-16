@@ -12,13 +12,13 @@ pub trait Validator<T> {
     ///
     /// If this produces `Ok(())` then the value is used and parsed, if
     /// an error is returned validation fails with that error.
-    fn validate(&self, input: &T) -> Result<(), Self::Err>;
+    fn validate(&mut self, input: &T) -> Result<(), Self::Err>;
 }
 
-impl<T, F: Fn(&T) -> Result<(), E>, E: Debug + Display> Validator<T> for F {
+impl<T, F: FnMut(&T) -> Result<(), E>, E: Debug + Display> Validator<T> for F {
     type Err = E;
 
-    fn validate(&self, input: &T) -> Result<(), Self::Err> {
+    fn validate(&mut self, input: &T) -> Result<(), Self::Err> {
         self(input)
     }
 }

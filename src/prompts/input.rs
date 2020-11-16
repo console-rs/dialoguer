@@ -44,7 +44,7 @@ pub struct Input<'a, T> {
     initial_text: Option<String>,
     theme: &'a dyn Theme,
     permit_empty: bool,
-    validator: Option<Box<dyn Fn(&T) -> Option<String> + 'a>>,
+    validator: Option<Box<dyn FnMut(&T) -> Option<String> + 'a>>,
 }
 
 impl<'a, T> Default for Input<'a, T>
@@ -139,15 +139,15 @@ where
     ///     .interact()
     ///     .unwrap();
     /// ```
-    pub fn validate_with<V>(&mut self, validator: V) -> &mut Input<'a, T>
+    pub fn validate_with<V>(&mut self, mut validator: V) -> &mut Input<'a, T>
     where
         V: Validator<T> + 'a,
         T: 'a,
     {
-        let old_validator_func = self.validator.take();
+        let mut old_validator_func = self.validator.take();
 
         self.validator = Some(Box::new(move |value: &T| -> Option<String> {
-            if let Some(old) = old_validator_func.as_ref() {
+            if let Some(old) = old_validator_func.as_mut() {
                 if let Some(err) = old(value) {
                     return Some(err);
                 }
@@ -168,12 +168,12 @@ where
     /// while [`interact`](#method.interact) allows virtually any character to be used e.g arrow keys.
     ///
     /// The dialog is rendered on stderr.
-    pub fn interact_text(&self) -> io::Result<T> {
+    pub fn interact_text(&mut self) -> io::Result<T> {
         self.interact_text_on(&Term::stderr())
     }
 
     /// Like [`interact_text`](#method.interact_text) but allows a specific terminal to be set.
-    pub fn interact_text_on(&self, term: &Term) -> io::Result<T> {
+    pub fn interact_text_on(&mut self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
@@ -265,7 +265,7 @@ where
 
             match input.parse::<T>() {
                 Ok(value) => {
-                    if let Some(ref validator) = self.validator {
+                    if let Some(ref mut validator) = self.validator {
                         if let Some(err) = validator(&value) {
                             render.error(&err)?;
                             continue;
@@ -293,12 +293,12 @@ where
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
-    pub fn interact(&self) -> io::Result<T> {
+    pub fn interact(&mut self) -> io::Result<T> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like [`interact`](#method.interact) but allows a specific terminal to be set.
-    pub fn interact_on(&self, term: &Term) -> io::Result<T> {
+    pub fn interact_on(&mut self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
@@ -336,7 +336,7 @@ where
 
             match input.parse::<T>() {
                 Ok(value) => {
-                    if let Some(ref validator) = self.validator {
+                    if let Some(ref mut validator) = self.validator {
                         if let Some(err) = validator(&value) {
                             render.error(&err)?;
                             continue;
