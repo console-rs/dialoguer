@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0
+
+### Enhancements
+
+* `Input::validate_with` can take a `FnMut` (allowing multiple references)
+
+### Breaking
+
+* `Input::interact*` methods take `&mut self` instead of `&self`
+
 ## 0.7.0
 
 ### Enhancements
