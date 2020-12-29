@@ -78,7 +78,7 @@ impl<'a> Select<'a> {
             default: !0,
             items: vec![],
             prompt: None,
-            before: Box::new(||()),
+            before: Box::new(|| ()),
             clear: true,
             theme,
             paged: false,
@@ -304,9 +304,9 @@ impl<'a> Select<'a> {
             term.flush()?;
 
             if is_first_update {
-                (self.before)(); 
+                (self.before)();
                 is_first_update = false;
-            }            
+            }
 
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
@@ -368,7 +368,7 @@ impl<'a> Select<'a> {
                     }
 
                     term.show_cursor()?;
-                    term.flush()?;         
+                    term.flush()?;
 
                     return Ok(Some(sel));
                 }

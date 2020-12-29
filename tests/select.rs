@@ -27,5 +27,5 @@ fn basic_navigation_produces_correct_selection() {
         .interact_opt()
         .unwrap();
 
-    assert_eq!(Some(1),selection);
+    assert_eq!(Some(1), selection);
 }
