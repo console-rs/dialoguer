@@ -37,7 +37,7 @@ pub struct Select<'a> {
     default: usize,
     items: Vec<String>,
     prompt: Option<String>,
-    before: Box<dyn FnMut() -> () + 'a>,
+    before: Box<dyn FnMut() + 'a>,
     clear: bool,
     theme: &'a dyn Theme,
     paged: bool,
@@ -195,7 +195,7 @@ impl<'a> Select<'a> {
         self.interact_on_opt(&Term::stderr())
     }
 
-    pub fn set_before(&mut self, f: impl FnMut() -> () + 'a) -> &mut Select<'a> {
+    pub fn set_before(&mut self, f: impl FnMut() + 'a) -> &mut Select<'a> {
         self.before = Box::new(f);
         self
     }
