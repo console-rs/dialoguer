@@ -37,6 +37,7 @@ pub struct Select<'a> {
     default: usize,
     items: Vec<String>,
     prompt: Option<String>,
+    before: Box<dyn FnMut() -> () + 'a>,
     clear: bool,
     theme: &'a dyn Theme,
     paged: bool,
@@ -77,6 +78,7 @@ impl<'a> Select<'a> {
             default: !0,
             items: vec![],
             prompt: None,
+            before: Box::new(||()),
             clear: true,
             theme,
             paged: false,
@@ -180,7 +182,7 @@ impl<'a> Select<'a> {
     /// Similar to [interact_on](#method.interact_on) except for the fact that it does not allow selection of the terminal.
     /// The dialog is rendered on stderr.
     /// Result contains index of a selected item.
-    pub fn interact(&self) -> io::Result<usize> {
+    pub fn interact(&mut self) -> io::Result<usize> {
         self.interact_on(&Term::stderr())
     }
 
@@ -189,8 +191,13 @@ impl<'a> Select<'a> {
     /// This method is similar to [interact_on_opt](#method.interact_on_opt) except for the fact that it does not allow selection of the terminal.
     /// The dialog is rendered on stderr.
     /// Result contains `Some(index)` if user selected one of items or `None` if user cancelled with 'Esc' or 'q'.
-    pub fn interact_opt(&self) -> io::Result<Option<usize>> {
+    pub fn interact_opt(&mut self) -> io::Result<Option<usize>> {
         self.interact_on_opt(&Term::stderr())
+    }
+
+    pub fn set_before(&mut self, f: impl FnMut() -> () + 'a) -> &mut Select<'a> {
+        self.before = Box::new(f);
+        self
     }
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
@@ -211,7 +218,7 @@ impl<'a> Select<'a> {
     ///     Ok(())
     /// }
     ///```
-    pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
+    pub fn interact_on(&mut self, term: &Term) -> io::Result<usize> {
         self._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
@@ -238,12 +245,12 @@ impl<'a> Select<'a> {
     /// }
     /// ```
     #[inline]
-    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<usize>> {
+    pub fn interact_on_opt(&mut self, term: &Term) -> io::Result<Option<usize>> {
         self._interact_on(term, true)
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
+    fn _interact_on(&mut self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
         let mut page = 0;
 
         if self.items.is_empty() {
@@ -280,6 +287,8 @@ impl<'a> Select<'a> {
             size_vec.push(*size);
         }
 
+        let mut is_first_update = true;
+
         loop {
             for (idx, item) in self
                 .items
@@ -293,6 +302,11 @@ impl<'a> Select<'a> {
 
             term.hide_cursor()?;
             term.flush()?;
+
+            if is_first_update {
+                (self.before)(); 
+                is_first_update = false;
+            }            
 
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
@@ -354,7 +368,7 @@ impl<'a> Select<'a> {
                     }
 
                     term.show_cursor()?;
-                    term.flush()?;
+                    term.flush()?;         
 
                     return Ok(Some(sel));
                 }
