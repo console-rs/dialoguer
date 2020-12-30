@@ -52,7 +52,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --target ${{ matrix.target }} --tests
+          args: --target ${{ matrix.target }} --lib
   nightly:
     name: Nightly Tests
     runs-on: ubuntu-latest
@@ -68,7 +68,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --tests
+          args: --lib
   lint:
     name: Linting (fmt + clippy)
     runs-on: ubuntu-latest
