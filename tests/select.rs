@@ -13,15 +13,14 @@ fn basic_navigation_produces_correct_selection() {
         "A Pile of sweet, sweet mustard",
     ];
 
+    let mut enigo = Enigo::new();
+    enigo.key_click(Key::Layout('j'));
+    enigo.key_down(Key::Return);
+    thread::sleep(Duration::from_millis(10));
+    enigo.key_up(Key::Return);
+
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Optionally pick your flavor")
-        .set_before(|| {
-            let mut enigo = Enigo::new();
-            enigo.key_click(Key::Layout('j'));
-            enigo.key_down(Key::Return);
-            thread::sleep(Duration::from_millis(10));
-            enigo.key_up(Key::Return);
-        })
         .default(0)
         .items(&selections[..])
         .interact_opt()
