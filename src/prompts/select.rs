@@ -251,6 +251,8 @@ impl<'a> Select<'a> {
 
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&mut self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
+        (self.before)();
+        
         let mut page = 0;
 
         if self.items.is_empty() {
@@ -287,8 +289,6 @@ impl<'a> Select<'a> {
             size_vec.push(*size);
         }
 
-        let mut is_first_update = true;
-
         loop {
             for (idx, item) in self
                 .items
@@ -302,11 +302,6 @@ impl<'a> Select<'a> {
 
             term.hide_cursor()?;
             term.flush()?;
-
-            if is_first_update {
-                (self.before)();
-                is_first_update = false;
-            }
 
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
