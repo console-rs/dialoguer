@@ -252,7 +252,6 @@ impl<'a> Select<'a> {
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&mut self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
         (self.before)();
-        
         let mut page = 0;
 
         if self.items.is_empty() {
