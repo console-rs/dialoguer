@@ -121,6 +121,15 @@ impl<'a> Confirm<'a> {
         self.interact_on(&Term::stderr())
     }
 
+    /// Enables user interaction and returns the result.
+    ///
+    /// This method is similar to [interact_on_opt](#method.interact_on_opt) except for the fact that it does not allow selection of the terminal.
+    /// The dialog is rendered on stderr.
+    /// Result contains `Some(bool)` if user answered "yes" or "no" or `None` if user cancelled with 'Esc' or 'q'.
+    pub fn interact_opt(&self) -> io::Result<Option<bool>> {
+        self.interact_on_opt(&Term::stderr())
+    }
+
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
     ///
     /// ## Examples
@@ -139,6 +148,29 @@ impl<'a> Confirm<'a> {
     pub fn interact_on(&self, term: &Term) -> io::Result<bool> {
         self._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
+    }
+
+    /// Like [interact_opt](#method.interact_opt) but allows a specific terminal to be set.
+    ///
+    /// ## Examples
+    /// ```rust,no_run
+    /// use dialoguer::Confirm;
+    /// use console::Term;
+    ///
+    /// fn main() -> std::io::Result<()> {
+    ///     let confirmation = Confirm::new()
+    ///         .interact_on_opt(&Term::stdout())?;
+    ///
+    ///     match confirmation {
+    ///         Some(answer) => println!("User answered {}", if answer { "yes" } else { "no " }),
+    ///         None => println!("User did not answer")
+    ///     }
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<bool>> {
+        self._interact_on(term, true)
     }
 
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<bool>> {
