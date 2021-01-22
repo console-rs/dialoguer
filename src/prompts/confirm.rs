@@ -182,6 +182,9 @@ impl<'a> Confirm<'a> {
                             continue;
                         }
                     }
+                    Key::Escape | Key::Char('q') if allow_quit => {
+                        value = None;
+                    }
                     _ => {
                         continue;
                     }
@@ -199,6 +202,7 @@ impl<'a> Confirm<'a> {
                     Key::Char('y') | Key::Char('Y') => Some(true),
                     Key::Char('n') | Key::Char('N') => Some(false),
                     Key::Enter if self.default.is_some() => Some(self.default.unwrap()),
+                    Key::Escape | Key::Char('q') if allow_quit => None,
                     _ => {
                         continue;
                     }
