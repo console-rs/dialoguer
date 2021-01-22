@@ -137,10 +137,11 @@ impl<'a> Confirm<'a> {
     /// # }
     /// ```
     pub fn interact_on(&self, term: &Term) -> io::Result<bool> {
-        self._interact_on(term, false)
+        self._interact_on(term, false)?
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<bool> {
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<bool>> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         let default_if_show = if self.show_default {
@@ -175,7 +176,7 @@ impl<'a> Confirm<'a> {
                         value = value.or(self.default);
 
                         if let Some(val) = value {
-                            rv = val;
+                            rv = Some(val);
                             break;
                         } else {
                             continue;
@@ -195,9 +196,9 @@ impl<'a> Confirm<'a> {
             loop {
                 let input = term.read_key()?;
                 let value = match input {
-                    Key::Char('y') | Key::Char('Y') => true,
-                    Key::Char('n') | Key::Char('N') => false,
-                    Key::Enter if self.default.is_some() => self.default.unwrap(),
+                    Key::Char('y') | Key::Char('Y') => Some(true),
+                    Key::Char('n') | Key::Char('N') => Some(false),
+                    Key::Enter if self.default.is_some() => Some(self.default.unwrap()),
                     _ => {
                         continue;
                     }
