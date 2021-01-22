@@ -2,7 +2,7 @@ use std::io;
 
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
-use console::Term;
+use console::{Key, Term};
 
 /// Renders a confirm prompt.
 ///
@@ -162,16 +162,16 @@ impl<'a> Confirm<'a> {
             let mut value = default_if_show;
 
             loop {
-                let input = term.read_char()?;
+                let input = term.read_key()?;
 
                 match input {
-                    'y' | 'Y' => {
+                    Key::Char('y') | Key::Char('Y') => {
                         value = Some(true);
                     }
-                    'n' | 'N' => {
+                    Key::Char('n') | Key::Char('N') => {
                         value = Some(false);
                     }
-                    '\n' | '\r' => {
+                    Key::Enter => {
                         value = value.or(self.default);
 
                         if let Some(val) = value {
@@ -193,11 +193,11 @@ impl<'a> Confirm<'a> {
             // Default behavior: matches continuously on every keystroke,
             // and does not wait for user to hit the Enter key.
             loop {
-                let input = term.read_char()?;
+                let input = term.read_key()?;
                 let value = match input {
-                    'y' | 'Y' => true,
-                    'n' | 'N' => false,
-                    '\n' | '\r' if self.default.is_some() => self.default.unwrap(),
+                    Key::Char('y') | Key::Char('Y') => true,
+                    Key::Char('n') | Key::Char('N') => false,
+                    Key::Enter if self.default.is_some() => self.default.unwrap(),
                     _ => {
                         continue;
                     }
