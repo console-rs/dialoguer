@@ -45,4 +45,14 @@ fn main() {
     } else {
         println!("nevermind then :(");
     }
+
+    match Confirm::with_theme(&ColorfulTheme::default())
+        .with_prompt("Do you really really really really want to continue?")
+        .interact_opt()
+        .unwrap()
+    {
+        Some(true) => println!("Looks like you want to continue"),
+        Some(false) => println!("nevermind then :("),
+        None => println!("Ok, we can start over later"),
+    }
 }
