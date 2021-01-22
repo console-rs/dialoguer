@@ -91,7 +91,7 @@ impl<'a> Select<'a> {
         self
     }
 
-    /// Indicates whether select menu should be ereased from the screen after interaction.
+    /// Indicates whether select menu should be erased from the screen after interaction.
     ///
     /// The default is to clear the menu.
     pub fn clear(&mut self, val: bool) -> &mut Select<'a> {
