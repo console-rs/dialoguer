@@ -137,6 +137,10 @@ impl<'a> Confirm<'a> {
     /// # }
     /// ```
     pub fn interact_on(&self, term: &Term) -> io::Result<bool> {
+        self._interact_on(term, false)
+    }
+
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<bool> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         let default_if_show = if self.show_default {
