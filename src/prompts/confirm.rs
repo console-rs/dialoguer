@@ -207,12 +207,11 @@ impl<'a> Confirm<'a> {
                     Key::Enter => {
                         value = value.or(self.default);
 
-                        if let Some(val) = value {
-                            rv = Some(val);
+                        if value.is_some() || allow_quit {
+                            rv = value;
                             break;
-                        } else {
-                            continue;
                         }
+                        continue;
                     }
                     Key::Escape | Key::Char('q') if allow_quit => {
                         value = None;
