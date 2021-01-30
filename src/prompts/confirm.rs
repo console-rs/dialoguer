@@ -103,9 +103,7 @@ impl<'a> Confirm<'a> {
 
     /// Disables or enables the default value display.
     ///
-    /// The default is to append `[y/n]` to the prompt to tell the
-    /// user which keys to press. This also renders the default choice
-    /// in uppercase. The default is selected on enter.
+    /// The default is to append the default value to the prompt to tell the user.
     pub fn show_default(&mut self, val: bool) -> &mut Confirm<'a> {
         self.show_default = val;
         self
