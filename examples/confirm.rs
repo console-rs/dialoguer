@@ -58,6 +58,7 @@ fn main() {
 
     match Confirm::with_theme(&ColorfulTheme::default())
         .with_prompt("Do you really really really really really want to continue?")
+        .default(true)
         .wait_for_newline(true)
         .interact_opt()
         .unwrap()
