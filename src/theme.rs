@@ -42,7 +42,7 @@ pub trait Theme {
         prompt: &str,
         selection: Option<bool>,
     ) -> fmt::Result {
-        let selection = selection.map_or("n/a", |b| if b { "yes" } else { "no" });
+        let selection = selection.map_or("cancel", |b| if b { "yes" } else { "no" });
         if prompt.is_empty() {
             write!(f, "{}", selection)
         } else {
@@ -377,7 +377,7 @@ impl Theme for ColorfulTheme {
                 self.prompt_style.apply_to(prompt)
             )?;
         }
-        let selection = selection.map_or("n/a", |b| if b { "yes" } else { "no" });
+        let selection = selection.map_or("cancel", |b| if b { "yes" } else { "no" });
 
         write!(
             f,
