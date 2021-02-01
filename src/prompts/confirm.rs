@@ -205,7 +205,9 @@ impl<'a> Confirm<'a> {
                         value = Some(false);
                     }
                     Key::Enter => {
-                        value = value.or(self.default);
+                        if !allow_quit {
+                            value = value.or(self.default);
+                        }
 
                         if value.is_some() || allow_quit {
                             rv = value;
