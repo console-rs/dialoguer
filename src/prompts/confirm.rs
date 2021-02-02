@@ -2,7 +2,7 @@ use std::io;
 
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
-use console::Term;
+use console::{Key, Term};
 
 /// Renders a confirm prompt.
 ///
@@ -119,6 +119,15 @@ impl<'a> Confirm<'a> {
         self.interact_on(&Term::stderr())
     }
 
+    /// Enables user interaction and returns the result.
+    ///
+    /// This method is similar to [interact_on_opt](#method.interact_on_opt) except for the fact that it does not allow selection of the terminal.
+    /// The dialog is rendered on stderr.
+    /// Result contains `Some(bool)` if user answered "yes" or "no" or `None` if user cancelled with 'Esc' or 'q'.
+    pub fn interact_opt(&self) -> io::Result<Option<bool>> {
+        self.interact_on_opt(&Term::stderr())
+    }
+
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
     ///
     /// ## Examples
@@ -135,6 +144,34 @@ impl<'a> Confirm<'a> {
     /// # }
     /// ```
     pub fn interact_on(&self, term: &Term) -> io::Result<bool> {
+        self._interact_on(term, false)?
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
+    }
+
+    /// Like [interact_opt](#method.interact_opt) but allows a specific terminal to be set.
+    ///
+    /// ## Examples
+    /// ```rust,no_run
+    /// use dialoguer::Confirm;
+    /// use console::Term;
+    ///
+    /// fn main() -> std::io::Result<()> {
+    ///     let confirmation = Confirm::new()
+    ///         .interact_on_opt(&Term::stdout())?;
+    ///
+    ///     match confirmation {
+    ///         Some(answer) => println!("User answered {}", if answer { "yes" } else { "no " }),
+    ///         None => println!("User did not answer")
+    ///     }
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<bool>> {
+        self._interact_on(term, true)
+    }
+
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<bool>> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         let default_if_show = if self.show_default {
@@ -156,24 +193,28 @@ impl<'a> Confirm<'a> {
             let mut value = default_if_show;
 
             loop {
-                let input = term.read_char()?;
+                let input = term.read_key()?;
 
                 match input {
-                    'y' | 'Y' => {
+                    Key::Char('y') | Key::Char('Y') => {
                         value = Some(true);
                     }
-                    'n' | 'N' => {
+                    Key::Char('n') | Key::Char('N') => {
                         value = Some(false);
                     }
-                    '\n' | '\r' => {
-                        value = value.or(self.default);
-
-                        if let Some(val) = value {
-                            rv = val;
-                            break;
-                        } else {
-                            continue;
+                    Key::Enter => {
+                        if !allow_quit {
+                            value = value.or(self.default);
                         }
+
+                        if value.is_some() || allow_quit {
+                            rv = value;
+                            break;
+                        }
+                        continue;
+                    }
+                    Key::Escape | Key::Char('q') if allow_quit => {
+                        value = None;
                     }
                     _ => {
                         continue;
@@ -187,11 +228,12 @@ impl<'a> Confirm<'a> {
             // Default behavior: matches continuously on every keystroke,
             // and does not wait for user to hit the Enter key.
             loop {
-                let input = term.read_char()?;
+                let input = term.read_key()?;
                 let value = match input {
-                    'y' | 'Y' => true,
-                    'n' | 'N' => false,
-                    '\n' | '\r' if self.default.is_some() => self.default.unwrap(),
+                    Key::Char('y') | Key::Char('Y') => Some(true),
+                    Key::Char('n') | Key::Char('N') => Some(false),
+                    Key::Enter if self.default.is_some() => Some(self.default.unwrap()),
+                    Key::Escape | Key::Char('q') if allow_quit => None,
                     _ => {
                         continue;
                     }

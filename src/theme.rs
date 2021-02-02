@@ -40,12 +40,21 @@ pub trait Theme {
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
-        selection: bool,
+        selection: Option<bool>,
     ) -> fmt::Result {
-        if prompt.is_empty() {
-            write!(f, "{}", if selection { "yes" } else { "no" })
-        } else {
-            write!(f, "{} {}", &prompt, if selection { "yes" } else { "no" })
+        let selection = selection.map(|b| if b { "yes" } else { "no" });
+
+        match selection {
+            Some(selection) if prompt.is_empty() => {
+                write!(f, "{}", selection)
+            }
+            Some(selection) => {
+                write!(f, "{} {}", &prompt, selection)
+            }
+            None if prompt.is_empty() => Ok(()),
+            None => {
+                write!(f, "{}", &prompt)
+            }
         }
     }
 
@@ -366,7 +375,7 @@ impl Theme for ColorfulTheme {
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
-        selection: bool,
+        selection: Option<bool>,
     ) -> fmt::Result {
         if !prompt.is_empty() {
             write!(
@@ -376,14 +385,21 @@ impl Theme for ColorfulTheme {
                 self.prompt_style.apply_to(prompt)
             )?;
         }
+        let selection = selection.map(|b| if b { "yes" } else { "no" });
 
-        write!(
-            f,
-            "{} {}",
-            &self.success_suffix,
-            self.values_style
-                .apply_to(if selection { "yes" } else { "no" })
-        )
+        match selection {
+            Some(selection) => {
+                write!(
+                    f,
+                    "{} {}",
+                    &self.success_suffix,
+                    self.values_style.apply_to(selection)
+                )
+            }
+            None => {
+                write!(f, "{}", &self.success_suffix)
+            }
+        }
     }
 
     /// Formats an input prompt after selection.
@@ -607,7 +623,7 @@ impl<'a> TermThemeRenderer<'a> {
         self.write_formatted_str(|this, buf| this.theme.format_confirm_prompt(buf, prompt, default))
     }
 
-    pub fn confirm_prompt_selection(&mut self, prompt: &str, sel: bool) -> io::Result<()> {
+    pub fn confirm_prompt_selection(&mut self, prompt: &str, sel: Option<bool>) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_confirm_prompt_selection(buf, prompt, sel)
         })
