@@ -42,11 +42,19 @@ pub trait Theme {
         prompt: &str,
         selection: Option<bool>,
     ) -> fmt::Result {
-        let selection = selection.map_or("cancel", |b| if b { "yes" } else { "no" });
-        if prompt.is_empty() {
-            write!(f, "{}", selection)
-        } else {
-            write!(f, "{} {}", &prompt, selection)
+        let selection = selection.map(|b| if b { "yes" } else { "no" });
+
+        match selection {
+            Some(selection) if prompt.is_empty() => {
+                write!(f, "{}", selection)
+            }
+            Some(selection) => {
+                write!(f, "{} {}", &prompt, selection)
+            }
+            None if prompt.is_empty() => Ok(()),
+            None => {
+                write!(f, "{}", &prompt)
+            }
         }
     }
 
@@ -377,14 +385,21 @@ impl Theme for ColorfulTheme {
                 self.prompt_style.apply_to(prompt)
             )?;
         }
-        let selection = selection.map_or("cancel", |b| if b { "yes" } else { "no" });
+        let selection = selection.map(|b| if b { "yes" } else { "no" });
 
-        write!(
-            f,
-            "{} {}",
-            &self.success_suffix,
-            self.values_style.apply_to(selection)
-        )
+        match selection {
+            Some(selection) => {
+                write!(
+                    f,
+                    "{} {}",
+                    &self.success_suffix,
+                    self.values_style.apply_to(selection)
+                )
+            }
+            None => {
+                write!(f, "{}", &self.success_suffix)
+            }
+        }
     }
 
     /// Formats an input prompt after selection.
