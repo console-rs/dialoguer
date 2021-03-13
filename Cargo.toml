@@ -16,7 +16,7 @@ documentation = "https://docs.rs/dialoguer"
 readme = "README.md"
 
 [dependencies]
-console = "0.13.0"
+console = "0.14.0"
 lazy_static = "1"
 tempfile = "3"
 zeroize = "1.1.1"
