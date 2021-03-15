@@ -1,7 +1,7 @@
 [package]
 name = "dialoguer"
 description = "A command line prompting library."
-version = "0.7.1"
+version = "0.8.0"
 edition = "2018"
 authors = [
 	"Armin Ronacher <armin.ronacher@active-4.com>",
@@ -16,7 +16,7 @@ documentation = "https://docs.rs/dialoguer"
 readme = "README.md"
 
 [dependencies]
-console = "0.13.0"
+console = "0.14.1"
 lazy_static = "1"
 tempfile = "3"
 zeroize = "1.1.1"
