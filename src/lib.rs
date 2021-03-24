@@ -18,6 +18,7 @@
 //! * Editor launching
 
 pub use console;
+#[cfg(feature = "edit")]
 pub use edit::Editor;
 pub use prompts::{
     confirm::Confirm, input::Input, multi_select::MultiSelect, password::Password, select::Select,
@@ -25,6 +26,7 @@ pub use prompts::{
 };
 pub use validate::Validator;
 
+#[cfg(feature = "edit")]
 mod edit;
 mod prompts;
 pub mod theme;
