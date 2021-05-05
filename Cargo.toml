@@ -16,8 +16,8 @@ documentation = "https://docs.rs/dialoguer"
 readme = "README.md"
 
 [features]
-default = ["edit"]
-edit = ["tempfile"]
+default = ["editor"]
+editor = ["tempfile"]
 
 [dependencies]
 console = "0.14.1"
