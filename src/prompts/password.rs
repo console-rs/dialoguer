@@ -3,7 +3,6 @@ use std::io;
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::Term;
-use zeroize::Zeroizing;
 
 /// Renders a password input prompt.
 ///
@@ -86,16 +85,16 @@ impl<'a> Password<'a> {
         render.set_prompts_reset_height(false);
 
         loop {
-            let password = Zeroizing::new(self.prompt_password(&mut render, &self.prompt)?);
+            let password = self.prompt_password(&mut render, &self.prompt)?;
 
             if let Some((ref prompt, ref err)) = self.confirmation_prompt {
-                let pw2 = Zeroizing::new(self.prompt_password(&mut render, &prompt)?);
+                let pw2 = self.prompt_password(&mut render, &prompt)?;
 
                 if *password == *pw2 {
                     render.clear()?;
                     render.password_prompt_selection(&self.prompt)?;
                     term.flush()?;
-                    return Ok((*password).clone());
+                    return Ok(password.to_string());
                 }
 
                 render.error(err)?;
@@ -104,12 +103,27 @@ impl<'a> Password<'a> {
                 render.password_prompt_selection(&self.prompt)?;
                 term.flush()?;
 
-                return Ok((*password).clone());
+                return Ok(password.to_string());
             }
         }
     }
 
+    #[cfg(feature = "zeroize-passwords")]
+    fn prompt_password(
+        &self,
+        render: &mut TermThemeRenderer,
+        prompt: &str,
+    ) -> io::Result<zeroize::Zeroizing<String>> {
+        let prompt = self._prompt_password(render, prompt)?;
+        Ok(zeroize::Zeroizing::new(prompt))
+    }
+
+    #[cfg(not(feature = "zeroize-passwords"))]
     fn prompt_password(&self, render: &mut TermThemeRenderer, prompt: &str) -> io::Result<String> {
+        Ok(self._prompt_password(render, prompt)?)
+    }
+
+    fn _prompt_password(&self, render: &mut TermThemeRenderer, prompt: &str) -> io::Result<String> {
         loop {
             render.password_prompt(prompt)?;
             render.term().flush()?;
