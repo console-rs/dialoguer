@@ -255,6 +255,13 @@ where
 
             if chars.is_empty() {
                 if let Some(ref default) = self.default {
+                    if let Some(ref mut validator) = self.validator {
+                        if let Some(err) = validator(&default) {
+                            render.error(&err)?;
+                            continue;
+                        }
+                    }
+                    
                     render.input_prompt_selection(&self.prompt, &default.to_string())?;
                     term.flush()?;
                     return Ok(default.clone());
@@ -326,6 +333,13 @@ where
 
             if input.is_empty() {
                 if let Some(ref default) = self.default {
+                    if let Some(ref mut validator) = self.validator {
+                        if let Some(err) = validator(&default) {
+                            render.error(&err)?;
+                            continue;
+                        }
+                    }
+                    
                     render.input_prompt_selection(&self.prompt, &default.to_string())?;
                     term.flush()?;
                     return Ok(default.clone());
