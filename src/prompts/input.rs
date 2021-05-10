@@ -261,7 +261,7 @@ where
                             continue;
                         }
                     }
-                    
+
                     render.input_prompt_selection(&self.prompt, &default.to_string())?;
                     term.flush()?;
                     return Ok(default.clone());
@@ -339,7 +339,7 @@ where
                             continue;
                         }
                     }
-                    
+
                     render.input_prompt_selection(&self.prompt, &default.to_string())?;
                     term.flush()?;
                     return Ok(default.clone());
