@@ -24,3 +24,6 @@ console = "0.14.1"
 lazy_static = "1"
 tempfile = { version = "3", optional = true }
 zeroize = "1.1.1"
+
+[dev-dependencies]
+enigo = "0.0.14"
