@@ -24,3 +24,39 @@ console = "0.14.1"
 lazy_static = "1"
 tempfile = { version = "3", optional = true }
 zeroize = "1.1.1"
+
+[[example]]
+name = "buffered"
+path = "examples/buffered.rs"
+
+[[example]]
+name = "confirm"
+path = "examples/confirm.rs"
+
+[[example]]
+name = "editor"
+path = "examples/editor.rs"
+
+[[example]]
+name = "input"
+path = "examples/input.rs"
+
+[[example]]
+name = "multi_select"
+path = "examples/multi_select.rs"
+
+[[example]]
+name = "password"
+path = "examples/password.rs"
+
+[[example]]
+name = "select"
+path = "examples/select.rs"
+
+[[example]]
+name = "sort"
+path = "examples/sort.rs"
+
+[[example]]
+name = "wizard"
+path = "examples/wizard.rs"
