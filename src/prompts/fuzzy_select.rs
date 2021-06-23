@@ -1,7 +1,10 @@
-use crate::{Select, theme::{SimpleTheme, Theme, TermThemeRenderer}};
-use std::{io, ops::Rem};
-use console::{Term, Key};
+use crate::{
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    Select,
+};
+use console::{Key, Term};
 use fuzzy_matcher::FuzzyMatcher;
+use std::{io, ops::Rem};
 
 /// Renders a selection menu that user can fuzzy match to reduce set.
 ///
@@ -145,10 +148,8 @@ impl<'a> FuzzySelect<'a> {
 
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
-        self._interact_on(term, false)?.ok_or_else(|| io::Error::new(
-            io::ErrorKind::Other,
-            "Quit not allowed in this case",
-        ))
+        self._interact_on(term, false)?
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
     /// Like `interact` but allows a specific terminal to be set.
@@ -184,7 +185,9 @@ impl<'a> FuzzySelect<'a> {
             render.fuzzy_select_prompt(self.prompt.as_deref(), &search_term)?;
 
             // Maps all items to a tuple of item and its match score.
-            let mut filtered_list = self.items.iter()
+            let mut filtered_list = self
+                .items
+                .iter()
                 .map(|item| (item, matcher.fuzzy_match(item, &search_term)))
                 .filter_map(|(item, score)| score.map(|s| (item, s)))
                 .collect::<Vec<_>>();
@@ -196,7 +199,12 @@ impl<'a> FuzzySelect<'a> {
                 capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
             }
 
-            for (idx, (item, _)) in filtered_list.iter().enumerate().skip(page * capacity).take(capacity) {
+            for (idx, (item, _)) in filtered_list
+                .iter()
+                .enumerate()
+                .skip(page * capacity)
+                .take(capacity)
+            {
                 render.select_prompt_item(item, idx == sel)?;
             }
 
@@ -207,7 +215,7 @@ impl<'a> FuzzySelect<'a> {
                     } else {
                         sel = (sel as u64 + 1).rem(filtered_list.len() as u64) as usize;
                     }
-                },
+                }
                 Key::Escape => {
                     if allow_quit {
                         if self.clear {
@@ -215,7 +223,7 @@ impl<'a> FuzzySelect<'a> {
                         }
                         return Ok(None);
                     }
-                },
+                }
                 Key::ArrowUp if filtered_list.len() > 0 => {
                     if sel == !0 {
                         sel = filtered_list.len() - 1;
@@ -223,7 +231,7 @@ impl<'a> FuzzySelect<'a> {
                         sel = ((sel as i64 - 1 + filtered_list.len() as i64)
                             % (filtered_list.len() as i64)) as usize;
                     }
-                },
+                }
                 Key::ArrowLeft => {
                     if self.paged {
                         if page == 0 {
@@ -233,7 +241,7 @@ impl<'a> FuzzySelect<'a> {
                         }
                         sel = page * capacity;
                     }
-                },
+                }
                 Key::ArrowRight => {
                     if self.paged {
                         if page == pages - 1 {
@@ -243,7 +251,7 @@ impl<'a> FuzzySelect<'a> {
                         }
                         sel = page * capacity;
                     }
-                },
+                }
                 Key::Enter if filtered_list.len() > 0 => {
                     if self.clear {
                         render.clear()?;
@@ -269,7 +277,7 @@ impl<'a> FuzzySelect<'a> {
                         search_term.push(key);
                     }
                     sel = 0;
-                },
+                }
                 _ => {}
             }
             if filtered_list.len() > 0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
