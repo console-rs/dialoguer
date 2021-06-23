@@ -35,6 +35,8 @@ use std::{io, ops::Rem};
 ///     Ok(())
 /// }
 /// ```
+
+// TODO: I don't think we need this. Ideally dialoguer should figure out the number of lines and intelligently do display them.
 pub struct FuzzySelect<'a> {
     default: usize,
     items: Vec<String>,
@@ -200,6 +202,7 @@ impl<'a> FuzzySelect<'a> {
                 capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
             }
 
+            // TODO: Need to move cursor to the prompt and flush here.
             for (idx, (item, _)) in filtered_list
                 .iter()
                 .enumerate()
@@ -217,14 +220,12 @@ impl<'a> FuzzySelect<'a> {
                         sel = (sel as u64 + 1).rem(filtered_list.len() as u64) as usize;
                     }
                 }
-                Key::Escape => {
-                    if allow_quit {
-                        if self.clear {
-                            term.clear_last_lines(filtered_list.len())?;
-                            term.flush()?
-                        }
-                        return Ok(None);
+                Key::Escape if allow_quit => {
+                    if self.clear {
+                        term.clear_last_lines(filtered_list.len())?;
+                        term.flush()?
                     }
+                    return Ok(None);
                 }
                 Key::ArrowUp if filtered_list.len() > 0 => {
                     if sel == !0 {
@@ -273,7 +274,6 @@ impl<'a> FuzzySelect<'a> {
                     term.flush()?;
                 }
                 Key::Char(chr) if !chr.is_ascii_control() => {
-                    // search_term.insert(position, chr);
                     if self.ignore_casing {
                         search_term.insert(position, chr.to_lowercase().to_string().pop().unwrap());
                     } else {
