@@ -142,12 +142,12 @@ impl<'a> FuzzySelect<'a> {
     /// cancelled with Esc or 'q'.
     /// The dialog is rendered on stderr.
     pub fn interact_opt(&self) -> io::Result<Option<String>> {
-        self._interact_on(&Term::stderr(), true)
+        self.interact_on_opt(&Term::stderr(), true)
     }
 
     /// Like `interact` but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<String> {
-        self._interact_on(term, false)?.ok_or(io::Error::new(
+        self._interact_on(term, false)?.ok_or_else(|| io::Error::new(
             io::ErrorKind::Other,
             "Quit not allowed in this case",
         ))
@@ -159,7 +159,7 @@ impl<'a> FuzzySelect<'a> {
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<String>> {
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
         let mut page = 0;
         let mut capacity = self.items.len();
         let mut search_term = String::new();
