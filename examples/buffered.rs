@@ -1,6 +1,3 @@
-extern crate console;
-extern crate dialoguer;
-
 use console::Term;
 use dialoguer::{theme::ColorfulTheme, Confirm, Input, MultiSelect, Password, Select, Sort};
 

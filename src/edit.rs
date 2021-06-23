@@ -11,7 +11,6 @@ use std::{
 /// ## Example
 ///
 /// ```rust,no_run
-/// # fn test() -> Result<(), Box<std::error::Error>> {
 /// use dialoguer::Editor;
 ///
 /// if let Some(rv) = Editor::new().edit("Enter a commit message").unwrap() {
@@ -20,7 +19,6 @@ use std::{
 /// } else {
 ///     println!("Abort!");
 /// }
-/// # Ok(()) } fn main() { test().unwrap(); }
 /// ```
 pub struct Editor {
     editor: OsString,
@@ -100,7 +98,13 @@ impl Editor {
         f.flush()?;
         let ts = fs::metadata(f.path())?.modified()?;
 
-        let rv = process::Command::new(&self.editor)
+        let s: String = self.editor.clone().into_string().unwrap();
+        let mut iterator = s.split(' ');
+        let cmd = iterator.next().unwrap();
+        let args: Vec<&str> = iterator.collect();
+
+        let rv = process::Command::new(cmd)
+            .args(args)
             .arg(f.path())
             .spawn()?
             .wait()?;

@@ -5,18 +5,21 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 use console::{Key, Term};
 
 /// Renders a sort prompt.
-/// 
+///
 /// Returns list of indices in original items list sorted according to user input.
-/// 
+///
 /// ## Example usage
 /// ```rust,no_run
 /// use dialoguer::Sort;
 ///
+/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
 /// let items_to_order = vec!["Item 1", "Item 2", "Item 3"];
 /// let ordered = Sort::new()
 ///     .with_prompt("Order the items")
 ///     .items(&items_to_order)
 ///     .interact()?;
+/// # Ok(())
+/// # }
 /// ```
 pub struct Sort<'a> {
     items: Vec<String>,
@@ -98,6 +101,13 @@ impl<'a> Sort<'a> {
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
         let mut page = 0;
 
+        if self.items.is_empty() {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Empty list of items given to `Sort`",
+            ));
+        }
+
         let capacity = if self.paged {
             term.size().0 as usize - 1
         } else {
@@ -105,6 +115,7 @@ impl<'a> Sort<'a> {
         };
 
         let pages = (self.items.len() as f64 / capacity as f64).ceil() as usize;
+
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
 
@@ -116,7 +127,7 @@ impl<'a> Sort<'a> {
 
         for items in self.items.iter().as_slice() {
             let size = &items.len();
-            size_vec.push(size.clone());
+            size_vec.push(*size);
         }
 
         let mut order: Vec<_> = (0..self.items.len()).collect();

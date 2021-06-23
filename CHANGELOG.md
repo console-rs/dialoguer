@@ -1,9 +1,20 @@
 # Changelog
 
-## master
+## 0.8.0
 
 ### Enhancements
 
+* `Input::validate_with` can take a `FnMut` (allowing multiple references)
+
+### Breaking
+
+* `Input::interact*` methods take `&mut self` instead of `&self`
+
+## 0.7.0
+
+### Enhancements
+
+* Added `wait_for_newline` to `Confirm`
 * More secure password prompt
 * More documentation
 * Added `interact_text` method for input prompt
@@ -12,6 +23,8 @@
 ### Breaking
 
 * Removed `theme::CustomPromptCharacterTheme`
+* `Input` validators now take the input type `T` as arg
+* `Confirm` has no `default` value by default now
 
 ## 0.6.2
 

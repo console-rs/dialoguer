@@ -1,5 +1,3 @@
-extern crate dialoguer;
-
 use dialoguer::{theme::ColorfulTheme, Password};
 
 fn main() {
@@ -8,5 +6,6 @@ fn main() {
         .with_confirmation("Repeat password", "Error: the passwords don't match.")
         .interact()
         .unwrap();
+
     println!("Your password is {} characters long", password.len());
 }

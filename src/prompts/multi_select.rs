@@ -5,15 +5,18 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 use console::{Key, Term};
 
 /// Renders a multi select prompt.
-/// 
+///
 /// ## Example usage
 /// ```rust,no_run
+/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
 /// use dialoguer::MultiSelect;
-/// 
-/// let items = vec![("Option 1", true), ("Option 2", false)];
+///
+/// let items = vec!["Option 1", "Option 2"];
 /// let chosen : Vec<usize> = MultiSelect::new()
 ///     .items(&items)
 ///     .interact()?;
+/// # Ok(())
+/// # }
 /// ```
 pub struct MultiSelect<'a> {
     defaults: Vec<bool>,
@@ -126,17 +129,20 @@ impl<'a> MultiSelect<'a> {
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
         let mut page = 0;
 
+        if self.items.is_empty() {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Empty list of items given to `MultiSelect`",
+            ));
+        }
+
         let capacity = if self.paged {
             term.size().0 as usize - 1
         } else {
             self.items.len()
         };
 
-        let pages = if capacity == 0 {
-            return Ok(vec![]);
-        } else {
-            (self.items.len() / capacity) + 1
-        };
+        let pages = (self.items.len() as f64 / capacity as f64).ceil() as usize;
 
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
@@ -154,7 +160,7 @@ impl<'a> MultiSelect<'a> {
             .collect::<Vec<_>>()
         {
             let size = &items.len();
-            size_vec.push(size.clone());
+            size_vec.push(*size);
         }
 
         let mut checked: Vec<bool> = self.defaults.clone();

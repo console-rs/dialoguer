@@ -1,7 +1,6 @@
 use std::{
     fmt::{Debug, Display},
-    io,
-    iter,
+    io, iter,
     str::FromStr,
 };
 
@@ -19,17 +18,24 @@ use console::{Key, Term};
 /// ```rust,no_run
 /// use dialoguer::Input;
 ///
+/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
 /// let input : String = Input::new()
 ///     .with_prompt("Tea or coffee?")
 ///     .with_initial_text("Yes")
 ///     .default("No".into())
 ///     .interact_text()?;
+/// # Ok(())
+/// # }
 /// ```
 /// It can also be used with turbofish notation:
 ///
 /// ```rust,no_run
+/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
+/// # use dialoguer::Input;
 /// let input = Input::<String>::new()
 ///     .interact_text()?;
+/// # Ok(())
+/// # }
 /// ```
 pub struct Input<'a, T> {
     prompt: String,
@@ -38,7 +44,7 @@ pub struct Input<'a, T> {
     initial_text: Option<String>,
     theme: &'a dyn Theme,
     permit_empty: bool,
-    validator: Option<Box<dyn Fn(&T) -> Option<String>>>,
+    validator: Option<Box<dyn FnMut(&T) -> Option<String> + 'a>>,
 }
 
 impl<'a, T> Default for Input<'a, T>
@@ -57,7 +63,7 @@ where
     T::Err: Display + Debug,
 {
     /// Creates an input prompt.
-    pub fn new() -> Input<'static, T> {
+    pub fn new() -> Input<'a, T> {
         Input::with_theme(&SimpleTheme)
     }
 
@@ -123,7 +129,7 @@ where
     /// # use dialoguer::Input;
     /// let mail: String = Input::new()
     ///     .with_prompt("Enter email")
-    ///     .validate_with(|input: &str| -> Result<(), &str> {
+    ///     .validate_with(|input: &String| -> Result<(), &str> {
     ///         if input.contains('@') {
     ///             Ok(())
     ///         } else {
@@ -133,15 +139,15 @@ where
     ///     .interact()
     ///     .unwrap();
     /// ```
-    pub fn validate_with<V>(&mut self, validator: V) -> &mut Input<'a, T>
+    pub fn validate_with<V>(&mut self, mut validator: V) -> &mut Input<'a, T>
     where
-        V: Validator<T> + 'static,
-        T: 'static,
+        V: Validator<T> + 'a,
+        T: 'a,
     {
-        let old_validator_func = self.validator.take();
+        let mut old_validator_func = self.validator.take();
 
         self.validator = Some(Box::new(move |value: &T| -> Option<String> {
-            if let Some(old) = old_validator_func.as_ref() {
+            if let Some(old) = old_validator_func.as_mut() {
                 if let Some(err) = old(value) {
                     return Some(err);
                 }
@@ -158,16 +164,16 @@ where
 
     /// Enables the user to enter a printable ascii sequence and returns the result.
     ///
-    /// Its difference from [`interact`](#method.interact) is that it only allows ascii characters, backspace and enter keys,
+    /// Its difference from [`interact`](#method.interact) is that it only allows ascii characters for string,
     /// while [`interact`](#method.interact) allows virtually any character to be used e.g arrow keys.
     ///
     /// The dialog is rendered on stderr.
-    pub fn interact_text(&self) -> io::Result<T> {
+    pub fn interact_text(&mut self) -> io::Result<T> {
         self.interact_text_on(&Term::stderr())
     }
 
     /// Like [`interact_text`](#method.interact_text) but allows a specific terminal to be set.
-    pub fn interact_text_on(&self, term: &Term) -> io::Result<T> {
+    pub fn interact_text_on(&mut self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
@@ -176,7 +182,7 @@ where
             render.input_prompt(
                 &self.prompt,
                 if self.show_default {
-                    default_string.as_ref().map(|x| x.as_str())
+                    default_string.as_deref()
                 } else {
                     None
                 },
@@ -184,31 +190,40 @@ where
             term.flush()?;
 
             // Read input by keystroke so that we can suppress ascii control characters
-            if !term.is_term() {
+            if !term.features().is_attended() {
                 return Ok("".to_owned().parse::<T>().unwrap());
             }
 
             let mut chars: Vec<char> = Vec::new();
+            let mut position = 0;
+
             if let Some(initial) = self.initial_text.as_ref() {
                 term.write_str(initial)?;
                 chars = initial.chars().collect();
+                position = chars.len();
             }
-            let mut position = 0;
+
             loop {
                 match term.read_key()? {
-                    Key::Backspace => {
-                        if chars.pop().is_some() {
-                            term.clear_chars(1)?;
-                            position -= 1;
+                    Key::Backspace if position > 0 => {
+                        position -= 1;
+                        chars.remove(position);
+                        term.clear_chars(1)?;
+
+                        let tail: String = chars[position..].iter().collect();
+
+                        if !tail.is_empty() {
+                            term.write_str(&tail)?;
+                            term.move_cursor_left(tail.len())?;
                         }
+
                         term.flush()?;
                     }
                     Key::Char(chr) if !chr.is_ascii_control() => {
                         chars.insert(position, chr);
                         position += 1;
-                        let tail: String = iter::once(&chr)
-                            .chain(chars[position..].iter())
-                            .collect();
+                        let tail: String =
+                            iter::once(&chr).chain(chars[position..].iter()).collect();
                         term.write_str(&tail)?;
                         term.move_cursor_left(tail.len() - 1)?;
                         term.flush()?;
@@ -240,6 +255,13 @@ where
 
             if chars.is_empty() {
                 if let Some(ref default) = self.default {
+                    if let Some(ref mut validator) = self.validator {
+                        if let Some(err) = validator(&default) {
+                            render.error(&err)?;
+                            continue;
+                        }
+                    }
+
                     render.input_prompt_selection(&self.prompt, &default.to_string())?;
                     term.flush()?;
                     return Ok(default.clone());
@@ -250,7 +272,7 @@ where
 
             match input.parse::<T>() {
                 Ok(value) => {
-                    if let Some(ref validator) = self.validator {
+                    if let Some(ref mut validator) = self.validator {
                         if let Some(err) = validator(&value) {
                             render.error(&err)?;
                             continue;
@@ -278,12 +300,12 @@ where
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
-    pub fn interact(&self) -> io::Result<T> {
+    pub fn interact(&mut self) -> io::Result<T> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like [`interact`](#method.interact) but allows a specific terminal to be set.
-    pub fn interact_on(&self, term: &Term) -> io::Result<T> {
+    pub fn interact_on(&mut self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
@@ -292,7 +314,7 @@ where
             render.input_prompt(
                 &self.prompt,
                 if self.show_default {
-                    default_string.as_ref().map(|x| x.as_str())
+                    default_string.as_deref()
                 } else {
                     None
                 },
@@ -311,6 +333,13 @@ where
 
             if input.is_empty() {
                 if let Some(ref default) = self.default {
+                    if let Some(ref mut validator) = self.validator {
+                        if let Some(err) = validator(&default) {
+                            render.error(&err)?;
+                            continue;
+                        }
+                    }
+
                     render.input_prompt_selection(&self.prompt, &default.to_string())?;
                     term.flush()?;
                     return Ok(default.clone());
@@ -321,7 +350,7 @@ where
 
             match input.parse::<T>() {
                 Ok(value) => {
-                    if let Some(ref validator) = self.validator {
+                    if let Some(ref mut validator) = self.validator {
                         if let Some(err) = validator(&value) {
                             render.error(&err)?;
                             continue;
