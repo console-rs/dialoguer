@@ -1,9 +1,7 @@
-use crate::theme::{SimpleTheme, Theme, TermThemeRenderer};
-use crate::Select;
-use std::io;
+use crate::{Select, theme::{SimpleTheme, Theme, TermThemeRenderer}};
+use std::{io, ops::Rem};
 use console::{Term, Key};
 use fuzzy_matcher::FuzzyMatcher;
-use std::ops::Rem;
 
 /// Renders a selection menu that user can fuzzy match to reduce set.
 ///
