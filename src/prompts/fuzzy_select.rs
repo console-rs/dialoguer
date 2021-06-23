@@ -6,6 +6,34 @@ use fuzzy_matcher::FuzzyMatcher;
 use std::ops::Rem;
 
 /// Renders a selection menu that user can fuzzy match to reduce set.
+///
+/// User can use fuzzy search to limit selectable items.
+/// Interaction returns index of an item selected in the order they appear in `item` invocation or `items` slice.
+///
+/// ## Examples
+///
+/// ```rust,no_run
+/// use dialoguer::{
+///     FuzzySelect,
+///     theme::ColorfulTheme
+/// };
+/// use console::Term;
+///
+/// fn main() -> std::io::Result<()> {
+///     let items = vec!["Item 1", "item 2"];
+///     let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
+///         .items(&items)
+///         .default(0)
+///         .interact_on_opt(&Term::stderr())?;
+///
+///     match selection {
+///         Some(index) => println!("User selected item : {}", items[index]),
+///         None => println!("User did not select anything")
+///     }
+///
+///     Ok(())
+/// }
+/// ```
 pub struct FuzzySelect<'a> {
     default: usize,
     items: Vec<String>,
