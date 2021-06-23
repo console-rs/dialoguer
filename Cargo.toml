@@ -18,9 +18,11 @@ readme = "README.md"
 [features]
 default = ["editor"]
 editor = ["tempfile"]
+fuzzy-select = ["fuzzy-matcher"]
 
 [dependencies]
 console = "0.14.1"
 lazy_static = "1"
 tempfile = { version = "3", optional = true }
 zeroize = "1.1.1"
+fuzzy-matcher = { version = "0.3.7", optional = true }
