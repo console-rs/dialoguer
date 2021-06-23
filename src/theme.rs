@@ -204,8 +204,8 @@ pub trait Theme {
         )
     }
 
-    /// Formats a fuzzy search prompt.
-    #[inline]
+    /// Formats a fuzzy select prompt.
+    #[cfg(feature = "fuzzy-select")]
     fn format_fuzzy_select_prompt(
         &self,
         f: &mut dyn fmt::Write,
