@@ -671,7 +671,7 @@ impl<'a> TermThemeRenderer<'a> {
     }
 
     #[cfg(feature = "fuzzy-select")]
-    pub fn fuzzy_select_prompt(&mut self, prompt: &str, search_term: &str) -> io::Result<()> {
+    pub fn fuzzy_select_prompt(&mut self, prompt: Option<&str>, search_term: &str) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_fuzzy_select_prompt(buf, prompt, search_term)
         })

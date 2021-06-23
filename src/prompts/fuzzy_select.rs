@@ -122,7 +122,7 @@ impl<'a> FuzzySelect<'a> {
     /// When a prompt is set the system also prints out a confirmation after
     /// the fuzzy selection.
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut FuzzySelect<'a> {
-        self.prompt = Some(prompt.to_string());
+        self.prompt = Some(prompt.into());
         self
     }
 
@@ -130,7 +130,7 @@ impl<'a> FuzzySelect<'a> {
     ///
     /// The index of the selected item.
     /// The dialog is rendered on stderr.
-    pub fn interact(&self) -> io::Result<String> {
+    pub fn interact(&self) -> io::Result<usize> {
         self.interact_on(&Term::stderr())
     }
 
@@ -139,12 +139,12 @@ impl<'a> FuzzySelect<'a> {
     /// The index of the selected item. None if the user
     /// cancelled with Esc or 'q'.
     /// The dialog is rendered on stderr.
-    pub fn interact_opt(&self) -> io::Result<Option<String>> {
-        self.interact_on_opt(&Term::stderr(), true)
+    pub fn interact_opt(&self) -> io::Result<Option<usize>> {
+        self.interact_on_opt(&Term::stderr())
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    pub fn interact_on(&self, term: &Term) -> io::Result<String> {
+    pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
         self._interact_on(term, false)?.ok_or_else(|| io::Error::new(
             io::ErrorKind::Other,
             "Quit not allowed in this case",
@@ -152,7 +152,7 @@ impl<'a> FuzzySelect<'a> {
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<String>> {
+    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<usize>> {
         self._interact_on(term, true)
     }
 
@@ -251,7 +251,7 @@ impl<'a> FuzzySelect<'a> {
                     if let Some(ref prompt) = self.prompt {
                         render.input_prompt_selection(prompt, &filtered_list[sel].0)?;
                     }
-                    return Ok(Some(filtered_list[sel].0.to_owned()));
+                    return Ok(Some(sel));
                 },
                 Key::Backspace => {
                     search_term.pop();
