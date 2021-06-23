@@ -160,6 +160,7 @@ impl<'a> FuzzySelect<'a> {
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
         let mut page = 0;
+        let mut position = 0;
         let mut capacity = self.items.len();
         let mut search_term = String::new();
 
@@ -233,25 +234,15 @@ impl<'a> FuzzySelect<'a> {
                             % (filtered_list.len() as i64)) as usize;
                     }
                 }
-                Key::ArrowLeft => {
-                    if self.paged {
-                        if page == 0 {
-                            page = pages - 1;
-                        } else {
-                            page = page - 1;
-                        }
-                        sel = page * capacity;
-                    }
+                Key::ArrowLeft if position > 0 => {
+                    term.move_cursor_left(1)?;
+                    position -= 1;
+                    term.flush()?;
                 }
-                Key::ArrowRight => {
-                    if self.paged {
-                        if page == pages - 1 {
-                            page = 0;
-                        } else {
-                            page = page + 1;
-                        }
-                        sel = page * capacity;
-                    }
+                Key::ArrowRight if position < search_term.len() => {
+                    term.move_cursor_right(1)?;
+                    position += 1;
+                    term.flush()?;
                 }
                 Key::Enter if filtered_list.len() > 0 => {
                     if self.clear {
@@ -262,23 +253,47 @@ impl<'a> FuzzySelect<'a> {
                     }
 
                     let sel_string = filtered_list[sel].0;
-                    let sel_string_pos_in_items = self.items
-                        .iter()
-                        .position(|item| item.eq(sel_string));
+                    let sel_string_pos_in_items =
+                        self.items.iter().position(|item| item.eq(sel_string));
 
                     return Ok(sel_string_pos_in_items);
                 }
-                Key::Backspace => {
-                    search_term.pop();
-                }
-                Key::Char(key) => {
-                    if self.ignore_casing {
-                        search_term.push(key.to_lowercase().to_string().pop().unwrap());
-                    } else {
-                        search_term.push(key);
+                Key::Backspace if position > 0 => {
+                    position -= 1;
+                    search_term.remove(position);
+                    term.clear_chars(1)?;
+
+                    let tail = search_term[position..].to_string();
+
+                    if !tail.is_empty() {
+                        term.write_str(&tail)?;
+                        term.move_cursor_left(tail.len())?;
                     }
+
+                    term.flush()?;
+                }
+                Key::Char(chr) if !chr.is_ascii_control() => {
+                    // search_term.insert(position, chr);
+                    if self.ignore_casing {
+                        search_term.insert(position, chr.to_lowercase().to_string().pop().unwrap());
+                    } else {
+                        search_term.insert(position, chr);
+                    }
+
+                    position += 1;
+
+                    let tail = search_term[position..].to_string();
+
+                    if !tail.is_empty() {
+                        term.write_str(&tail)?;
+                        term.move_cursor_left(tail.len() - 1)?;
+                    }
+
+                    term.flush()?;
+
                     sel = 0;
                 }
+
                 _ => {}
             }
             if filtered_list.len() > 0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
