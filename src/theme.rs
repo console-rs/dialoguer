@@ -559,6 +559,7 @@ impl Theme for ColorfulTheme {
     }
 
     /// Formats an input prompt after selection.
+    #[cfg(feature = "fuzzy-select")]
     fn format_fuzzy_select_prompt(
         &self,
         f: &mut dyn fmt::Write,
