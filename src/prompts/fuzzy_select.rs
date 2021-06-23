@@ -188,10 +188,7 @@ impl<'a> FuzzySelect<'a> {
             // Maps all items to a tuple of item and its match score.
             let mut filtered_list = self.items.iter()
                 .map(|item| (item, matcher.fuzzy_match(item, &search_term)))
-                .filter_map(|(item, score)| match score {
-                    Some(score) => Some((item, score)),
-                    _ => None,
-                })
+                .filter_map(|(item, score)| score.map(|s| (item, s)))
                 .collect::<Vec<_>>();
 
             // Renders all matching items, from best match to worst.
