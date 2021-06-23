@@ -168,7 +168,7 @@ impl<'a> FuzzySelect<'a> {
             capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
         }
 
-        let pages = (self.items.len() / capacity) + 1;
+        let pages = (self.items.len() as f64 / capacity as f64).ceil() as usize;
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
