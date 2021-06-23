@@ -251,11 +251,17 @@ impl<'a> FuzzySelect<'a> {
                     if let Some(ref prompt) = self.prompt {
                         render.input_prompt_selection(prompt, &filtered_list[sel].0)?;
                     }
-                    return Ok(Some(sel));
-                },
+
+                    let sel_string = filtered_list[sel].0;
+                    let sel_string_pos_in_items = self.items
+                        .iter()
+                        .position(|item| item.eq(sel_string));
+
+                    return Ok(sel_string_pos_in_items);
+                }
                 Key::Backspace => {
                     search_term.pop();
-                },
+                }
                 Key::Char(key) => {
                     if self.ignore_casing {
                         search_term.push(key.to_lowercase().to_string().pop().unwrap());
