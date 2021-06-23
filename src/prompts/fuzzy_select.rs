@@ -219,6 +219,7 @@ impl<'a> FuzzySelect<'a> {
                 Key::Escape => {
                     if allow_quit {
                         if self.clear {
+                            term.clear_last_lines(filtered_list.len())?;
                             term.flush()?
                         }
                         return Ok(None);
