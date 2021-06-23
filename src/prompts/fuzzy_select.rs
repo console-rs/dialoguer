@@ -106,7 +106,7 @@ impl<'a> FuzzySelect<'a> {
     }
 
     /// Add a single item to the fuzzy selector.
-    pub fn item(&mut self, item: &str) -> &mut FuzzySelect<'a> {
+    pub fn item<T: ToString>(&mut self, item: T) -> &mut FuzzySelect<'a> {
         self.items.push(item.to_string());
         self
     }
@@ -123,7 +123,7 @@ impl<'a> FuzzySelect<'a> {
     ///
     /// When a prompt is set the system also prints out a confirmation after
     /// the fuzzy selection.
-    pub fn with_prompt(&mut self, prompt: &str) -> &mut FuzzySelect<'a> {
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut FuzzySelect<'a> {
         self.prompt = Some(prompt.to_string());
         self
     }
