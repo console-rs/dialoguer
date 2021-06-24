@@ -202,7 +202,6 @@ impl<'a> FuzzySelect<'a> {
                 capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
             }
 
-            // TODO: Need to move cursor to the prompt and flush here.
             for (idx, (item, _)) in filtered_list
                 .iter()
                 .enumerate()
@@ -210,6 +209,7 @@ impl<'a> FuzzySelect<'a> {
                 .take(capacity)
             {
                 render.select_prompt_item(item, idx == sel)?;
+                term.flush()?
             }
 
             match term.read_key()? {
