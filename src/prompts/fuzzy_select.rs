@@ -40,7 +40,7 @@ use std::{io, ops::Rem};
 pub struct FuzzySelect<'a> {
     default: usize,
     items: Vec<String>,
-    prompt: Option<String>,
+    prompt: String,
     clear: bool,
     theme: &'a dyn Theme,
     paged: bool,
@@ -60,7 +60,7 @@ impl<'a> FuzzySelect<'a> {
         FuzzySelect {
             default: !0,
             items: vec![],
-            prompt: None,
+            prompt: "".into(),
             clear: true,
             theme,
             paged: false,
@@ -127,7 +127,7 @@ impl<'a> FuzzySelect<'a> {
     /// When a prompt is set the system also prints out a confirmation after
     /// the fuzzy selection.
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut FuzzySelect<'a> {
-        self.prompt = Some(prompt.into());
+        self.prompt = prompt.into();
         self
     }
 
@@ -185,7 +185,8 @@ impl<'a> FuzzySelect<'a> {
 
         loop {
             render.clear()?;
-            render.fuzzy_select_prompt(self.prompt.as_deref(), &search_term)?;
+            render.fuzzy_select_prompt(self.prompt.as_str(), &search_term)?;
+            term.hide_cursor()?;
 
             // Maps all items to a tuple of item and its match score.
             let mut filtered_list = self
@@ -250,9 +251,9 @@ impl<'a> FuzzySelect<'a> {
                     if self.clear {
                         render.clear()?;
                     }
-                    if let Some(ref prompt) = self.prompt {
-                        render.input_prompt_selection(prompt, &filtered_list[sel].0)?;
-                    }
+
+                    
+                    render.input_prompt_selection(self.prompt.as_str(), &filtered_list[sel].0)?;
 
                     let sel_string = filtered_list[sel].0;
                     let sel_string_pos_in_items =

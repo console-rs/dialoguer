@@ -209,12 +209,13 @@ pub trait Theme {
     fn format_fuzzy_select_prompt(
         &self,
         f: &mut dyn fmt::Write,
-        prompt: Option<&str>,
+        prompt: &str,
         search_term: &str,
     ) -> fmt::Result {
-        match prompt {
-            Some(prompt) => write!(f, "{}: {}", prompt, search_term),
-            None => write!(f, "> {}", search_term),
+        if prompt.is_empty() {
+            write!(f, "> {}", search_term)
+        } else {
+            write!(f, "{}: {}", prompt, search_term)
         }
     }
 }
@@ -563,18 +564,17 @@ impl Theme for ColorfulTheme {
     fn format_fuzzy_select_prompt(
         &self,
         f: &mut dyn fmt::Write,
-        prompt: Option<&str>,
+        prompt: &str,
         search_term: &str,
     ) -> fmt::Result {
-        if let Some(prompt) = prompt {
-            if !prompt.is_empty() {
-                write!(
-                    f,
-                    "{} {} ",
-                    &self.prompt_prefix,
-                    self.prompt_style.apply_to(prompt)
-                )?;
-            }
+        
+        if !prompt.is_empty() {
+            write!(
+                f,
+                "{} {} ",
+                &self.prompt_prefix,
+                self.prompt_style.apply_to(prompt)
+            )?;
         }
 
         write!(
@@ -671,7 +671,7 @@ impl<'a> TermThemeRenderer<'a> {
     }
 
     #[cfg(feature = "fuzzy-select")]
-    pub fn fuzzy_select_prompt(&mut self, prompt: Option<&str>, search_term: &str) -> io::Result<()> {
+    pub fn fuzzy_select_prompt(&mut self, prompt: &str, search_term: &str) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_fuzzy_select_prompt(buf, prompt, search_term)
         })
