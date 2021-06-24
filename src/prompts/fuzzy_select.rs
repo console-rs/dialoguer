@@ -251,7 +251,6 @@ impl<'a> FuzzySelect<'a> {
                     if self.clear {
                         render.clear()?;
                     }
-
                     
                     render.input_prompt_selection(self.prompt.as_str(), &filtered_list[sel].0)?;
 
@@ -264,15 +263,6 @@ impl<'a> FuzzySelect<'a> {
                 Key::Backspace if position > 0 => {
                     position -= 1;
                     search_term.remove(position);
-                    term.clear_chars(1)?;
-
-                    let tail = search_term[position..].to_string();
-
-                    if !tail.is_empty() {
-                        term.write_str(&tail)?;
-                        term.move_cursor_left(tail.len())?;
-                    }
-
                     term.flush()?;
                 }
                 Key::Char(chr) if !chr.is_ascii_control() => {
@@ -283,13 +273,6 @@ impl<'a> FuzzySelect<'a> {
                     }
 
                     position += 1;
-
-                    let tail = search_term[position..].to_string();
-
-                    if !tail.is_empty() {
-                        term.write_str(&tail)?;
-                        term.move_cursor_left(tail.len() - 1)?;
-                    }
 
                     term.flush()?;
 
