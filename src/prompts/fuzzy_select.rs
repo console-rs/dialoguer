@@ -46,7 +46,7 @@ pub struct FuzzySelect<'a> {
     paged: bool,
     offset: usize,
     lines_per_item: usize,
-    ignore_casing: bool,
+    fuzzy_search_is_case_sensitive: bool,
 }
 
 impl<'a> FuzzySelect<'a> {
@@ -66,7 +66,7 @@ impl<'a> FuzzySelect<'a> {
             paged: false,
             offset: 1,
             lines_per_item: 1,
-            ignore_casing: true,
+            fuzzy_search_is_case_sensitive: false,
         }
     }
 
@@ -104,7 +104,7 @@ impl<'a> FuzzySelect<'a> {
 
     /// Specify whether casing should be ignored in matches
     pub fn ignore_casing(&mut self, val: bool) -> &mut FuzzySelect<'a> {
-        self.ignore_casing = val;
+        self.fuzzy_search_is_case_sensitive = val;
         self
     }
 
@@ -198,6 +198,7 @@ impl<'a> FuzzySelect<'a> {
             // Renders all matching items, from best match to worst.
             filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(&s1));
             capacity = filtered_list.len();
+
             if self.paged {
                 capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
             }
@@ -274,10 +275,10 @@ impl<'a> FuzzySelect<'a> {
                     term.flush()?;
                 }
                 Key::Char(chr) if !chr.is_ascii_control() => {
-                    if self.ignore_casing {
-                        search_term.insert(position, chr.to_lowercase().to_string().pop().unwrap());
-                    } else {
+                    if self.fuzzy_search_is_case_sensitive {
                         search_term.insert(position, chr);
+                    } else {
+                        search_term.insert(position, chr.to_lowercase().to_string().pop().unwrap());
                     }
 
                     position += 1;
