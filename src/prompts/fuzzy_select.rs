@@ -214,13 +214,6 @@ impl<'a> FuzzySelect<'a> {
             }
 
             match term.read_key()? {
-                Key::ArrowDown => {
-                    if sel == !0 {
-                        sel = 0;
-                    } else {
-                        sel = (sel as u64 + 1).rem(filtered_list.len() as u64) as usize;
-                    }
-                }
                 Key::Escape if allow_quit => {
                     if self.clear {
                         term.clear_last_lines(filtered_list.len())?;
@@ -234,6 +227,13 @@ impl<'a> FuzzySelect<'a> {
                     } else {
                         sel = ((sel as i64 - 1 + filtered_list.len() as i64)
                             % (filtered_list.len() as i64)) as usize;
+                    }
+                }
+                Key::ArrowDown if filtered_list.len() > 0 => {
+                    if sel == !0 {
+                        sel = 0;
+                    } else {
+                        sel = (sel as u64 + 1).rem(filtered_list.len() as u64) as usize;
                     }
                 }
                 Key::ArrowLeft if position > 0 => {
