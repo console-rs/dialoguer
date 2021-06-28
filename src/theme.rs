@@ -559,7 +559,7 @@ impl Theme for ColorfulTheme {
         write!(f, "{} {}", details.0, details.1)
     }
 
-    /// Formats an input prompt after selection.
+    /// Formats a fuzzy-selectprompt after selection.
     #[cfg(feature = "fuzzy-select")]
     fn format_fuzzy_select_prompt(
         &self,
@@ -567,7 +567,7 @@ impl Theme for ColorfulTheme {
         prompt: &str,
         search_term: &str,
     ) -> fmt::Result {
-        
+
         if !prompt.is_empty() {
             write!(
                 f,
