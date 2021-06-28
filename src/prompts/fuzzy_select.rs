@@ -183,6 +183,8 @@ impl<'a> FuzzySelect<'a> {
         // Fuzzy matcher
         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
 
+        term.hide_cursor()?;
+
         loop {
             render.clear()?;
             render.fuzzy_select_prompt(self.prompt.as_str(), &search_term)?;
@@ -219,6 +221,7 @@ impl<'a> FuzzySelect<'a> {
                         term.clear_last_lines(filtered_list.len())?;
                         term.flush()?
                     }
+                    term.show_cursor()?;
                     return Ok(None);
                 }
                 Key::ArrowUp if filtered_list.len() > 0 => {
@@ -257,6 +260,7 @@ impl<'a> FuzzySelect<'a> {
                     let sel_string_pos_in_items =
                         self.items.iter().position(|item| item.eq(sel_string));
 
+                    term.show_cursor()?;
                     return Ok(sel_string_pos_in_items);
                 }
                 Key::Backspace if position > 0 => {
