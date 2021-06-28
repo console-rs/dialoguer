@@ -186,8 +186,7 @@ impl<'a> FuzzySelect<'a> {
         loop {
             render.clear()?;
             render.fuzzy_select_prompt(self.prompt.as_str(), &search_term)?;
-            term.hide_cursor()?;
-
+            
             // Maps all items to a tuple of item and its match score.
             let mut filtered_list = self
                 .items
@@ -229,6 +228,7 @@ impl<'a> FuzzySelect<'a> {
                         sel = ((sel as i64 - 1 + filtered_list.len() as i64)
                             % (filtered_list.len() as i64)) as usize;
                     }
+                    term.flush()?;
                 }
                 Key::ArrowDown if filtered_list.len() > 0 => {
                     if sel == !0 {
@@ -236,14 +236,13 @@ impl<'a> FuzzySelect<'a> {
                     } else {
                         sel = (sel as u64 + 1).rem(filtered_list.len() as u64) as usize;
                     }
+                    term.flush()?;
                 }
                 Key::ArrowLeft if position > 0 => {
-                    term.move_cursor_left(1)?;
                     position -= 1;
                     term.flush()?;
                 }
                 Key::ArrowRight if position < search_term.len() => {
-                    term.move_cursor_right(1)?;
                     position += 1;
                     term.flush()?;
                 }
