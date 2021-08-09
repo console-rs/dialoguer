@@ -287,6 +287,8 @@ impl<'a> FuzzySelect<'a> {
             if filtered_list.len() > 0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
                 page = sel / capacity;
             }
+            
+            render.clear_preserve_prompt(&size_vec)?;
         }
     }
 }
