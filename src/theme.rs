@@ -293,6 +293,9 @@ pub struct ColorfulTheme {
     pub picked_item_prefix: StyledObject<String>,
     /// Unpicked item in sort prefix value and style
     pub unpicked_item_prefix: StyledObject<String>,
+    /// Formats the cursor for a fuzzy select prompt
+    #[cfg(feature = "fuzzy-select")]
+    pub fuzzy_cursor_style: Style,
     /// Show the selections from certain prompts inline
     pub inline_selections: bool,
 }
@@ -318,6 +321,8 @@ impl Default for ColorfulTheme {
             unchecked_item_prefix: style("✔".to_string()).for_stderr().black(),
             picked_item_prefix: style("❯".to_string()).for_stderr().green(),
             unpicked_item_prefix: style(" ".to_string()).for_stderr(),
+            #[cfg(feature = "fuzzy-select")]
+            fuzzy_cursor_style: Style::new().for_stderr().black().on_white(),
             inline_selections: true,
         }
     }
@@ -611,7 +616,7 @@ impl Theme for ColorfulTheme {
         if cursor_pos < search_term.len() {
             let st_head = search_term[0..cursor_pos].to_string();
             let st_tail = search_term[cursor_pos+1..search_term.len()].to_string();
-            let st_cursor = style(search_term.to_string().chars().nth(cursor_pos).unwrap()).black().on_white();  
+            let st_cursor = self.fuzzy_cursor_style.apply_to(search_term.to_string().chars().nth(cursor_pos).unwrap());
             write!(
                 f,
                 "{} {}{}{}",
@@ -621,7 +626,7 @@ impl Theme for ColorfulTheme {
                 st_tail
             )  
         } else {
-            let cursor = style(" ".to_string()).black().on_white();  
+            let cursor = self.fuzzy_cursor_style.apply_to(" ");
             write!(
                 f,
                 "{} {}{}",
