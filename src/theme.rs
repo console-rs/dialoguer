@@ -213,14 +213,39 @@ pub trait Theme {
         search_term: &str,
         cursor_pos: usize
     ) -> fmt::Result {
-        let st_head = search_term[0..cursor_pos-1].to_string();
-        let st_tail = search_term[cursor_pos+1..search_term.len()].to_string();
-        let st_cursor = style(search_term.to_string().chars().nth(cursor_pos).unwrap()).on_white();
 
         if prompt.is_empty() {
-            write!(f, "> {}{}{}", st_head, st_cursor, st_tail)
+            write!(
+                f,
+                "> ",
+            )?;
         } else {
-            write!(f, "{}: {}{}{}", prompt, st_head, st_cursor, st_tail)
+            write!(
+                f,
+                "{} ",
+                prompt,
+            )?;
+        }
+
+        if cursor_pos < search_term.len() {
+            let st_head = search_term[0..cursor_pos].to_string();
+            let st_tail = search_term[cursor_pos+1..search_term.len()].to_string();
+            let st_cursor = style(search_term.to_string().chars().nth(cursor_pos).unwrap()).black().on_white();  
+            write!(
+                f,
+                "{}{}{}",
+                st_head,
+                st_cursor,
+                st_tail
+            )  
+        } else {
+            let cursor = style(" ".to_string()).black().on_white();  
+            write!(
+                f,
+                "{}{}",
+                search_term.to_string(),
+                cursor
+            )
         }
     }
 }
