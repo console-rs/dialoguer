@@ -187,7 +187,7 @@ impl<'a> FuzzySelect<'a> {
 
         loop {
             render.clear()?;
-            render.fuzzy_select_prompt(self.prompt.as_str(), &search_term)?;
+            render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, position)?;
             
             // Maps all items to a tuple of item and its match score.
             let mut filtered_list = self

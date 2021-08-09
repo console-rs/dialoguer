@@ -211,11 +211,16 @@ pub trait Theme {
         f: &mut dyn fmt::Write,
         prompt: &str,
         search_term: &str,
+        cursor_pos: usize
     ) -> fmt::Result {
+        let st_head = search_term[0..cursor_pos-1].to_string();
+        let st_tail = search_term[cursor_pos+1..search_term.len()].to_string();
+        let st_cursor = style(search_term.to_string().chars().nth(cursor_pos).unwrap()).on_white();
+
         if prompt.is_empty() {
-            write!(f, "> {}", search_term)
+            write!(f, "> {}{}{}", st_head, st_cursor, st_tail)
         } else {
-            write!(f, "{}: {}", prompt, search_term)
+            write!(f, "{}: {}{}{}", prompt, st_head, st_cursor, st_tail)
         }
     }
 }
@@ -566,6 +571,7 @@ impl Theme for ColorfulTheme {
         f: &mut dyn fmt::Write,
         prompt: &str,
         search_term: &str,
+        cursor_pos: usize
     ) -> fmt::Result {
 
         if !prompt.is_empty() {
@@ -577,12 +583,28 @@ impl Theme for ColorfulTheme {
             )?;
         }
 
-        write!(
-            f,
-            "{} {}",
-            &self.prompt_suffix,
-            self.hint_style.apply_to(search_term)
-        )
+        if cursor_pos < search_term.len() {
+            let st_head = search_term[0..cursor_pos].to_string();
+            let st_tail = search_term[cursor_pos+1..search_term.len()].to_string();
+            let st_cursor = style(search_term.to_string().chars().nth(cursor_pos).unwrap()).black().on_white();  
+            write!(
+                f,
+                "{} {}{}{}",
+                &self.prompt_suffix,
+                st_head,
+                st_cursor,
+                st_tail
+            )  
+        } else {
+            let cursor = style(" ".to_string()).black().on_white();  
+            write!(
+                f,
+                "{} {}{}",
+                &self.prompt_suffix,
+                search_term.to_string(),
+                cursor
+            )
+        }
     }
 }
 
@@ -671,9 +693,9 @@ impl<'a> TermThemeRenderer<'a> {
     }
 
     #[cfg(feature = "fuzzy-select")]
-    pub fn fuzzy_select_prompt(&mut self, prompt: &str, search_term: &str) -> io::Result<()> {
+    pub fn fuzzy_select_prompt(&mut self, prompt: &str, search_term: &str, cursor_pos: usize) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
-            this.theme.format_fuzzy_select_prompt(buf, prompt, search_term)
+            this.theme.format_fuzzy_select_prompt(buf, prompt, search_term, cursor_pos)
         })
     }
 
