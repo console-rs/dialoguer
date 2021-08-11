@@ -203,6 +203,46 @@ pub trait Theme {
             text
         )
     }
+
+    /// Formats a fuzzy select prompt.
+    #[cfg(feature = "fuzzy-select")]
+    fn format_fuzzy_select_prompt(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        search_term: &str,
+        cursor_pos: usize
+    ) -> fmt::Result {
+
+        if !prompt.is_empty() {
+            write!(
+                f,
+                "{} ",
+                prompt,
+            )?;
+        }
+
+        if cursor_pos < search_term.len() {
+            let st_head = search_term[0..cursor_pos].to_string();
+            let st_tail = search_term[cursor_pos..search_term.len()].to_string();
+            let st_cursor = "|".to_string();  
+            write!(
+                f,
+                "{}{}{}",
+                st_head,
+                st_cursor,
+                st_tail
+            )
+        } else {
+            let cursor = "|".to_string();  
+            write!(
+                f,
+                "{}{}",
+                search_term.to_string(),
+                cursor
+            )
+        }
+    }
 }
 
 /// The default theme.
@@ -248,6 +288,9 @@ pub struct ColorfulTheme {
     pub picked_item_prefix: StyledObject<String>,
     /// Unpicked item in sort prefix value and style
     pub unpicked_item_prefix: StyledObject<String>,
+    /// Formats the cursor for a fuzzy select prompt
+    #[cfg(feature = "fuzzy-select")]
+    pub fuzzy_cursor_style: Style,
     /// Show the selections from certain prompts inline
     pub inline_selections: bool,
 }
@@ -273,6 +316,8 @@ impl Default for ColorfulTheme {
             unchecked_item_prefix: style("✔".to_string()).for_stderr().black(),
             picked_item_prefix: style("❯".to_string()).for_stderr().green(),
             unpicked_item_prefix: style(" ".to_string()).for_stderr(),
+            #[cfg(feature = "fuzzy-select")]
+            fuzzy_cursor_style: Style::new().for_stderr().black().on_white(),
             inline_selections: true,
         }
     }
@@ -543,6 +588,49 @@ impl Theme for ColorfulTheme {
 
         write!(f, "{} {}", details.0, details.1)
     }
+
+    /// Formats a fuzzy-selectprompt after selection.
+    #[cfg(feature = "fuzzy-select")]
+    fn format_fuzzy_select_prompt(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        search_term: &str,
+        cursor_pos: usize
+    ) -> fmt::Result {
+
+        if !prompt.is_empty() {
+            write!(
+                f,
+                "{} {} ",
+                &self.prompt_prefix,
+                self.prompt_style.apply_to(prompt)
+            )?;
+        }
+
+        if cursor_pos < search_term.len() {
+            let st_head = search_term[0..cursor_pos].to_string();
+            let st_tail = search_term[cursor_pos+1..search_term.len()].to_string();
+            let st_cursor = self.fuzzy_cursor_style.apply_to(search_term.to_string().chars().nth(cursor_pos).unwrap());
+            write!(
+                f,
+                "{} {}{}{}",
+                &self.prompt_suffix,
+                st_head,
+                st_cursor,
+                st_tail
+            )  
+        } else {
+            let cursor = self.fuzzy_cursor_style.apply_to(" ");
+            write!(
+                f,
+                "{} {}{}",
+                &self.prompt_suffix,
+                search_term.to_string(),
+                cursor
+            )
+        }
+    }
 }
 
 /// Helper struct to conveniently render a theme ot a term.
@@ -626,6 +714,13 @@ impl<'a> TermThemeRenderer<'a> {
     pub fn confirm_prompt_selection(&mut self, prompt: &str, sel: Option<bool>) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_confirm_prompt_selection(buf, prompt, sel)
+        })
+    }
+
+    #[cfg(feature = "fuzzy-select")]
+    pub fn fuzzy_select_prompt(&mut self, prompt: &str, search_term: &str, cursor_pos: usize) -> io::Result<()> {
+        self.write_formatted_prompt(|this, buf| {
+            this.theme.format_fuzzy_select_prompt(buf, prompt, search_term, cursor_pos)
         })
     }
 
