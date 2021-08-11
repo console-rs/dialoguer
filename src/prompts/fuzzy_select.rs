@@ -33,16 +33,12 @@ use std::{io, ops::Rem};
 /// }
 /// ```
 
-// TODO: I don't think we need this. Ideally dialoguer should figure out the number of lines and intelligently do display them.
 pub struct FuzzySelect<'a> {
     default: usize,
     items: Vec<String>,
     prompt: String,
     clear: bool,
     theme: &'a dyn Theme,
-    paged: bool,
-    offset: usize,
-    lines_per_item: usize,
 }
 
 impl<'a> FuzzySelect<'a> {
@@ -59,16 +55,7 @@ impl<'a> FuzzySelect<'a> {
             prompt: "".into(),
             clear: true,
             theme,
-            paged: false,
-            offset: 1,
-            lines_per_item: 1
         }
-    }
-
-    /// Enables or disables paging
-    pub fn paged(&mut self, val: bool) -> &mut FuzzySelect<'a> {
-        self.paged = val;
-        self
     }
 
     /// Sets the clear behavior of the menu.
@@ -82,18 +69,6 @@ impl<'a> FuzzySelect<'a> {
     /// Sets a default for the menu
     pub fn default(&mut self, val: usize) -> &mut FuzzySelect<'a> {
         self.default = val;
-        self
-    }
-
-    /// Sets number of lines paged offset includes
-    pub fn offset(&mut self, val: usize) -> &mut FuzzySelect<'a> {
-        self.offset = val;
-        self
-    }
-
-    /// Enables or disables paging
-    pub fn lines_per_item(&mut self, val: usize) -> &mut FuzzySelect<'a> {
-        self.lines_per_item = val;
         self
     }
 
@@ -150,16 +125,9 @@ impl<'a> FuzzySelect<'a> {
 
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
-        let mut page = 0;
         let mut position = 0;
-        let mut capacity = self.items.len();
         let mut search_term = String::new();
 
-        if self.paged {
-            capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
-        }
-
-        let _pages = (self.items.len() as f64 / capacity as f64).ceil() as usize;
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
@@ -188,17 +156,10 @@ impl<'a> FuzzySelect<'a> {
 
             // Renders all matching items, from best match to worst.
             filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(&s1));
-            capacity = filtered_list.len();
-
-            if self.paged {
-                capacity = (term.size().0 as usize) / self.lines_per_item - self.offset;
-            }
 
             for (idx, (item, _)) in filtered_list
                 .iter()
                 .enumerate()
-                .skip(page * capacity)
-                .take(capacity)
             {
                 render.select_prompt_item(item, idx == sel)?;
                 term.flush()?;
@@ -265,9 +226,6 @@ impl<'a> FuzzySelect<'a> {
                 }
 
                 _ => {}
-            }
-            if filtered_list.len() > 0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
-                page = sel / capacity;
             }
 
             render.clear_preserve_prompt(&size_vec)?;
