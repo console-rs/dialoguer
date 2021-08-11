@@ -164,7 +164,37 @@ where
         self
     }
 
-    /// Enable history
+    /// Enable history processing
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use dialoguer::Input;
+    /// # use std::collections::VecDeque;
+    /// let mut history = VecDeque::<String>::new();
+    /// loop {
+    ///     if let Ok(input) = Input::<String>::new()
+    ///         .with_prompt("hist")
+    ///         .history_with(|pos: usize, val_opt: Option<&String>| {
+    ///             // If the option has a value it should be stored in
+    ///             // history.  Otherwise, the pos argument can be used
+    ///             // to lookup a value from your history.  This value
+    ///             // represents how many times the up/down arrow has been
+    ///             // pressed and would normally be an index into a
+    ///             // vector.
+    ///             if let Some(val) = val_opt {
+    ///                 history.push_front(val.clone());
+    ///                 None
+    ///             } else {
+    ///                 history.get(pos).cloned()
+    ///             }
+    ///         })
+    ///         .interact_text()
+    ///     {
+    ///         // Do something with the input
+    ///     }
+    /// }
+    /// ```
     pub fn history_with<R>(&mut self, history: R) -> &mut Input<'a, T>
     where
         R: FnMut(usize, Option<&T>) -> Option<String> + 'a,
