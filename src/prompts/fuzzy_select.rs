@@ -1,4 +1,4 @@
-use crate::{theme::{SimpleTheme, TermThemeRenderer, Theme}};
+use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 use console::{Key, Term};
 use fuzzy_matcher::FuzzyMatcher;
 use std::{io, ops::Rem};
@@ -43,7 +43,6 @@ pub struct FuzzySelect<'a> {
     paged: bool,
     offset: usize,
     lines_per_item: usize,
-    ignore_casing: bool,
 }
 
 impl<'a> FuzzySelect<'a> {
@@ -62,8 +61,7 @@ impl<'a> FuzzySelect<'a> {
             theme,
             paged: false,
             offset: 1,
-            lines_per_item: 1,
-            ignore_casing: false,
+            lines_per_item: 1
         }
     }
 
@@ -96,12 +94,6 @@ impl<'a> FuzzySelect<'a> {
     /// Enables or disables paging
     pub fn lines_per_item(&mut self, val: usize) -> &mut FuzzySelect<'a> {
         self.lines_per_item = val;
-        self
-    }
-
-    /// Specify whether casing should be ignored in matches
-    pub fn ignore_casing(&mut self, val: bool) -> &mut FuzzySelect<'a> {
-        self.ignore_casing = val;
         self
     }
 
@@ -185,7 +177,7 @@ impl<'a> FuzzySelect<'a> {
         loop {
             render.clear()?;
             render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, position)?;
-            
+
             // Maps all items to a tuple of item and its match score.
             let mut filtered_list = self
                 .items
@@ -250,7 +242,7 @@ impl<'a> FuzzySelect<'a> {
                     if self.clear {
                         render.clear()?;
                     }
-                    
+
                     render.input_prompt_selection(self.prompt.as_str(), &filtered_list[sel].0)?;
 
                     let sel_string = filtered_list[sel].0;
@@ -266,16 +258,9 @@ impl<'a> FuzzySelect<'a> {
                     term.flush()?;
                 }
                 Key::Char(chr) if !chr.is_ascii_control() => {
-                    if self.ignore_casing {
-                        search_term.insert(position, chr);
-                    } else {
-                        search_term.insert(position, chr.to_lowercase().to_string().pop().unwrap());
-                    }
-
+                    search_term.insert(position, chr);
                     position += 1;
-
                     term.flush()?;
-
                     sel = 0;
                 }
 
@@ -284,7 +269,7 @@ impl<'a> FuzzySelect<'a> {
             if filtered_list.len() > 0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
                 page = sel / capacity;
             }
-            
+
             render.clear_preserve_prompt(&size_vec)?;
         }
     }
