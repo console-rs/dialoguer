@@ -45,6 +45,7 @@ pub struct Input<'a, T> {
     theme: &'a dyn Theme,
     permit_empty: bool,
     validator: Option<Box<dyn FnMut(&T) -> Option<String> + 'a>>,
+    history: Option<Box<dyn FnMut(usize, Option<&T>) -> Option<String> + 'a>>,
 }
 
 impl<'a, T> Default for Input<'a, T>
@@ -77,6 +78,7 @@ where
             theme,
             permit_empty: false,
             validator: None,
+            history: None,
         }
     }
 
@@ -162,6 +164,16 @@ where
         self
     }
 
+    /// Enable history
+    pub fn history_with<R>(&mut self, history: R) -> &mut Input<'a, T>
+    where
+        R: FnMut(usize, Option<&T>) -> Option<String> + 'a,
+        T: 'a,
+    {
+        self.history = Some(Box::new(history));
+        self
+    }
+
     /// Enables the user to enter a printable ascii sequence and returns the result.
     ///
     /// Its difference from [`interact`](#method.interact) is that it only allows ascii characters for string,
@@ -196,6 +208,7 @@ where
 
             let mut chars: Vec<char> = Vec::new();
             let mut position = 0;
+            let mut hist_pos = 0;
 
             if let Some(initial) = self.initial_text.as_ref() {
                 term.write_str(initial)?;
@@ -238,6 +251,53 @@ where
                         position += 1;
                         term.flush()?;
                     }
+                    Key::ArrowUp => {
+                        if let Some(read_history) = &mut self.history {
+                            if let Some(previous) = read_history(hist_pos, None) {
+                                hist_pos += 1;
+                                term.clear_chars(chars.len())?;
+                                chars.clear();
+                                position = 0;
+                                for ch in previous.chars() {
+                                    chars.insert(position, ch);
+                                    position += 1;
+                                }
+                                term.write_str(&previous)?;
+                                term.flush()?;
+                            }
+                        }
+                    }
+                    Key::ArrowDown => {
+                        if let Some(read_history) = &mut self.history {
+                            // Move the history position back one in case we have up arrowed into it
+                            // and the position is sitting on the next to read
+                            if let Some(pos) = hist_pos.checked_sub(1) {
+                                // Move it back again to get the previous history entry
+                                if let Some(pos) = pos.checked_sub(1) {
+                                    hist_pos = pos;
+                                    if let Some(previous) = read_history(hist_pos, None) {
+                                        term.clear_chars(chars.len())?;
+                                        chars.clear();
+                                        position = 0;
+                                        for ch in previous.chars() {
+                                            chars.insert(position, ch);
+                                            position += 1;
+                                        }
+                                        term.write_str(&previous)?;
+                                        term.flush()?;
+                                    }
+                                } else {
+                                    term.clear_chars(chars.len())?;
+                                    chars.clear();
+                                    position = 0;
+                                }
+                            } else {
+                                term.clear_chars(chars.len())?;
+                                chars.clear();
+                                position = 0;
+                            }
+                        }
+                    }
                     Key::Enter => break,
                     Key::Unknown => {
                         return Err(io::Error::new(
@@ -279,6 +339,9 @@ where
                         }
                     }
 
+                    if let Some(history_write) = &mut self.history {
+                        history_write(0, Some(&value));
+                    }
                     render.input_prompt_selection(&self.prompt, &input)?;
                     term.flush()?;
 
