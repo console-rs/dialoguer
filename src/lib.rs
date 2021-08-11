@@ -26,10 +26,10 @@ pub use prompts::{
 };
 pub use validate::Validator;
 
-#[cfg(feature = "editor")]
 #[cfg(feature = "fuzzy-select")]
 pub use prompts::fuzzy_select::FuzzySelect;
 
+#[cfg(feature = "editor")]
 mod edit;
 mod prompts;
 pub mod theme;

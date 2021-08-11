@@ -1,7 +1,4 @@
-use crate::{
-    theme::{SimpleTheme, TermThemeRenderer, Theme},
-    Select,
-};
+use crate::{theme::{SimpleTheme, TermThemeRenderer, Theme}};
 use console::{Key, Term};
 use fuzzy_matcher::FuzzyMatcher;
 use std::{io, ops::Rem};
@@ -46,13 +43,13 @@ pub struct FuzzySelect<'a> {
     paged: bool,
     offset: usize,
     lines_per_item: usize,
-    fuzzy_search_is_case_sensitive: bool,
+    ignore_casing: bool,
 }
 
 impl<'a> FuzzySelect<'a> {
     /// Creates the prompt with a specific text.
-    pub fn new() -> Select<'static> {
-        Select::with_theme(&SimpleTheme)
+    pub fn new() -> FuzzySelect<'static> {
+        FuzzySelect::with_theme(&SimpleTheme)
     }
 
     /// Same as `new` but with a specific theme.
@@ -66,7 +63,7 @@ impl<'a> FuzzySelect<'a> {
             paged: false,
             offset: 1,
             lines_per_item: 1,
-            fuzzy_search_is_case_sensitive: false,
+            ignore_casing: false,
         }
     }
 
@@ -104,7 +101,7 @@ impl<'a> FuzzySelect<'a> {
 
     /// Specify whether casing should be ignored in matches
     pub fn ignore_casing(&mut self, val: bool) -> &mut FuzzySelect<'a> {
-        self.fuzzy_search_is_case_sensitive = val;
+        self.ignore_casing = val;
         self
     }
 
@@ -212,14 +209,14 @@ impl<'a> FuzzySelect<'a> {
                 .take(capacity)
             {
                 render.select_prompt_item(item, idx == sel)?;
-                term.flush()?
+                term.flush()?;
             }
 
             match term.read_key()? {
                 Key::Escape if allow_quit => {
                     if self.clear {
                         term.clear_last_lines(filtered_list.len())?;
-                        term.flush()?
+                        term.flush()?;
                     }
                     term.show_cursor()?;
                     return Ok(None);
@@ -269,7 +266,7 @@ impl<'a> FuzzySelect<'a> {
                     term.flush()?;
                 }
                 Key::Char(chr) if !chr.is_ascii_control() => {
-                    if self.fuzzy_search_is_case_sensitive {
+                    if self.ignore_casing {
                         search_term.insert(position, chr);
                     } else {
                         search_term.insert(position, chr.to_lowercase().to_string().pop().unwrap());

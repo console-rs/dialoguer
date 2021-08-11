@@ -214,12 +214,7 @@ pub trait Theme {
         cursor_pos: usize
     ) -> fmt::Result {
 
-        if prompt.is_empty() {
-            write!(
-                f,
-                "> ",
-            )?;
-        } else {
+        if !prompt.is_empty() {
             write!(
                 f,
                 "{} ",
@@ -229,17 +224,17 @@ pub trait Theme {
 
         if cursor_pos < search_term.len() {
             let st_head = search_term[0..cursor_pos].to_string();
-            let st_tail = search_term[cursor_pos+1..search_term.len()].to_string();
-            let st_cursor = style(search_term.to_string().chars().nth(cursor_pos).unwrap()).black().on_white();  
+            let st_tail = search_term[cursor_pos..search_term.len()].to_string();
+            let st_cursor = "|".to_string();  
             write!(
                 f,
                 "{}{}{}",
                 st_head,
                 st_cursor,
                 st_tail
-            )  
+            )
         } else {
-            let cursor = style(" ".to_string()).black().on_white();  
+            let cursor = "|".to_string();  
             write!(
                 f,
                 "{}{}",
