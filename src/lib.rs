@@ -20,6 +20,8 @@
 pub use console;
 #[cfg(feature = "editor")]
 pub use edit::Editor;
+#[cfg(feature = "history")]
+pub use history::History;
 pub use prompts::{
     confirm::Confirm, input::Input, multi_select::MultiSelect, password::Password, select::Select,
     sort::Sort,
@@ -31,6 +33,8 @@ pub use prompts::fuzzy_select::FuzzySelect;
 
 #[cfg(feature = "editor")]
 mod edit;
+#[cfg(feature = "history")]
+mod history;
 mod prompts;
 pub mod theme;
 mod validate;
