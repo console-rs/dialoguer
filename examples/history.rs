@@ -1,5 +1,5 @@
 use dialoguer::{theme::ColorfulTheme, History, Input};
-use std::{collections::VecDeque, fmt::Display, process, str::FromStr};
+use std::{collections::VecDeque, fmt::Display, process};
 
 fn main() {
     println!("Use 'exit' to quit the prompt");
@@ -42,7 +42,7 @@ impl<T> History<T> for MyHistory {
 
     fn write(&mut self, val: &T)
     where
-        T: Clone + FromStr + Display,
+        T: Clone + Display,
     {
         if self.history.len() == self.max {
             self.history.pop_back();

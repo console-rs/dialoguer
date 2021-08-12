@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use std::fmt::Display;
 
 /// Trait for history handling
 pub trait History<T> {
@@ -14,5 +14,5 @@ pub trait History<T> {
     /// is implemented as a FIFO queue.
     fn write(&mut self, val: &T)
     where
-        T: Clone + FromStr + Display;
+        T: Clone + Display;
 }

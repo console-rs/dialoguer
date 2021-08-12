@@ -174,7 +174,7 @@ where
     ///
     /// ```no_run
     /// # use dialoguer::{History, Input};
-    /// # use std::{collections::VecDeque, fmt::Display, str::FromStr};
+    /// # use std::{collections::VecDeque, fmt::Display};
     /// let mut history = MyHistory::default();
     /// loop {
     ///     if let Ok(input) = Input::<String>::new()
@@ -204,7 +204,7 @@ where
     /// #
     /// #     fn write(&mut self, val: &T)
     /// #     where
-    /// #         T: Clone + FromStr + Display,
+    /// #         T: Clone + Display,
     /// #     {
     /// #         self.history.push_front(val.to_string());
     /// #     }
@@ -254,6 +254,7 @@ where
 
             let mut chars: Vec<char> = Vec::new();
             let mut position = 0;
+            #[cfg(feature = "history")]
             let mut hist_pos = 0;
 
             if let Some(initial) = self.initial_text.as_ref() {
@@ -297,11 +298,54 @@ where
                         position += 1;
                         term.flush()?;
                     }
+                    #[cfg(feature = "history")]
                     Key::ArrowUp => {
-                        self.process_up_arrow(term, &mut chars, &mut position, &mut hist_pos)?;
+                        if let Some(history) = &self.history {
+                            if let Some(previous) = history.read(hist_pos) {
+                                hist_pos += 1;
+                                term.clear_chars(chars.len())?;
+                                chars.clear();
+                                position = 0;
+                                for ch in previous.chars() {
+                                    chars.insert(position, ch);
+                                    position += 1;
+                                }
+                                term.write_str(&previous)?;
+                                term.flush()?;
+                            }
+                        }
                     }
+                    #[cfg(feature = "history")]
                     Key::ArrowDown => {
-                        self.process_down_arrow(term, &mut chars, &mut position, &mut hist_pos)?;
+                        if let Some(history) = &self.history {
+                            // Move the history position back one in case we have up arrowed into it
+                            // and the position is sitting on the next to read
+                            if let Some(pos) = hist_pos.checked_sub(1) {
+                                hist_pos = pos;
+                                // Move it back again to get the previous history entry
+                                if let Some(pos) = pos.checked_sub(1) {
+                                    if let Some(previous) = history.read(pos) {
+                                        term.clear_chars(chars.len())?;
+                                        chars.clear();
+                                        position = 0;
+                                        for ch in previous.chars() {
+                                            chars.insert(position, ch);
+                                            position += 1;
+                                        }
+                                        term.write_str(&previous)?;
+                                        term.flush()?;
+                                    }
+                                } else {
+                                    term.clear_chars(chars.len())?;
+                                    chars.clear();
+                                    position = 0;
+                                }
+                            } else {
+                                term.clear_chars(chars.len())?;
+                                chars.clear();
+                                position = 0;
+                            }
+                        }
                     }
                     Key::Enter => break,
                     Key::Unknown => {
@@ -344,7 +388,10 @@ where
                         }
                     }
 
-                    self.write_history(&value);
+                    #[cfg(feature = "history")]
+                    if let Some(history) = &mut self.history {
+                        history.write(&value);
+                    }
 
                     render.input_prompt_selection(&self.prompt, &input)?;
                     term.flush()?;
@@ -357,103 +404,6 @@ where
                 }
             }
         }
-    }
-
-    #[cfg(feature = "history")]
-    fn write_history(&mut self, value: &T) {
-        if let Some(history) = &mut self.history {
-            history.write(value);
-        }
-    }
-
-    #[cfg(not(feature = "history"))]
-    fn write_history(&mut self, _value: &T) {}
-
-    #[cfg(feature = "history")]
-    fn process_up_arrow(
-        &mut self,
-        term: &Term,
-        chars: &mut Vec<char>,
-        position: &mut usize,
-        hist_pos: &mut usize,
-    ) -> io::Result<()> {
-        if let Some(history) = &self.history {
-            if let Some(previous) = history.read(*hist_pos) {
-                *hist_pos += 1;
-                term.clear_chars(chars.len())?;
-                chars.clear();
-                *position = 0;
-                for ch in previous.chars() {
-                    chars.insert(*position, ch);
-                    *position += 1;
-                }
-                term.write_str(&previous)?;
-                term.flush()?;
-            }
-        }
-        Ok(())
-    }
-
-    #[cfg(not(feature = "history"))]
-    fn process_up_arrow(
-        &mut self,
-        _term: &Term,
-        _chars: &mut Vec<char>,
-        _position: &mut usize,
-        _hist_pos: &mut usize,
-    ) -> io::Result<()> {
-        Ok(())
-    }
-
-    #[cfg(feature = "history")]
-    fn process_down_arrow(
-        &mut self,
-        term: &Term,
-        chars: &mut Vec<char>,
-        position: &mut usize,
-        hist_pos: &mut usize,
-    ) -> io::Result<()> {
-        if let Some(history) = &self.history {
-            // Move the history position back one in case we have up arrowed into it
-            // and the position is sitting on the next to read
-            if let Some(pos) = hist_pos.checked_sub(1) {
-                *hist_pos = pos;
-                // Move it back again to get the previous history entry
-                if let Some(pos) = pos.checked_sub(1) {
-                    if let Some(previous) = history.read(pos) {
-                        term.clear_chars(chars.len())?;
-                        chars.clear();
-                        *position = 0;
-                        for ch in previous.chars() {
-                            chars.insert(*position, ch);
-                            *position += 1;
-                        }
-                        term.write_str(&previous)?;
-                        term.flush()?;
-                    }
-                } else {
-                    term.clear_chars(chars.len())?;
-                    chars.clear();
-                    *position = 0;
-                }
-            } else {
-                term.clear_chars(chars.len())?;
-                chars.clear();
-                *position = 0;
-            }
-        }
-        Ok(())
-    }
-
-    #[cfg(not(feature = "history"))]
-    fn process_down_arrow(
-        &mut self,
-        _term: &Term,
-        _chars: &mut Vec<char>,
-        _position: &mut usize,
-        _hist_pos: &mut usize,
-    ) -> io::Result<()> {
-        Ok(())
     }
 
     /// Enables user interaction and returns the result.
