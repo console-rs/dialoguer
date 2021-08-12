@@ -4,6 +4,8 @@ use std::{
     str::FromStr,
 };
 
+#[cfg(feature = "history")]
+use crate::history::History;
 use crate::{
     theme::{SimpleTheme, TermThemeRenderer, Theme},
     validate::Validator,
@@ -45,6 +47,8 @@ pub struct Input<'a, T> {
     theme: &'a dyn Theme,
     permit_empty: bool,
     validator: Option<Box<dyn FnMut(&T) -> Option<String> + 'a>>,
+    #[cfg(feature = "history")]
+    history: Option<&'a mut dyn History<T>>,
 }
 
 impl<'a, T> Default for Input<'a, T>
@@ -77,6 +81,8 @@ where
             theme,
             permit_empty: false,
             validator: None,
+            #[cfg(feature = "history")]
+            history: None,
         }
     }
 
@@ -162,6 +168,58 @@ where
         self
     }
 
+    /// Enable history processing
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use dialoguer::{History, Input};
+    /// # use std::{collections::VecDeque, fmt::Display};
+    /// let mut history = MyHistory::default();
+    /// loop {
+    ///     if let Ok(input) = Input::<String>::new()
+    ///         .with_prompt("hist")
+    ///         .history_with(&mut history)
+    ///         .interact_text()
+    ///     {
+    ///         // Do something with the input
+    ///     }
+    /// }
+    /// # struct MyHistory {
+    /// #     history: VecDeque<String>,
+    /// # }
+    /// #
+    /// # impl Default for MyHistory {
+    /// #     fn default() -> Self {
+    /// #         MyHistory {
+    /// #             history: VecDeque::new(),
+    /// #         }
+    /// #     }
+    /// # }
+    /// #
+    /// # impl<T> History<T> for MyHistory {
+    /// #     fn read(&self, pos: usize) -> Option<String> {
+    /// #         self.history.get(pos).cloned()
+    /// #     }
+    /// #
+    /// #     fn write(&mut self, val: &T)
+    /// #     where
+    /// #         T: Clone + Display,
+    /// #     {
+    /// #         self.history.push_front(val.to_string());
+    /// #     }
+    /// # }
+    /// ```
+    #[cfg(feature = "history")]
+    pub fn history_with<H>(&mut self, history: &'a mut H) -> &mut Input<'a, T>
+    where
+        H: History<T> + 'a,
+        T: 'a,
+    {
+        self.history = Some(history);
+        self
+    }
+
     /// Enables the user to enter a printable ascii sequence and returns the result.
     ///
     /// Its difference from [`interact`](#method.interact) is that it only allows ascii characters for string,
@@ -196,6 +254,8 @@ where
 
             let mut chars: Vec<char> = Vec::new();
             let mut position = 0;
+            #[cfg(feature = "history")]
+            let mut hist_pos = 0;
 
             if let Some(initial) = self.initial_text.as_ref() {
                 term.write_str(initial)?;
@@ -238,6 +298,55 @@ where
                         position += 1;
                         term.flush()?;
                     }
+                    #[cfg(feature = "history")]
+                    Key::ArrowUp => {
+                        if let Some(history) = &self.history {
+                            if let Some(previous) = history.read(hist_pos) {
+                                hist_pos += 1;
+                                term.clear_chars(chars.len())?;
+                                chars.clear();
+                                position = 0;
+                                for ch in previous.chars() {
+                                    chars.insert(position, ch);
+                                    position += 1;
+                                }
+                                term.write_str(&previous)?;
+                                term.flush()?;
+                            }
+                        }
+                    }
+                    #[cfg(feature = "history")]
+                    Key::ArrowDown => {
+                        if let Some(history) = &self.history {
+                            // Move the history position back one in case we have up arrowed into it
+                            // and the position is sitting on the next to read
+                            if let Some(pos) = hist_pos.checked_sub(1) {
+                                hist_pos = pos;
+                                // Move it back again to get the previous history entry
+                                if let Some(pos) = pos.checked_sub(1) {
+                                    if let Some(previous) = history.read(pos) {
+                                        term.clear_chars(chars.len())?;
+                                        chars.clear();
+                                        position = 0;
+                                        for ch in previous.chars() {
+                                            chars.insert(position, ch);
+                                            position += 1;
+                                        }
+                                        term.write_str(&previous)?;
+                                        term.flush()?;
+                                    }
+                                } else {
+                                    term.clear_chars(chars.len())?;
+                                    chars.clear();
+                                    position = 0;
+                                }
+                            } else {
+                                term.clear_chars(chars.len())?;
+                                chars.clear();
+                                position = 0;
+                            }
+                        }
+                    }
                     Key::Enter => break,
                     Key::Unknown => {
                         return Err(io::Error::new(
@@ -277,6 +386,11 @@ where
                             render.error(&err)?;
                             continue;
                         }
+                    }
+
+                    #[cfg(feature = "history")]
+                    if let Some(history) = &mut self.history {
+                        history.write(&value);
                     }
 
                     render.input_prompt_selection(&self.prompt, &input)?;

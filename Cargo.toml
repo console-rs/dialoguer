@@ -16,9 +16,10 @@ documentation = "https://docs.rs/dialoguer"
 readme = "README.md"
 
 [features]
-default = ["editor"]
+default = ["editor", "history"]
 editor = ["tempfile"]
 fuzzy-select = ["fuzzy-matcher"]
+history = []
 
 [dependencies]
 console = "0.14.1"

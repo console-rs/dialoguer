@@ -211,36 +211,20 @@ pub trait Theme {
         f: &mut dyn fmt::Write,
         prompt: &str,
         search_term: &str,
-        cursor_pos: usize
+        cursor_pos: usize,
     ) -> fmt::Result {
-
         if !prompt.is_empty() {
-            write!(
-                f,
-                "{} ",
-                prompt,
-            )?;
+            write!(f, "{} ", prompt,)?;
         }
 
         if cursor_pos < search_term.len() {
             let st_head = search_term[0..cursor_pos].to_string();
             let st_tail = search_term[cursor_pos..search_term.len()].to_string();
-            let st_cursor = "|".to_string();  
-            write!(
-                f,
-                "{}{}{}",
-                st_head,
-                st_cursor,
-                st_tail
-            )
+            let st_cursor = "|".to_string();
+            write!(f, "{}{}{}", st_head, st_cursor, st_tail)
         } else {
-            let cursor = "|".to_string();  
-            write!(
-                f,
-                "{}{}",
-                search_term.to_string(),
-                cursor
-            )
+            let cursor = "|".to_string();
+            write!(f, "{}{}", search_term.to_string(), cursor)
         }
     }
 }
@@ -596,9 +580,8 @@ impl Theme for ColorfulTheme {
         f: &mut dyn fmt::Write,
         prompt: &str,
         search_term: &str,
-        cursor_pos: usize
+        cursor_pos: usize,
     ) -> fmt::Result {
-
         if !prompt.is_empty() {
             write!(
                 f,
@@ -610,16 +593,15 @@ impl Theme for ColorfulTheme {
 
         if cursor_pos < search_term.len() {
             let st_head = search_term[0..cursor_pos].to_string();
-            let st_tail = search_term[cursor_pos+1..search_term.len()].to_string();
-            let st_cursor = self.fuzzy_cursor_style.apply_to(search_term.to_string().chars().nth(cursor_pos).unwrap());
+            let st_tail = search_term[cursor_pos + 1..search_term.len()].to_string();
+            let st_cursor = self
+                .fuzzy_cursor_style
+                .apply_to(search_term.to_string().chars().nth(cursor_pos).unwrap());
             write!(
                 f,
                 "{} {}{}{}",
-                &self.prompt_suffix,
-                st_head,
-                st_cursor,
-                st_tail
-            )  
+                &self.prompt_suffix, st_head, st_cursor, st_tail
+            )
         } else {
             let cursor = self.fuzzy_cursor_style.apply_to(" ");
             write!(
@@ -718,9 +700,15 @@ impl<'a> TermThemeRenderer<'a> {
     }
 
     #[cfg(feature = "fuzzy-select")]
-    pub fn fuzzy_select_prompt(&mut self, prompt: &str, search_term: &str, cursor_pos: usize) -> io::Result<()> {
+    pub fn fuzzy_select_prompt(
+        &mut self,
+        prompt: &str,
+        search_term: &str,
+        cursor_pos: usize,
+    ) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
-            this.theme.format_fuzzy_select_prompt(buf, prompt, search_term, cursor_pos)
+            this.theme
+                .format_fuzzy_select_prompt(buf, prompt, search_term, cursor_pos)
         })
     }
 
