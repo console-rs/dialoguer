@@ -253,8 +253,12 @@ impl<'a> Select<'a> {
             ));
         }
 
-        let capacity = if self.paged {
-            term.size().0 as usize - 1
+        dbg!(term.size());
+
+        let paging_active = self.paged && (term.size().0 as usize) < self.items.len();
+
+        let capacity = if paging_active {
+            term.size().0 as usize - 2
         } else {
             self.items.len()
         };
@@ -281,6 +285,16 @@ impl<'a> Select<'a> {
         }
 
         loop {
+            if paging_active && page < pages {
+                // This may be redundant to last statement in loop
+                // But is needed to prevent the prompt to be written multiple times
+                term.clear_last_lines(capacity)?;
+
+                if let Some(ref prompt) = self.prompt {
+                    render.select_prompt_with_pages(prompt, page + 1, pages)?;
+                }
+            }
+
             for (idx, item) in self
                 .items
                 .iter()

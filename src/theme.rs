@@ -105,6 +105,12 @@ pub trait Theme {
         self.format_prompt(f, prompt)
     }
 
+    /// Formats a select prompt with pages.
+    fn format_select_prompt_with_pages(&self, f: &mut dyn fmt::Write, prompt: &str, page: usize, pages: usize) -> fmt::Result {
+        self.format_prompt(f, prompt)?;
+        write!(f, " (Page {}/{})", page, pages)
+    }
+
     /// Formats a select prompt after selection.
     #[inline]
     fn format_select_prompt_selection(
@@ -737,6 +743,15 @@ impl<'a> TermThemeRenderer<'a> {
 
     pub fn select_prompt(&mut self, prompt: &str) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| this.theme.format_select_prompt(buf, prompt))
+    }
+
+    pub fn select_prompt_with_pages(
+        &mut self,
+        prompt: &str,
+        page: usize,
+        pages: usize,
+    ) -> io::Result<()> {
+        self.write_formatted_prompt(|this, buf| this.theme.format_select_prompt_with_pages(buf, prompt, page, pages))
     }
 
     pub fn select_prompt_selection(&mut self, prompt: &str, sel: &str) -> io::Result<()> {
