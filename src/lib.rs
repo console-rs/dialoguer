@@ -27,6 +27,7 @@ pub use prompts::{
     sort::Sort,
 };
 pub use validate::Validator;
+pub use paging::Paging;
 
 #[cfg(feature = "fuzzy-select")]
 pub use prompts::fuzzy_select::FuzzySelect;
@@ -38,3 +39,4 @@ mod history;
 mod prompts;
 pub mod theme;
 mod validate;
+mod paging;

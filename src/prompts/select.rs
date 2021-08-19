@@ -1,6 +1,7 @@
 use std::{io, ops::Rem};
 
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
+use crate::paging::Paging;
 
 use console::{Key, Term};
 
@@ -244,7 +245,7 @@ impl<'a> Select<'a> {
 
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
-        let mut page = 0;
+        let mut paging = Paging::new(term, &self.items);
 
         if self.items.is_empty() {
             return Err(io::Error::new(
@@ -252,18 +253,6 @@ impl<'a> Select<'a> {
                 "Empty list of items given to `Select`",
             ));
         }
-
-        dbg!(term.size());
-
-        let paging_active = self.paged && (term.size().0 as usize) < self.items.len();
-
-        let capacity = if paging_active {
-            term.size().0 as usize - 2
-        } else {
-            self.items.len()
-        };
-
-        let pages = (self.items.len() as f64 / capacity as f64).ceil() as usize;
 
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
@@ -284,29 +273,22 @@ impl<'a> Select<'a> {
             size_vec.push(*size);
         }
 
+        term.hide_cursor()?;
+
         loop {
-            if paging_active && page < pages {
+            paging.update(sel)?;
+
+            if paging.enabled() {
                 // This may be redundant to last statement in loop
                 // But is needed to prevent the prompt to be written multiple times
-                term.clear_last_lines(capacity)?;
+                term.clear_last_lines(paging.capacity())?;
 
                 if let Some(ref prompt) = self.prompt {
-                    render.select_prompt_with_pages(prompt, page + 1, pages)?;
+                    render.select_prompt_paged(prompt, paging.current_page() + 1, paging.pages())?;
                 }
             }
 
-            for (idx, item) in self
-                .items
-                .iter()
-                .enumerate()
-                .skip(page * capacity)
-                .take(capacity)
-            {
-                render.select_prompt_item(item, sel == idx)?;
-            }
-
-            term.hide_cursor()?;
-            term.flush()?;
+            paging.render_page_items(|idx, item| render.select_prompt_item(item, sel == idx))?;
 
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
@@ -337,24 +319,12 @@ impl<'a> Select<'a> {
                 }
                 Key::ArrowLeft | Key::Char('h') => {
                     if self.paged {
-                        if page == 0 {
-                            page = pages - 1;
-                        } else {
-                            page -= 1;
-                        }
-
-                        sel = page * capacity;
+                        sel = paging.previous_page();
                     }
                 }
                 Key::ArrowRight | Key::Char('l') => {
                     if self.paged {
-                        if page == pages - 1 {
-                            page = 0;
-                        } else {
-                            page += 1;
-                        }
-
-                        sel = page * capacity;
+                        sel = paging.next_page();
                     }
                 }
 
@@ -373,10 +343,6 @@ impl<'a> Select<'a> {
                     return Ok(Some(sel));
                 }
                 _ => {}
-            }
-
-            if sel != !0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
-                page = sel / capacity;
             }
 
             render.clear_preserve_prompt(&size_vec)?;
