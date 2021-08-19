@@ -87,6 +87,7 @@ impl<'a> Select<'a> {
     /// Enables or disables paging
     ///
     /// Paging is disabled by default
+    #[deprecated(since="0.9.0", note="Activating paging has no effect anymore. Paging will be activated automatically if needed.")]
     pub fn paged(&mut self, val: bool) -> &mut Select<'a> {
         self.paged = val;
         self
@@ -278,6 +279,11 @@ impl<'a> Select<'a> {
         loop {
             paging.update(sel)?;
 
+            // This should go somewhere else
+            // We also need to handle the following case:
+            // Paging was active, terminal is resized to a size where paging is disabled
+            // -> (Unpaged) Prompt must be written at the top of the screen
+
             if paging.enabled() {
                 // This may be redundant to last statement in loop
                 // But is needed to prevent the prompt to be written multiple times
@@ -318,12 +324,12 @@ impl<'a> Select<'a> {
                     }
                 }
                 Key::ArrowLeft | Key::Char('h') => {
-                    if self.paged {
+                    if paging.enabled() {
                         sel = paging.previous_page();
                     }
                 }
                 Key::ArrowRight | Key::Char('l') => {
-                    if self.paged {
+                    if paging.enabled() {
                         sel = paging.next_page();
                     }
                 }
