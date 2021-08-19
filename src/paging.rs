@@ -1,4 +1,4 @@
-use std::{fmt, io};
+use std::io;
 
 use console::Term;
 
