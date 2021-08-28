@@ -9,7 +9,7 @@ pub struct Paging<'a> {
     current_page: usize,
     capacity: usize,
     items: &'a Vec<String>,
-    enabled: bool,
+    active: bool,
 }
 
 impl<'a> Paging<'a> {
@@ -25,7 +25,7 @@ impl<'a> Paging<'a> {
             current_page: 0,
             capacity,
             items,
-            enabled: pages > 1,
+            active: pages > 1,
         }
     }
 
@@ -34,7 +34,7 @@ impl<'a> Paging<'a> {
             self.current_term_size = self.term.size();
             self.capacity = self.current_term_size.0 as usize - 2;
             self.pages = (self.items.len() as f64 / self.capacity as f64).ceil() as usize;
-            self.enabled = self.pages > 1;
+            self.active = self.pages > 1;
             self.term.clear_last_lines(self.capacity)?;
         }
 
@@ -48,8 +48,8 @@ impl<'a> Paging<'a> {
         Ok(())
     }
 
-    pub fn enabled(&self) -> bool {
-        self.enabled
+    pub fn active(&self) -> bool {
+        self.active
     }
 
     pub fn capacity(&self) -> usize {

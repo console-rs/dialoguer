@@ -255,12 +255,12 @@ impl<'a> Select<'a> {
             ));
         }
 
-        let mut render = TermThemeRenderer::new(term, self.theme);
+        let mut render = TermThemeRenderer::new(term, self.theme, Some(&self.items));
         let mut sel = self.default;
 
-        if let Some(ref prompt) = self.prompt {
-            render.select_prompt(prompt)?;
-        }
+        // if let Some(ref prompt) = self.prompt {
+        //     render.select_prompt(prompt)?;
+        // }
 
         let mut size_vec = Vec::new();
 
@@ -277,24 +277,25 @@ impl<'a> Select<'a> {
         term.hide_cursor()?;
 
         loop {
-            paging.update(sel)?;
+            render.update(sel)?;
 
             // This should go somewhere else
             // We also need to handle the following case:
             // Paging was active, terminal is resized to a size where paging is disabled
             // -> (Unpaged) Prompt must be written at the top of the screen
 
-            if paging.enabled() {
+            if paging.active() {
                 // This may be redundant to last statement in loop
                 // But is needed to prevent the prompt to be written multiple times
-                term.clear_last_lines(paging.capacity())?;
+                // term.clear_last_lines(paging.capacity())?;
+                render.clear_preserve_prompt(&size_vec)?;
 
                 if let Some(ref prompt) = self.prompt {
-                    render.select_prompt_paged(prompt, paging.current_page() + 1, paging.pages())?;
+                    render.select_prompt(prompt)?;
                 }
             }
 
-            paging.render_page_items(|idx, item| render.select_prompt_item(item, sel == idx))?;
+            render.render_items(|idx, item| render.select_prompt_item(item, sel == idx))?;
 
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
@@ -324,12 +325,12 @@ impl<'a> Select<'a> {
                     }
                 }
                 Key::ArrowLeft | Key::Char('h') => {
-                    if paging.enabled() {
+                    if paging.active() {
                         sel = paging.previous_page();
                     }
                 }
                 Key::ArrowRight | Key::Char('l') => {
-                    if paging.enabled() {
+                    if paging.active() {
                         sel = paging.next_page();
                     }
                 }
@@ -351,7 +352,7 @@ impl<'a> Select<'a> {
                 _ => {}
             }
 
-            render.clear_preserve_prompt(&size_vec)?;
+            // render.clear_preserve_prompt(&size_vec)?;
         }
     }
 }
