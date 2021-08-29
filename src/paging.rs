@@ -63,8 +63,26 @@ impl<'a> Paging<'a> {
         self.current_page
     }
 
-    pub fn render_page_items<F: FnMut(usize, &String) -> io::Result<()>>(
-        &self,
+    pub fn render_prompt<F: FnMut(Option<(usize, usize)>) -> io::Result<()>>(
+        &mut self,
+        mut render_prompt: F,
+    ) -> io::Result<()> {
+        
+        let mut paging_info = None;
+
+        if self.active {
+            paging_info = Some((self.current_page + 1, self.pages));
+        }
+
+        render_prompt(paging_info)?;
+
+        self.term.flush()?;
+
+        Ok(())
+    }
+
+    pub fn render_items<F: FnMut(usize, &String) -> io::Result<()>>(
+        &mut self,
         mut render_item: F,
     ) -> io::Result<()> {
         for (idx, item) in self
