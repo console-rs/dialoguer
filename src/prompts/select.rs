@@ -335,7 +335,12 @@ impl<'a> Select<'a> {
             }
 
             paging.update(sel)?;
-            render.clear_preserve_prompt(&size_vec)?;
+
+            if paging.active() {
+                render.clear()?;
+            } else {
+                render.clear_preserve_prompt(&size_vec)?;
+            }
         }
     }
 }
