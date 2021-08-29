@@ -246,7 +246,6 @@ impl<'a> Select<'a> {
 
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
-        let mut paging = Paging::new(term, &self.items);
 
         if self.items.is_empty() {
             return Err(io::Error::new(
@@ -255,12 +254,9 @@ impl<'a> Select<'a> {
             ));
         }
 
-        let mut render = TermThemeRenderer::new(term, self.theme, Some(&self.items));
+        let mut render = TermThemeRenderer::new(term, self.theme);
+        let mut paging = Paging::new(term, &self.items);
         let mut sel = self.default;
-
-        // if let Some(ref prompt) = self.prompt {
-        //     render.select_prompt(prompt)?;
-        // }
 
         let mut size_vec = Vec::new();
 
@@ -277,25 +273,11 @@ impl<'a> Select<'a> {
         term.hide_cursor()?;
 
         loop {
-            render.update(sel)?;
-
-            // This should go somewhere else
-            // We also need to handle the following case:
-            // Paging was active, terminal is resized to a size where paging is disabled
-            // -> (Unpaged) Prompt must be written at the top of the screen
-
-            if paging.active() {
-                // This may be redundant to last statement in loop
-                // But is needed to prevent the prompt to be written multiple times
-                // term.clear_last_lines(paging.capacity())?;
-                render.clear_preserve_prompt(&size_vec)?;
-
-                if let Some(ref prompt) = self.prompt {
-                    render.select_prompt(prompt)?;
-                }
+            if let Some(ref prompt) = self.prompt {
+                paging.render_prompt(|paging_info| render.select_prompt(prompt, paging_info))?;
             }
 
-            render.render_items(|idx, item| render.select_prompt_item(item, sel == idx))?;
+            paging.render_items(|idx, item| render.select_prompt_item(item, sel == idx))?;
 
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
@@ -352,7 +334,8 @@ impl<'a> Select<'a> {
                 _ => {}
             }
 
-            // render.clear_preserve_prompt(&size_vec)?;
+            paging.update(sel)?;
+            render.clear_preserve_prompt(&size_vec)?;
         }
     }
 }
