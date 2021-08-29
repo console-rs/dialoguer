@@ -26,7 +26,7 @@ impl<'a> Paging<'a> {
             capacity,
             items,
             active: pages > 1,
-            activity_transition: true
+            activity_transition: true,
         }
     }
 
@@ -75,7 +75,6 @@ impl<'a> Paging<'a> {
         &mut self,
         mut render_prompt: F,
     ) -> io::Result<()> {
-        
         let mut paging_info = None;
 
         if self.active {
