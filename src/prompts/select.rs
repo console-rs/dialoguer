@@ -40,7 +40,6 @@ pub struct Select<'a> {
     prompt: Option<String>,
     clear: bool,
     theme: &'a dyn Theme,
-    paged: bool,
 }
 
 impl<'a> Default for Select<'a> {
@@ -80,7 +79,6 @@ impl<'a> Select<'a> {
             prompt: None,
             clear: true,
             theme,
-            paged: false,
         }
     }
 
@@ -91,8 +89,7 @@ impl<'a> Select<'a> {
         since = "0.9.0",
         note = "Activating paging has no effect anymore. Paging will be activated automatically if needed."
     )]
-    pub fn paged(&mut self, val: bool) -> &mut Select<'a> {
-        self.paged = val;
+    pub fn paged(&mut self, _val: bool) -> &mut Select<'a> {
         self
     }
 

@@ -26,7 +26,6 @@ pub struct Sort<'a> {
     prompt: Option<String>,
     clear: bool,
     theme: &'a dyn Theme,
-    paged: bool,
 }
 
 impl<'a> Default for Sort<'a> {
@@ -48,7 +47,6 @@ impl<'a> Sort<'a> {
             clear: true,
             prompt: None,
             theme,
-            paged: false,
         }
     }
 
@@ -57,8 +55,7 @@ impl<'a> Sort<'a> {
         since = "0.9.0",
         note = "Activating paging has no effect anymore. Paging will be activated automatically if needed."
     )]
-    pub fn paged(&mut self, val: bool) -> &mut Sort<'a> {
-        self.paged = val;
+    pub fn paged(&mut self, _val: bool) -> &mut Sort<'a> {
         self
     }
 

@@ -27,7 +27,6 @@ pub struct MultiSelect<'a> {
     prompt: Option<String>,
     clear: bool,
     theme: &'a dyn Theme,
-    paged: bool,
 }
 
 impl<'a> Default for MultiSelect<'a> {
@@ -50,7 +49,6 @@ impl<'a> MultiSelect<'a> {
             clear: true,
             prompt: None,
             theme,
-            paged: false,
         }
     }
 
@@ -59,8 +57,7 @@ impl<'a> MultiSelect<'a> {
         since = "0.9.0",
         note = "Activating paging has no effect anymore. Paging will be activated automatically if needed."
     )]
-    pub fn paged(&mut self, val: bool) -> &mut MultiSelect<'a> {
-        self.paged = val;
+    pub fn paged(&mut self, _val: bool) -> &mut MultiSelect<'a> {
         self
     }
 
