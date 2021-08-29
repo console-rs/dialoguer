@@ -34,7 +34,8 @@ impl<'a> Paging<'a> {
         }
     }
 
-    pub fn update(&mut self, sel: usize) -> io::Result<()> {
+    /// Updates all internal based on the current terminal size and cursor position
+    pub fn update(&mut self, cursor_pos: usize) -> io::Result<()> {
         if self.current_term_size != self.term.size() {
             self.current_term_size = self.term.size();
             self.capacity = self.current_term_size.0 as usize - 2;
@@ -49,32 +50,39 @@ impl<'a> Paging<'a> {
             self.activity_transition = false;
         }
 
-        if sel != !0
-            && (sel < self.current_page * self.capacity
-                || sel >= (self.current_page + 1) * self.capacity)
+        if cursor_pos != !0
+            && (cursor_pos < self.current_page * self.capacity
+                || cursor_pos >= (self.current_page + 1) * self.capacity)
         {
-            self.current_page = sel / self.capacity;
+            self.current_page = cursor_pos / self.capacity;
         }
 
         Ok(())
     }
 
+    /// Returns current acivity state
     pub fn active(&self) -> bool {
         self.active
     }
 
+    /// Returns capacity
     pub fn capacity(&self) -> usize {
         self.capacity
     }
 
+    /// Returns number of pages
     pub fn pages(&self) -> usize {
         self.pages
     }
 
+    /// Returns current page
     pub fn current_page(&self) -> usize {
         self.current_page
     }
 
+    /// Renders a prompt for paging when the following conditions are met:
+    /// * Paging is active
+    /// * Transition of the paging activity happened (active -> inactive / inactive -> active)
     pub fn render_prompt<F: FnMut(Option<(usize, usize)>) -> io::Result<()>>(
         &mut self,
         mut render_prompt: F,
@@ -93,6 +101,7 @@ impl<'a> Paging<'a> {
         Ok(())
     }
 
+    /// Navigates to the next page
     pub fn next_page(&mut self) -> usize {
         if self.current_page == self.pages - 1 {
             self.current_page = 0;
@@ -103,6 +112,7 @@ impl<'a> Paging<'a> {
         self.current_page * self.capacity
     }
 
+    /// Navigates to the previous page
     pub fn previous_page(&mut self) -> usize {
         if self.current_page == 0 {
             self.current_page = self.pages - 1;
