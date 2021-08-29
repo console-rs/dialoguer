@@ -53,6 +53,10 @@ impl<'a> Sort<'a> {
     }
 
     /// Enables or disables paging
+    #[deprecated(
+        since = "0.9.0",
+        note = "Activating paging has no effect anymore. Paging will be activated automatically if needed."
+    )]
     pub fn paged(&mut self, val: bool) -> &mut Sort<'a> {
         self.paged = val;
         self
