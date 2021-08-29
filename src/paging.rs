@@ -2,21 +2,25 @@ use std::io;
 
 use console::Term;
 
+/// Creates a paging module
+///
+/// The paging module serves as tracking structure to allow paged views
+/// and automatically (de-)activates paging depending on the current terminal size.
 pub struct Paging<'a> {
     term: &'a Term,
     current_term_size: (u16, u16),
     pages: usize,
     current_page: usize,
     capacity: usize,
-    items: &'a Vec<String>,
+    items_len: usize,
     active: bool,
     activity_transition: bool,
 }
 
 impl<'a> Paging<'a> {
-    pub fn new(term: &'a Term, items: &'a Vec<String>) -> Paging<'a> {
+    pub fn new(term: &'a Term, items_len: usize) -> Paging<'a> {
         let capacity = term.size().0 as usize - 2;
-        let pages = (items.len() as f64 / capacity as f64).ceil() as usize;
+        let pages = (items_len as f64 / capacity as f64).ceil() as usize;
 
         Paging {
             term,
@@ -24,7 +28,7 @@ impl<'a> Paging<'a> {
             pages,
             current_page: 0,
             capacity,
-            items,
+            items_len,
             active: pages > 1,
             activity_transition: true,
         }
@@ -34,7 +38,7 @@ impl<'a> Paging<'a> {
         if self.current_term_size != self.term.size() {
             self.current_term_size = self.term.size();
             self.capacity = self.current_term_size.0 as usize - 2;
-            self.pages = (self.items.len() as f64 / self.capacity as f64).ceil() as usize;
+            self.pages = (self.items_len as f64 / self.capacity as f64).ceil() as usize;
         }
 
         if self.active != (self.pages > 1) {

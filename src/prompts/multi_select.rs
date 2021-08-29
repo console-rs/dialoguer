@@ -138,7 +138,7 @@ impl<'a> MultiSelect<'a> {
             ));
         }
 
-        let mut paging = Paging::new(term, &self.items);
+        let mut paging = Paging::new(term, self.items.len());
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
 

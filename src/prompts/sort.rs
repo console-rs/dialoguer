@@ -109,7 +109,7 @@ impl<'a> Sort<'a> {
         }
 
         let mut render = TermThemeRenderer::new(term, self.theme);
-        let mut paging = Paging::new(term, &self.items);
+        let mut paging = Paging::new(term, self.items.len());
         let mut sel = 0;
 
         let mut size_vec = Vec::new();
