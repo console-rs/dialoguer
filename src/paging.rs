@@ -35,7 +35,6 @@ impl<'a> Paging<'a> {
             self.capacity = self.current_term_size.0 as usize - 2;
             self.pages = (self.items.len() as f64 / self.capacity as f64).ceil() as usize;
             self.active = self.pages > 1;
-            self.term.clear_last_lines(self.capacity)?;
         }
 
         if sel != !0
