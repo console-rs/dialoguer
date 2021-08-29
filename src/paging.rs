@@ -19,6 +19,7 @@ pub struct Paging<'a> {
 
 impl<'a> Paging<'a> {
     pub fn new(term: &'a Term, items_len: usize) -> Paging<'a> {
+        // Subtract -2 because we need space to render the prompt, if paging is active
         let capacity = term.size().0 as usize - 2;
         let pages = (items_len as f64 / capacity as f64).ceil() as usize;
 
@@ -30,6 +31,7 @@ impl<'a> Paging<'a> {
             capacity,
             items_len,
             active: pages > 1,
+            // Set transition initially to true to trigger prompt rendering for inactive paging on start
             activity_transition: true,
         }
     }
@@ -45,6 +47,7 @@ impl<'a> Paging<'a> {
         if self.active != (self.pages > 1) {
             self.active = self.pages > 1;
             self.activity_transition = true;
+            // Clear everything to prevent "ghost" lines in terminal when a resize happened
             self.term.clear_last_lines(self.capacity)?;
         } else {
             self.activity_transition = false;
@@ -80,7 +83,7 @@ impl<'a> Paging<'a> {
         self.current_page
     }
 
-    /// Renders a prompt for paging when the following conditions are met:
+    /// Renders a prompt when the following conditions are met:
     /// * Paging is active
     /// * Transition of the paging activity happened (active -> inactive / inactive -> active)
     pub fn render_prompt<F: FnMut(Option<(usize, usize)>) -> io::Result<()>>(
