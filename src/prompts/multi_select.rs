@@ -1,6 +1,9 @@
 use std::{io, iter::repeat, ops::Rem};
 
-use crate::{Paging, theme::{SimpleTheme, TermThemeRenderer, Theme}};
+use crate::{
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    Paging,
+};
 
 use console::{Key, Term};
 
@@ -155,12 +158,22 @@ impl<'a> MultiSelect<'a> {
         term.hide_cursor()?;
 
         loop {
-
             if let Some(ref prompt) = self.prompt {
-                paging.render_prompt(| paging_info | render.multi_select_prompt(prompt, paging_info))?;
+                paging
+                    .render_prompt(|paging_info| render.multi_select_prompt(prompt, paging_info))?;
             }
 
-            paging.render_items(|idx, item| render.multi_select_prompt_item(item, checked[idx], sel == idx))?;
+            for (idx, item) in self
+                .items
+                .iter()
+                .enumerate()
+                .skip(paging.current_page() * paging.capacity())
+                .take(paging.capacity())
+            {
+                render.multi_select_prompt_item(item, checked[idx], sel == idx)?;
+            }
+
+            term.flush()?;
 
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {

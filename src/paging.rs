@@ -89,25 +89,6 @@ impl<'a> Paging<'a> {
         Ok(())
     }
 
-    pub fn render_items<F: FnMut(usize, &String) -> io::Result<()>>(
-        &mut self,
-        mut render_item: F,
-    ) -> io::Result<()> {
-        for (idx, item) in self
-            .items
-            .iter()
-            .enumerate()
-            .skip(self.current_page * self.capacity)
-            .take(self.capacity)
-        {
-            render_item(idx, item).map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
-        }
-
-        self.term.flush()?;
-
-        Ok(())
-    }
-
     pub fn next_page(&mut self) -> usize {
         if self.current_page == self.pages - 1 {
             self.current_page = 0;

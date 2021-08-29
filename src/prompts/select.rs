@@ -1,7 +1,7 @@
 use std::{io, ops::Rem};
 
-use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 use crate::paging::Paging;
+use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::{Key, Term};
 
@@ -87,7 +87,10 @@ impl<'a> Select<'a> {
     /// Enables or disables paging
     ///
     /// Paging is disabled by default
-    #[deprecated(since="0.9.0", note="Activating paging has no effect anymore. Paging will be activated automatically if needed.")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Activating paging has no effect anymore. Paging will be activated automatically if needed."
+    )]
     pub fn paged(&mut self, val: bool) -> &mut Select<'a> {
         self.paged = val;
         self
@@ -246,7 +249,6 @@ impl<'a> Select<'a> {
 
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
-
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -277,7 +279,17 @@ impl<'a> Select<'a> {
                 paging.render_prompt(|paging_info| render.select_prompt(prompt, paging_info))?;
             }
 
-            paging.render_items(|idx, item| render.select_prompt_item(item, sel == idx))?;
+            for (idx, item) in self
+                .items
+                .iter()
+                .enumerate()
+                .skip(paging.current_page() * paging.capacity())
+                .take(paging.capacity())
+            {
+                render.select_prompt_item(item, sel == idx)?;
+            }
+
+            term.flush()?;
 
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
