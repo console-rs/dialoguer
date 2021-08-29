@@ -830,10 +830,6 @@ impl<'a> TermThemeRenderer<'a> {
             }
         }
 
-        if new_height < self.term.size().0 as usize {
-            new_height += self.term.size().0 as usize - new_height;
-        }
-
         self.term.clear_last_lines(new_height)?;
         self.height = 0;
         Ok(())
