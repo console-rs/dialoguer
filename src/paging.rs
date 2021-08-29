@@ -10,11 +10,11 @@ pub struct Paging<'a> {
     capacity: usize,
     items: &'a Vec<String>,
     active: bool,
+    activity_transition: bool,
 }
 
 impl<'a> Paging<'a> {
     pub fn new(term: &'a Term, items: &'a Vec<String>) -> Paging<'a> {
-        // Substract 2, because we show the prompt and/or page info on every page
         let capacity = term.size().0 as usize - 2;
         let pages = (items.len() as f64 / capacity as f64).ceil() as usize;
 
@@ -26,6 +26,7 @@ impl<'a> Paging<'a> {
             capacity,
             items,
             active: pages > 1,
+            activity_transition: true
         }
     }
 
@@ -34,7 +35,14 @@ impl<'a> Paging<'a> {
             self.current_term_size = self.term.size();
             self.capacity = self.current_term_size.0 as usize - 2;
             self.pages = (self.items.len() as f64 / self.capacity as f64).ceil() as usize;
+        }
+
+        if self.active != (self.pages > 1) {
             self.active = self.pages > 1;
+            self.activity_transition = true;
+            self.term.clear_last_lines(self.capacity)?;
+        } else {
+            self.activity_transition = false;
         }
 
         if sel != !0
@@ -72,9 +80,10 @@ impl<'a> Paging<'a> {
 
         if self.active {
             paging_info = Some((self.current_page + 1, self.pages));
+            render_prompt(paging_info)?;
+        } else if self.activity_transition {
+            render_prompt(paging_info)?;
         }
-
-        render_prompt(paging_info)?;
 
         self.term.flush()?;
 
