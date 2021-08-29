@@ -747,19 +747,18 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
-    pub fn select_prompt(&mut self, prompt: &str) -> io::Result<()> {
-        self.write_formatted_prompt(|this, buf| this.theme.format_select_prompt(buf, prompt))
-    }
-
-    pub fn select_prompt_paged(
+    pub fn select_prompt(
         &mut self,
         prompt: &str,
-        page: usize,
-        pages: usize,
+        paging_info: Option<(usize, usize)>,
     ) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
-            this.theme
-                .format_select_prompt_paged(buf, prompt, page, pages)
+            
+            if let Some(paging_info) = paging_info {
+                write!(buf, "[Page {}/{}] ", paging_info.0, paging_info.1)?
+            }
+
+            this.theme.format_select_prompt(buf, prompt)
         })
     }
 
