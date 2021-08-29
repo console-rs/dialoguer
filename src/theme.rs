@@ -697,6 +697,13 @@ impl<'a> TermThemeRenderer<'a> {
         Ok(())
     }
 
+    fn write_paging_info(&mut self, paging_info: (usize, usize)) -> io::Result<()> {
+        self.write_formatted_str(|_this, buf| {
+            write!(buf, "[Page {}/{}] ", paging_info.0, paging_info.1)
+        })?;
+        Ok(())
+    }
+
     pub fn error(&mut self, err: &str) -> io::Result<()> {
         self.write_formatted_line(|this, buf| this.theme.format_error(buf, err))
     }
@@ -752,14 +759,11 @@ impl<'a> TermThemeRenderer<'a> {
         prompt: &str,
         paging_info: Option<(usize, usize)>,
     ) -> io::Result<()> {
-        self.write_formatted_prompt(|this, buf| {
-            
-            if let Some(paging_info) = paging_info {
-                write!(buf, "[Page {}/{}] ", paging_info.0, paging_info.1)?
-            }
+        if let Some(paging_info) = paging_info {
+            self.write_paging_info(paging_info)?;
+        }
 
-            this.theme.format_select_prompt(buf, prompt)
-        })
+        self.write_formatted_prompt(|this, buf| this.theme.format_select_prompt(buf, prompt))
     }
 
     pub fn select_prompt_selection(&mut self, prompt: &str, sel: &str) -> io::Result<()> {
@@ -774,15 +778,16 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
-    pub fn multi_select_prompt(&mut self, prompt: &str, paging_info: Option<(usize, usize)>) -> io::Result<()> {
-        self.write_formatted_prompt(|this, buf| {
-            
-            if let Some(paging_info) = paging_info {
-                write!(buf, "[Page {}/{}] ", paging_info.0, paging_info.1)?
-            }
-            
-            this.theme.format_multi_select_prompt(buf, prompt)
-        })
+    pub fn multi_select_prompt(
+        &mut self,
+        prompt: &str,
+        paging_info: Option<(usize, usize)>,
+    ) -> io::Result<()> {
+        if let Some(paging_info) = paging_info {
+            self.write_paging_info(paging_info)?;
+        }
+
+        self.write_formatted_prompt(|this, buf| this.theme.format_multi_select_prompt(buf, prompt))
     }
 
     pub fn multi_select_prompt_selection(&mut self, prompt: &str, sel: &[&str]) -> io::Result<()> {
@@ -804,7 +809,14 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
-    pub fn sort_prompt(&mut self, prompt: &str) -> io::Result<()> {
+    pub fn sort_prompt(
+        &mut self,
+        prompt: &str,
+        paging_info: Option<(usize, usize)>,
+    ) -> io::Result<()> {
+        if let Some(paging_info) = paging_info {
+            self.write_paging_info(paging_info)?;
+        }
         self.write_formatted_prompt(|this, buf| this.theme.format_sort_prompt(buf, prompt))
     }
 
