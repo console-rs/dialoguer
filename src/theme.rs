@@ -774,8 +774,15 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
-    pub fn multi_select_prompt(&mut self, prompt: &str) -> io::Result<()> {
-        self.write_formatted_prompt(|this, buf| this.theme.format_multi_select_prompt(buf, prompt))
+    pub fn multi_select_prompt(&mut self, prompt: &str, paging_info: Option<(usize, usize)>) -> io::Result<()> {
+        self.write_formatted_prompt(|this, buf| {
+            
+            if let Some(paging_info) = paging_info {
+                write!(buf, "[Page {}/{}] ", paging_info.0, paging_info.1)?
+            }
+            
+            this.theme.format_multi_select_prompt(buf, prompt)
+        })
     }
 
     pub fn multi_select_prompt_selection(&mut self, prompt: &str, sel: &[&str]) -> io::Result<()> {

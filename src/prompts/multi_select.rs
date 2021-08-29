@@ -1,6 +1,6 @@
 use std::{io, iter::repeat, ops::Rem};
 
-use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
+use crate::{Paging, theme::{SimpleTheme, TermThemeRenderer, Theme}};
 
 use console::{Key, Term};
 
@@ -127,8 +127,6 @@ impl<'a> MultiSelect<'a> {
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
-        let mut page = 0;
-
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -136,20 +134,9 @@ impl<'a> MultiSelect<'a> {
             ));
         }
 
-        let capacity = if self.paged {
-            term.size().0 as usize - 1
-        } else {
-            self.items.len()
-        };
-
-        let pages = (self.items.len() as f64 / capacity as f64).ceil() as usize;
-
+        let mut paging = Paging::new(term, &self.items);
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
-
-        if let Some(ref prompt) = self.prompt {
-            render.multi_select_prompt(prompt)?;
-        }
 
         let mut size_vec = Vec::new();
 
@@ -165,19 +152,15 @@ impl<'a> MultiSelect<'a> {
 
         let mut checked: Vec<bool> = self.defaults.clone();
 
+        term.hide_cursor()?;
+
         loop {
-            for (idx, item) in self
-                .items
-                .iter()
-                .enumerate()
-                .skip(page * capacity)
-                .take(capacity)
-            {
-                render.multi_select_prompt_item(item, checked[idx], sel == idx)?;
+
+            if let Some(ref prompt) = self.prompt {
+                paging.render_prompt(| paging_info | render.multi_select_prompt(prompt, paging_info))?;
             }
 
-            term.hide_cursor()?;
-            term.flush()?;
+            paging.render_items(|idx, item| render.multi_select_prompt_item(item, checked[idx], sel == idx))?;
 
             match term.read_key()? {
                 Key::ArrowDown | Key::Char('j') => {
@@ -196,25 +179,13 @@ impl<'a> MultiSelect<'a> {
                     }
                 }
                 Key::ArrowLeft | Key::Char('h') => {
-                    if self.paged {
-                        if page == 0 {
-                            page = pages - 1;
-                        } else {
-                            page -= 1;
-                        }
-
-                        sel = page * capacity;
+                    if paging.active() {
+                        sel = paging.previous_page();
                     }
                 }
                 Key::ArrowRight | Key::Char('l') => {
-                    if self.paged {
-                        if page == pages - 1 {
-                            page = 0;
-                        } else {
-                            page += 1;
-                        }
-
-                        sel = page * capacity;
+                    if paging.active() {
+                        sel = paging.next_page();
                     }
                 }
                 Key::Char(' ') => {
@@ -273,11 +244,13 @@ impl<'a> MultiSelect<'a> {
                 _ => {}
             }
 
-            if sel < page * capacity || sel >= (page + 1) * capacity {
-                page = sel / capacity;
-            }
+            paging.update(sel)?;
 
-            render.clear_preserve_prompt(&size_vec)?;
+            if paging.active() {
+                render.clear()?;
+            } else {
+                render.clear_preserve_prompt(&size_vec)?;
+            }
         }
     }
 }
