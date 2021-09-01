@@ -31,44 +31,36 @@ pub struct Sort<'a> {
     theme: &'a dyn Theme,
 }
 
-impl<'a> Default for Sort<'a> {
-    fn default() -> Sort<'a> {
-        Sort::new()
+impl Default for Sort<'static> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-impl<'a> Sort<'a> {
+impl Sort<'static> {
     /// Creates a sort prompt.
-    pub fn new() -> Sort<'static> {
-        Sort::with_theme(&SimpleTheme)
+    pub fn new() -> Self {
+        Self::with_theme(&SimpleTheme)
     }
+}
 
-    /// Creates a sort prompt with a specific theme.
-    pub fn with_theme(theme: &'a dyn Theme) -> Sort<'a> {
-        Sort {
-            items: vec![],
-            clear: true,
-            prompt: None,
-            theme,
-        }
-    }
-
+impl Sort<'_> {
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu after user interaction.
-    pub fn clear(&mut self, val: bool) -> &mut Sort<'a> {
+    pub fn clear(&mut self, val: bool) -> &mut Self {
         self.clear = val;
         self
     }
 
     /// Add a single item to the selector.
-    pub fn item<T: ToString>(&mut self, item: T) -> &mut Sort<'a> {
+    pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
         self.items.push(item.to_string());
         self
     }
 
     /// Adds multiple items to the selector.
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Sort<'a> {
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
         for item in items {
             self.items.push(item.to_string());
         }
@@ -79,7 +71,7 @@ impl<'a> Sort<'a> {
     ///
     /// When a prompt is set the system also prints out a confirmation after
     /// the selection.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Sort<'a> {
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = Some(prompt.into());
         self
     }
@@ -109,7 +101,7 @@ impl<'a> Sort<'a> {
     ///
     /// ## Examples
     ///```rust,no_run
-    /// use dialoguer::Select;
+    /// use dialoguer::Sort;
     /// use console::Term;
     ///
     /// fn main() -> std::io::Result<()> {
@@ -133,7 +125,7 @@ impl<'a> Sort<'a> {
     ///
     /// ## Examples
     /// ```rust,no_run
-    /// use dialoguer::Select;
+    /// use dialoguer::MultiSelect;
     /// use console::Term;
     ///
     /// fn main() -> std::io::Result<()> {
@@ -311,6 +303,18 @@ impl<'a> Sort<'a> {
             } else {
                 render.clear_preserve_prompt(&size_vec)?;
             }
+        }
+    }
+}
+
+impl<'a> Sort<'a> {
+    /// Creates a sort prompt with a specific theme.
+    pub fn with_theme(theme: &'a dyn Theme) -> Self {
+        Self {
+            items: vec![],
+            clear: true,
+            prompt: None,
+            theme,
         }
     }
 }

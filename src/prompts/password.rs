@@ -26,36 +26,28 @@ pub struct Password<'a> {
     confirmation_prompt: Option<(String, String)>,
 }
 
-impl<'a> Default for Password<'a> {
-    fn default() -> Password<'a> {
-        Password::new()
+impl Default for Password<'static> {
+    fn default() -> Password<'static> {
+        Self::new()
     }
 }
 
-impl<'a> Password<'a> {
+impl Password<'static> {
     /// Creates a password input prompt.
     pub fn new() -> Password<'static> {
-        Password::with_theme(&SimpleTheme)
+        Self::with_theme(&SimpleTheme)
     }
+}
 
-    /// Creates a password input prompt with a specific theme.
-    pub fn with_theme(theme: &'a dyn Theme) -> Password<'a> {
-        Password {
-            prompt: "".into(),
-            theme,
-            allow_empty_password: false,
-            confirmation_prompt: None,
-        }
-    }
-
+impl Password<'_> {
     /// Sets the password input prompt.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Password<'a> {
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
         self
     }
 
     /// Enables confirmation prompting.
-    pub fn with_confirmation<A, B>(&mut self, prompt: A, mismatch_err: B) -> &mut Password<'a>
+    pub fn with_confirmation<A, B>(&mut self, prompt: A, mismatch_err: B) -> &mut Self
     where
         A: Into<String>,
         B: Into<String>,
@@ -67,7 +59,7 @@ impl<'a> Password<'a> {
     /// Allows/Disables empty password.
     ///
     /// By default this setting is set to false (i.e. password is not empty).
-    pub fn allow_empty_password(&mut self, allow_empty_password: bool) -> &mut Password<'a> {
+    pub fn allow_empty_password(&mut self, allow_empty_password: bool) -> &mut Self {
         self.allow_empty_password = allow_empty_password;
         self
     }
@@ -121,6 +113,18 @@ impl<'a> Password<'a> {
             if !input.is_empty() || self.allow_empty_password {
                 return Ok(input);
             }
+        }
+    }
+}
+
+impl<'a> Password<'a> {
+    /// Creates a password input prompt with a specific theme.
+    pub fn with_theme(theme: &'a dyn Theme) -> Self {
+        Self {
+            prompt: "".into(),
+            theme,
+            allow_empty_password: false,
+            confirmation_prompt: None,
         }
     }
 }

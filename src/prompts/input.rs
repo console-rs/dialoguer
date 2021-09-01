@@ -49,14 +49,14 @@ pub struct Input<'a, T> {
 
 impl<T> Default for Input<'_, T> {
     fn default() -> Self {
-        Input::new()
+        Self::new()
     }
 }
 
 impl<T> Input<'_, T> {
     /// Creates an input prompt.
     pub fn new() -> Self {
-        Input::with_theme(&SimpleTheme)
+        Self::with_theme(&SimpleTheme)
     }
 
     /// Sets the input prompt.
@@ -104,7 +104,7 @@ impl<T> Input<'_, T> {
 impl<'a, T> Input<'a, T> {
     /// Creates an input prompt with a specific theme.
     pub fn with_theme(theme: &'a dyn Theme) -> Self {
-        Input {
+        Self {
             prompt: "".into(),
             default: None,
             show_default: true,
@@ -115,47 +115,6 @@ impl<'a, T> Input<'a, T> {
             #[cfg(feature = "history")]
             history: None,
         }
-    }
-
-    /// Registers a validator.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use dialoguer::Input;
-    /// let mail: String = Input::new()
-    ///     .with_prompt("Enter email")
-    ///     .validate_with(|input: &String| -> Result<(), &str> {
-    ///         if input.contains('@') {
-    ///             Ok(())
-    ///         } else {
-    ///             Err("This is not a mail address")
-    ///         }
-    ///     })
-    ///     .interact()
-    ///     .unwrap();
-    /// ```
-    pub fn validate_with<V>(&mut self, mut validator: V) -> &mut Input<'a, T>
-    where
-        V: Validator<T> + 'a,
-        V::Err: ToString,
-    {
-        let mut old_validator_func = self.validator.take();
-
-        self.validator = Some(Box::new(move |value: &T| -> Option<String> {
-            if let Some(old) = old_validator_func.as_mut() {
-                if let Some(err) = old(value) {
-                    return Some(err);
-                }
-            }
-
-            match validator.validate(value) {
-                Ok(()) => None,
-                Err(err) => Some(err.to_string()),
-            }
-        }));
-
-        self
     }
 
     /// Enable history processing
@@ -205,6 +164,52 @@ impl<'a, T> Input<'a, T> {
         H: History<T>,
     {
         self.history = Some(history);
+        self
+    }
+}
+
+impl<'a, T> Input<'a, T>
+where
+    T: 'a,
+{
+    /// Registers a validator.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use dialoguer::Input;
+    /// let mail: String = Input::new()
+    ///     .with_prompt("Enter email")
+    ///     .validate_with(|input: &String| -> Result<(), &str> {
+    ///         if input.contains('@') {
+    ///             Ok(())
+    ///         } else {
+    ///             Err("This is not a mail address")
+    ///         }
+    ///     })
+    ///     .interact()
+    ///     .unwrap();
+    /// ```
+    pub fn validate_with<V>(&mut self, mut validator: V) -> &mut Self
+    where
+        V: Validator<T> + 'a,
+        V::Err: ToString,
+    {
+        let mut old_validator_func = self.validator.take();
+
+        self.validator = Some(Box::new(move |value: &T| -> Option<String> {
+            if let Some(old) = old_validator_func.as_mut() {
+                if let Some(err) = old(value) {
+                    return Some(err);
+                }
+            }
+
+            match validator.validate(value) {
+                Ok(()) => None,
+                Err(err) => Some(err.to_string()),
+            }
+        }));
+
         self
     }
 }
