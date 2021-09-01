@@ -14,7 +14,10 @@ pub trait Validator<T> {
     fn validate(&mut self, input: &T) -> Result<(), Self::Err>;
 }
 
-impl<T, F: FnMut(&T) -> Result<(), E>, E> Validator<T> for F {
+impl<T, F, E> Validator<T> for F
+where
+    F: FnMut(&T) -> Result<(), E>,
+{
     type Err = E;
 
     fn validate(&mut self, input: &T) -> Result<(), Self::Err> {
