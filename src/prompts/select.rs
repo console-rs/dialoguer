@@ -269,8 +269,8 @@ impl<'a> Select<'a> {
                 .items
                 .iter()
                 .enumerate()
-                .skip(paging.current_page() * paging.capacity())
-                .take(paging.capacity())
+                .skip(paging.current_page * paging.capacity)
+                .take(paging.capacity)
             {
                 render.select_prompt_item(item, sel == idx)?;
             }
@@ -305,12 +305,12 @@ impl<'a> Select<'a> {
                     }
                 }
                 Key::ArrowLeft | Key::Char('h') => {
-                    if paging.active() {
+                    if paging.active {
                         sel = paging.previous_page();
                     }
                 }
                 Key::ArrowRight | Key::Char('l') => {
-                    if paging.active() {
+                    if paging.active {
                         sel = paging.next_page();
                     }
                 }
@@ -334,7 +334,7 @@ impl<'a> Select<'a> {
 
             paging.update(sel)?;
 
-            if paging.active() {
+            if paging.active {
                 render.clear()?;
             } else {
                 render.clear_preserve_prompt(&size_vec)?;

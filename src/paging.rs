@@ -7,30 +7,32 @@ use console::Term;
 /// The paging module serves as tracking structure to allow paged views
 /// and automatically (de-)activates paging depending on the current terminal size.
 pub struct Paging<'a> {
+    pub pages: usize,
+    pub current_page: usize,
+    pub capacity: usize,
+    pub active: bool,
+
     term: &'a Term,
     current_term_size: (u16, u16),
-    pages: usize,
-    current_page: usize,
-    capacity: usize,
     items_len: usize,
-    active: bool,
     activity_transition: bool,
 }
 
 impl<'a> Paging<'a> {
     pub fn new(term: &'a Term, items_len: usize) -> Paging<'a> {
+        let term_size = term.size();
         // Subtract -2 because we need space to render the prompt, if paging is active
-        let capacity = term.size().0 as usize - 2;
+        let capacity = term_size.0 as usize - 2;
         let pages = (items_len as f64 / capacity as f64).ceil() as usize;
 
         Paging {
-            term,
-            current_term_size: term.size(),
             pages,
             current_page: 0,
             capacity,
-            items_len,
             active: pages > 1,
+            term,
+            current_term_size: term_size,
+            items_len,
             // Set transition initially to true to trigger prompt rendering for inactive paging on start
             activity_transition: true,
         }
@@ -38,8 +40,10 @@ impl<'a> Paging<'a> {
 
     /// Updates all internal based on the current terminal size and cursor position
     pub fn update(&mut self, cursor_pos: usize) -> io::Result<()> {
-        if self.current_term_size != self.term.size() {
-            self.current_term_size = self.term.size();
+        let new_term_size = self.term.size();
+
+        if self.current_term_size != new_term_size {
+            self.current_term_size = new_term_size;
             self.capacity = self.current_term_size.0 as usize - 2;
             self.pages = (self.items_len as f64 / self.capacity as f64).ceil() as usize;
         }
@@ -63,40 +67,18 @@ impl<'a> Paging<'a> {
         Ok(())
     }
 
-    /// Returns current acivity state
-    pub fn active(&self) -> bool {
-        self.active
-    }
-
-    /// Returns capacity
-    pub fn capacity(&self) -> usize {
-        self.capacity
-    }
-
-    /// Returns number of pages
-    pub fn pages(&self) -> usize {
-        self.pages
-    }
-
-    /// Returns current page
-    pub fn current_page(&self) -> usize {
-        self.current_page
-    }
-
     /// Renders a prompt when the following conditions are met:
     /// * Paging is active
     /// * Transition of the paging activity happened (active -> inactive / inactive -> active)
-    pub fn render_prompt<F: FnMut(Option<(usize, usize)>) -> io::Result<()>>(
-        &mut self,
-        mut render_prompt: F,
-    ) -> io::Result<()> {
-        let mut paging_info = None;
-
+    pub fn render_prompt<F>(&mut self, mut render_prompt: F) -> io::Result<()>
+    where
+        F: FnMut(Option<(usize, usize)>) -> io::Result<()>,
+    {
         if self.active {
-            paging_info = Some((self.current_page + 1, self.pages));
+            let paging_info = Some((self.current_page + 1, self.pages));
             render_prompt(paging_info)?;
         } else if self.activity_transition {
-            render_prompt(paging_info)?;
+            render_prompt(None)?;
         }
 
         self.term.flush()?;

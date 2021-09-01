@@ -123,8 +123,8 @@ impl<'a> Sort<'a> {
             for (idx, item) in order
                 .iter()
                 .enumerate()
-                .skip(paging.current_page() * paging.capacity())
-                .take(paging.capacity())
+                .skip(paging.current_page * paging.capacity)
+                .take(paging.capacity)
             {
                 render.sort_prompt_item(&self.items[*item], checked, sel == idx)?;
             }
@@ -160,9 +160,9 @@ impl<'a> Sort<'a> {
                     }
                 }
                 Key::ArrowLeft | Key::Char('h') => {
-                    if paging.active() {
+                    if paging.active {
                         let old_sel = sel;
-                        let old_page = paging.current_page();
+                        let old_page = paging.current_page;
 
                         sel = paging.previous_page();
                         
@@ -182,14 +182,14 @@ impl<'a> Sort<'a> {
                     }
                 }
                 Key::ArrowRight | Key::Char('l') => {
-                    if paging.active() {
+                    if paging.active {
                         let old_sel = sel;
-                        let old_page = paging.current_page();
+                        let old_page = paging.current_page;
 
                         sel = paging.next_page();
 
                         if checked {
-                            let indexes: Vec<_> = if old_page == paging.pages() - 1 {
+                            let indexes: Vec<_> = if old_page == paging.pages - 1 {
                                 let indexes1: Vec<_> = (old_sel..self.items.len()).collect();
                                 let indexes2: Vec<_> = vec![0];
                                 [indexes1, indexes2].concat()
@@ -231,7 +231,7 @@ impl<'a> Sort<'a> {
 
             paging.update(sel)?;
 
-            if paging.active() {
+            if paging.active {
                 render.clear()?;
             } else {
                 render.clear_preserve_prompt(&size_vec)?;
