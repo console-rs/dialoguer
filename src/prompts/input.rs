@@ -1,8 +1,4 @@
-use std::{
-    fmt::{Debug, Display},
-    io, iter,
-    str::FromStr,
-};
+use std::{fmt::Debug, io, iter, str::FromStr};
 
 #[cfg(feature = "history")]
 use crate::history::History;
@@ -51,21 +47,13 @@ pub struct Input<'a, T> {
     history: Option<&'a mut dyn History<T>>,
 }
 
-impl<'a, T> Default for Input<'a, T>
-where
-    T: Clone + FromStr + Display,
-    T::Err: Display + Debug,
-{
+impl<'a, T> Default for Input<'a, T> {
     fn default() -> Input<'a, T> {
         Input::new()
     }
 }
 
-impl<'a, T> Input<'a, T>
-where
-    T: Clone + FromStr + Display,
-    T::Err: Display + Debug,
-{
+impl<'a, T> Input<'a, T> {
     /// Creates an input prompt.
     pub fn new() -> Input<'a, T> {
         Input::with_theme(&SimpleTheme)
@@ -198,14 +186,13 @@ where
     /// #     }
     /// # }
     /// #
-    /// # impl<T> History<T> for MyHistory {
+    /// # impl<T: ToString> History<T> for MyHistory {
     /// #     fn read(&self, pos: usize) -> Option<String> {
     /// #         self.history.get(pos).cloned()
     /// #     }
     /// #
     /// #     fn write(&mut self, val: &T)
     /// #     where
-    /// #         T: Clone + Display,
     /// #     {
     /// #         self.history.push_front(val.to_string());
     /// #     }
@@ -227,12 +214,20 @@ where
     /// while [`interact`](#method.interact) allows virtually any character to be used e.g arrow keys.
     ///
     /// The dialog is rendered on stderr.
-    pub fn interact_text(&mut self) -> io::Result<T> {
+    pub fn interact_text(&mut self) -> io::Result<T>
+    where
+        T: Clone + FromStr + ToString,
+        <T as FromStr>::Err: Debug + ToString,
+    {
         self.interact_text_on(&Term::stderr())
     }
 
     /// Like [`interact_text`](#method.interact_text) but allows a specific terminal to be set.
-    pub fn interact_text_on(&mut self, term: &Term) -> io::Result<T> {
+    pub fn interact_text_on(&mut self, term: &Term) -> io::Result<T>
+    where
+        T: Clone + FromStr + ToString,
+        <T as FromStr>::Err: Debug + ToString,
+    {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
@@ -415,16 +410,24 @@ where
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
-    pub fn interact(&mut self) -> io::Result<T> {
+    pub fn interact(&mut self) -> io::Result<T>
+    where
+        T: Clone + FromStr + ToString,
+        <T as FromStr>::Err: ToString,
+    {
         self.interact_on(&Term::stderr())
     }
 
     /// Like [`interact`](#method.interact) but allows a specific terminal to be set.
-    pub fn interact_on(&mut self, term: &Term) -> io::Result<T> {
+    pub fn interact_on(&mut self, term: &Term) -> io::Result<T>
+    where
+        T: Clone + FromStr + ToString,
+        <T as FromStr>::Err: ToString,
+    {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
-            let default_string = self.default.as_ref().map(|x| x.to_string());
+            let default_string = self.default.as_ref().map(ToString::to_string);
 
             render.input_prompt(
                 &self.prompt,
