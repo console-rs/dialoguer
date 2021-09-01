@@ -47,20 +47,63 @@ pub struct Input<'a, T> {
     history: Option<&'a mut dyn History<T>>,
 }
 
-impl<'a, T> Default for Input<'a, T> {
-    fn default() -> Input<'a, T> {
+impl<T> Default for Input<'_, T> {
+    fn default() -> Self {
         Input::new()
     }
 }
 
-impl<'a, T> Input<'a, T> {
+impl<T> Input<'_, T> {
     /// Creates an input prompt.
-    pub fn new() -> Input<'a, T> {
+    pub fn new() -> Self {
         Input::with_theme(&SimpleTheme)
     }
 
+    /// Sets the input prompt.
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
+        self.prompt = prompt.into();
+        self
+    }
+
+    /// Sets initial text that user can accept or erase.
+    pub fn with_initial_text<S: Into<String>>(&mut self, val: S) -> &mut Self {
+        self.initial_text = Some(val.into());
+        self
+    }
+
+    /// Sets a default.
+    ///
+    /// Out of the box the prompt does not have a default and will continue
+    /// to display until the user inputs something and hits enter. If a default is set the user
+    /// can instead accept the default with enter.
+    pub fn default(&mut self, value: T) -> &mut Self {
+        self.default = Some(value);
+        self
+    }
+
+    /// Enables or disables an empty input
+    ///
+    /// By default, if there is no default value set for the input, the user must input a non-empty string.
+    pub fn allow_empty(&mut self, val: bool) -> &mut Self {
+        self.permit_empty = val;
+        self
+    }
+
+    /// Disables or enables the default value display.
+    ///
+    /// The default behaviour is to append [`default`] to the prompt to tell the
+    /// user what is the default value.
+    ///
+    /// This method does not affect existance of default value, only its display in the prompt!
+    pub fn show_default(&mut self, val: bool) -> &mut Self {
+        self.show_default = val;
+        self
+    }
+}
+
+impl<'a, T> Input<'a, T> {
     /// Creates an input prompt with a specific theme.
-    pub fn with_theme(theme: &'a dyn Theme) -> Input<'a, T> {
+    pub fn with_theme(theme: &'a dyn Theme) -> Self {
         Input {
             prompt: "".into(),
             default: None,
@@ -72,47 +115,6 @@ impl<'a, T> Input<'a, T> {
             #[cfg(feature = "history")]
             history: None,
         }
-    }
-
-    /// Sets the input prompt.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Input<'a, T> {
-        self.prompt = prompt.into();
-        self
-    }
-
-    /// Sets initial text that user can accept or erase.
-    pub fn with_initial_text<S: Into<String>>(&mut self, val: S) -> &mut Input<'a, T> {
-        self.initial_text = Some(val.into());
-        self
-    }
-
-    /// Sets a default.
-    ///
-    /// Out of the box the prompt does not have a default and will continue
-    /// to display until the user inputs something and hits enter. If a default is set the user
-    /// can instead accept the default with enter.
-    pub fn default(&mut self, value: T) -> &mut Input<'a, T> {
-        self.default = Some(value);
-        self
-    }
-
-    /// Enables or disables an empty input
-    ///
-    /// By default, if there is no default value set for the input, the user must input a non-empty string.
-    pub fn allow_empty(&mut self, val: bool) -> &mut Input<'a, T> {
-        self.permit_empty = val;
-        self
-    }
-
-    /// Disables or enables the default value display.
-    ///
-    /// The default behaviour is to append [`default`] to the prompt to tell the
-    /// user what is the default value.
-    ///
-    /// This method does not affect existance of default value, only its display in the prompt!
-    pub fn show_default(&mut self, val: bool) -> &mut Input<'a, T> {
-        self.show_default = val;
-        self
     }
 
     /// Registers a validator.
@@ -198,9 +200,9 @@ impl<'a, T> Input<'a, T> {
     /// # }
     /// ```
     #[cfg(feature = "history")]
-    pub fn history_with<H>(&mut self, history: &'a mut H) -> &mut Input<'a, T>
+    pub fn history_with<H>(&mut self, history: &'a mut H) -> &mut Self
     where
-        H: History<T> + 'a,
+        H: History<T>,
     {
         self.history = Some(history);
         self
