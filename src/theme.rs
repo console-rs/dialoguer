@@ -105,18 +105,6 @@ pub trait Theme {
         self.format_prompt(f, prompt)
     }
 
-    /// Formats a select prompt with pages.
-    fn format_select_prompt_paged(
-        &self,
-        f: &mut dyn fmt::Write,
-        prompt: &str,
-        page: usize,
-        pages: usize,
-    ) -> fmt::Result {
-        self.format_prompt(f, prompt)?;
-        write!(f, " (Page {}/{})", page, pages)
-    }
-
     /// Formats a select prompt after selection.
     #[inline]
     fn format_select_prompt_selection(
