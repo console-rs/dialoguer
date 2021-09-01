@@ -685,7 +685,7 @@ impl<'a> TermThemeRenderer<'a> {
         Ok(())
     }
 
-    fn write_paging_info_to_buf(
+    fn write_paging_info(
         buf: &mut dyn fmt::Write,
         paging_info: (usize, usize),
     ) -> fmt::Result {
@@ -751,7 +751,7 @@ impl<'a> TermThemeRenderer<'a> {
             this.theme.format_select_prompt(buf, prompt)?;
 
             if let Some(paging_info) = paging_info {
-                TermThemeRenderer::write_paging_info_to_buf(buf, paging_info)?;
+                TermThemeRenderer::write_paging_info(buf, paging_info)?;
             }
 
             Ok(())
@@ -779,7 +779,7 @@ impl<'a> TermThemeRenderer<'a> {
             this.theme.format_multi_select_prompt(buf, prompt)?;
 
             if let Some(paging_info) = paging_info {
-                TermThemeRenderer::write_paging_info_to_buf(buf, paging_info)?;
+                TermThemeRenderer::write_paging_info(buf, paging_info)?;
             }
 
             Ok(())
@@ -814,7 +814,7 @@ impl<'a> TermThemeRenderer<'a> {
             this.theme.format_sort_prompt(buf, prompt)?;
 
             if let Some(paging_info) = paging_info {
-                TermThemeRenderer::write_paging_info_to_buf(buf, paging_info)?;
+                TermThemeRenderer::write_paging_info(buf, paging_info)?;
             }
 
             Ok(())
