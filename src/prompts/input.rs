@@ -137,7 +137,6 @@ impl<'a, T> Input<'a, T> {
     where
         V: Validator<T> + 'a,
         V::Err: ToString,
-        T: 'a,
     {
         let mut old_validator_func = self.validator.take();
 
@@ -202,36 +201,33 @@ impl<'a, T> Input<'a, T> {
     pub fn history_with<H>(&mut self, history: &'a mut H) -> &mut Input<'a, T>
     where
         H: History<T> + 'a,
-        T: 'a,
     {
         self.history = Some(history);
         self
     }
+}
 
+impl<T> Input<'_, T>
+where
+    T: Clone + ToString + FromStr,
+    <T as FromStr>::Err: Debug + ToString,
+{
     /// Enables the user to enter a printable ascii sequence and returns the result.
     ///
     /// Its difference from [`interact`](#method.interact) is that it only allows ascii characters for string,
     /// while [`interact`](#method.interact) allows virtually any character to be used e.g arrow keys.
     ///
     /// The dialog is rendered on stderr.
-    pub fn interact_text(&mut self) -> io::Result<T>
-    where
-        T: Clone + FromStr + ToString,
-        <T as FromStr>::Err: Debug + ToString,
-    {
+    pub fn interact_text(&mut self) -> io::Result<T> {
         self.interact_text_on(&Term::stderr())
     }
 
     /// Like [`interact_text`](#method.interact_text) but allows a specific terminal to be set.
-    pub fn interact_text_on(&mut self, term: &Term) -> io::Result<T>
-    where
-        T: Clone + FromStr + ToString,
-        <T as FromStr>::Err: Debug + ToString,
-    {
+    pub fn interact_text_on(&mut self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
-            let default_string = self.default.as_ref().map(|x| x.to_string());
+            let default_string = self.default.as_ref().map(ToString::to_string);
 
             render.input_prompt(
                 &self.prompt,
@@ -401,7 +397,13 @@ impl<'a, T> Input<'a, T> {
             }
         }
     }
+}
 
+impl<T> Input<'_, T>
+where
+    T: Clone + ToString + FromStr,
+    <T as FromStr>::Err: ToString,
+{
     /// Enables user interaction and returns the result.
     ///
     /// Allows any characters as input, including e.g arrow keys.
@@ -410,20 +412,12 @@ impl<'a, T> Input<'a, T> {
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
-    pub fn interact(&mut self) -> io::Result<T>
-    where
-        T: Clone + FromStr + ToString,
-        <T as FromStr>::Err: ToString,
-    {
+    pub fn interact(&mut self) -> io::Result<T> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like [`interact`](#method.interact) but allows a specific terminal to be set.
-    pub fn interact_on(&mut self, term: &Term) -> io::Result<T>
-    where
-        T: Clone + FromStr + ToString,
-        <T as FromStr>::Err: ToString,
-    {
+    pub fn interact_on(&mut self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
