@@ -52,15 +52,6 @@ impl<'a> MultiSelect<'a> {
         }
     }
 
-    /// Enables or disables paging
-    #[deprecated(
-        since = "0.9.0",
-        note = "Activating paging has no effect anymore. Paging will be activated automatically if needed."
-    )]
-    pub fn paged(&mut self, _val: bool) -> &mut MultiSelect<'a> {
-        self
-    }
-
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu.

@@ -82,17 +82,6 @@ impl<'a> Select<'a> {
         }
     }
 
-    /// Enables or disables paging
-    ///
-    /// Paging is disabled by default
-    #[deprecated(
-        since = "0.9.0",
-        note = "Activating paging has no effect anymore. Paging will be activated automatically if needed."
-    )]
-    pub fn paged(&mut self, _val: bool) -> &mut Select<'a> {
-        self
-    }
-
     /// Indicates whether select menu should be erased from the screen after interaction.
     ///
     /// The default is to clear the menu.
