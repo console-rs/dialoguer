@@ -26,7 +26,7 @@ pub use prompts::{
     confirm::Confirm, input::Input, multi_select::MultiSelect, select::Select, sort::Sort,
 };
 pub use validate::Validator;
-pub use paging::Paging;
+use paging::Paging;
 
 #[cfg(feature = "fuzzy-select")]
 pub use prompts::fuzzy_select::FuzzySelect;
