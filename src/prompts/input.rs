@@ -148,6 +148,7 @@ where
     pub fn validate_with<V>(&mut self, mut validator: V) -> &mut Input<'a, T>
     where
         V: Validator<T> + 'a,
+        V::Err: ToString,
         T: 'a,
     {
         let mut old_validator_func = self.validator.take();
