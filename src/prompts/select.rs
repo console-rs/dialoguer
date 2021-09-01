@@ -242,8 +242,8 @@ impl<'a> Select<'a> {
             ));
         }
 
-        let mut render = TermThemeRenderer::new(term, self.theme);
         let mut paging = Paging::new(term, self.items.len());
+        let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
         let mut size_vec = Vec::new();
