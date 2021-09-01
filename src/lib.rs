@@ -23,13 +23,15 @@ pub use edit::Editor;
 #[cfg(feature = "history")]
 pub use history::History;
 pub use prompts::{
-    confirm::Confirm, input::Input, multi_select::MultiSelect, password::Password, select::Select,
-    sort::Sort,
+    confirm::Confirm, input::Input, multi_select::MultiSelect, select::Select, sort::Sort,
 };
 pub use validate::Validator;
 
 #[cfg(feature = "fuzzy-select")]
 pub use prompts::fuzzy_select::FuzzySelect;
+
+#[cfg(feature = "password")]
+pub use prompts::password::Password;
 
 #[cfg(feature = "editor")]
 mod edit;

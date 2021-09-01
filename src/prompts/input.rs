@@ -365,7 +365,7 @@ where
             if chars.is_empty() {
                 if let Some(ref default) = self.default {
                     if let Some(ref mut validator) = self.validator {
-                        if let Some(err) = validator(&default) {
+                        if let Some(err) = validator(default) {
                             render.error(&err)?;
                             continue;
                         }
@@ -448,7 +448,7 @@ where
             if input.is_empty() {
                 if let Some(ref default) = self.default {
                     if let Some(ref mut validator) = self.validator {
-                        if let Some(err) = validator(&default) {
+                        if let Some(err) = validator(default) {
                             render.error(&err)?;
                             continue;
                         }

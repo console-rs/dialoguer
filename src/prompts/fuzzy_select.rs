@@ -157,10 +157,7 @@ impl<'a> FuzzySelect<'a> {
             // Renders all matching items, from best match to worst.
             filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(&s1));
 
-            for (idx, (item, _)) in filtered_list
-                .iter()
-                .enumerate()
-            {
+            for (idx, (item, _)) in filtered_list.iter().enumerate() {
                 render.select_prompt_item(item, idx == sel)?;
                 term.flush()?;
             }
