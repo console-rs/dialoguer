@@ -1,6 +1,9 @@
 use std::{io, ops::Rem};
 
-use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
+use crate::{
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    Paging,
+};
 
 use console::{Key, Term};
 
@@ -26,7 +29,6 @@ pub struct Sort<'a> {
     prompt: Option<String>,
     clear: bool,
     theme: &'a dyn Theme,
-    paged: bool,
 }
 
 impl<'a> Default for Sort<'a> {
@@ -48,14 +50,7 @@ impl<'a> Sort<'a> {
             clear: true,
             prompt: None,
             theme,
-            paged: false,
         }
-    }
-
-    /// Enables or disables paging
-    pub fn paged(&mut self, val: bool) -> &mut Sort<'a> {
-        self.paged = val;
-        self
     }
 
     /// Sets the clear behavior of the menu.
@@ -99,8 +94,6 @@ impl<'a> Sort<'a> {
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
-        let mut page = 0;
-
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -108,20 +101,9 @@ impl<'a> Sort<'a> {
             ));
         }
 
-        let capacity = if self.paged {
-            term.size().0 as usize - 1
-        } else {
-            self.items.len()
-        };
-
-        let pages = (self.items.len() as f64 / capacity as f64).ceil() as usize;
-
+        let mut paging = Paging::new(term, self.items.len());
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
-
-        if let Some(ref prompt) = self.prompt {
-            render.sort_prompt(prompt)?;
-        }
 
         let mut size_vec = Vec::new();
 
@@ -133,17 +115,22 @@ impl<'a> Sort<'a> {
         let mut order: Vec<_> = (0..self.items.len()).collect();
         let mut checked: bool = false;
 
+        term.hide_cursor()?;
+
         loop {
+            if let Some(ref prompt) = self.prompt {
+                paging.render_prompt(|paging_info| render.sort_prompt(prompt, paging_info))?;
+            }
+
             for (idx, item) in order
                 .iter()
                 .enumerate()
-                .skip(page * capacity)
-                .take(capacity)
+                .skip(paging.current_page * paging.capacity)
+                .take(paging.capacity)
             {
                 render.sort_prompt_item(&self.items[*item], checked, sel == idx)?;
             }
 
-            term.hide_cursor()?;
             term.flush()?;
 
             match term.read_key()? {
@@ -175,17 +162,11 @@ impl<'a> Sort<'a> {
                     }
                 }
                 Key::ArrowLeft | Key::Char('h') => {
-                    if self.paged {
+                    if paging.active {
                         let old_sel = sel;
-                        let old_page = page;
+                        let old_page = paging.current_page;
 
-                        if page == 0 {
-                            page = pages - 1;
-                        } else {
-                            page -= 1;
-                        }
-
-                        sel = page * capacity;
+                        sel = paging.previous_page();
 
                         if checked {
                             let indexes: Vec<_> = if old_page == 0 {
@@ -203,20 +184,14 @@ impl<'a> Sort<'a> {
                     }
                 }
                 Key::ArrowRight | Key::Char('l') => {
-                    if self.paged {
+                    if paging.active {
                         let old_sel = sel;
-                        let old_page = page;
+                        let old_page = paging.current_page;
 
-                        if page == pages - 1 {
-                            page = 0;
-                        } else {
-                            page += 1;
-                        }
-
-                        sel = page * capacity;
+                        sel = paging.next_page();
 
                         if checked {
-                            let indexes: Vec<_> = if old_page == pages - 1 {
+                            let indexes: Vec<_> = if old_page == paging.pages - 1 {
                                 let indexes1: Vec<_> = (old_sel..self.items.len()).collect();
                                 let indexes2: Vec<_> = vec![0];
                                 [indexes1, indexes2].concat()
@@ -256,11 +231,13 @@ impl<'a> Sort<'a> {
                 _ => {}
             }
 
-            if sel < page * capacity || sel >= (page + 1) * capacity {
-                page = sel / capacity;
-            }
+            paging.update(sel)?;
 
-            render.clear_preserve_prompt(&size_vec)?;
+            if paging.active {
+                render.clear()?;
+            } else {
+                render.clear_preserve_prompt(&size_vec)?;
+            }
         }
     }
 }

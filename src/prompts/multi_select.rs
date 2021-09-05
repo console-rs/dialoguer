@@ -1,6 +1,9 @@
 use std::{io, iter::repeat, ops::Rem};
 
-use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
+use crate::{
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    Paging,
+};
 
 use console::{Key, Term};
 
@@ -24,7 +27,6 @@ pub struct MultiSelect<'a> {
     prompt: Option<String>,
     clear: bool,
     theme: &'a dyn Theme,
-    paged: bool,
 }
 
 impl<'a> Default for MultiSelect<'a> {
@@ -47,14 +49,7 @@ impl<'a> MultiSelect<'a> {
             clear: true,
             prompt: None,
             theme,
-            paged: false,
         }
-    }
-
-    /// Enables or disables paging
-    pub fn paged(&mut self, val: bool) -> &mut MultiSelect<'a> {
-        self.paged = val;
-        self
     }
 
     /// Sets the clear behavior of the menu.
@@ -127,8 +122,6 @@ impl<'a> MultiSelect<'a> {
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
-        let mut page = 0;
-
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -136,20 +129,9 @@ impl<'a> MultiSelect<'a> {
             ));
         }
 
-        let capacity = if self.paged {
-            term.size().0 as usize - 1
-        } else {
-            self.items.len()
-        };
-
-        let pages = (self.items.len() as f64 / capacity as f64).ceil() as usize;
-
+        let mut paging = Paging::new(term, self.items.len());
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
-
-        if let Some(ref prompt) = self.prompt {
-            render.multi_select_prompt(prompt)?;
-        }
 
         let mut size_vec = Vec::new();
 
@@ -165,18 +147,24 @@ impl<'a> MultiSelect<'a> {
 
         let mut checked: Vec<bool> = self.defaults.clone();
 
+        term.hide_cursor()?;
+
         loop {
+            if let Some(ref prompt) = self.prompt {
+                paging
+                    .render_prompt(|paging_info| render.multi_select_prompt(prompt, paging_info))?;
+            }
+
             for (idx, item) in self
                 .items
                 .iter()
                 .enumerate()
-                .skip(page * capacity)
-                .take(capacity)
+                .skip(paging.current_page * paging.capacity)
+                .take(paging.capacity)
             {
                 render.multi_select_prompt_item(item, checked[idx], sel == idx)?;
             }
 
-            term.hide_cursor()?;
             term.flush()?;
 
             match term.read_key()? {
@@ -196,25 +184,13 @@ impl<'a> MultiSelect<'a> {
                     }
                 }
                 Key::ArrowLeft | Key::Char('h') => {
-                    if self.paged {
-                        if page == 0 {
-                            page = pages - 1;
-                        } else {
-                            page -= 1;
-                        }
-
-                        sel = page * capacity;
+                    if paging.active {
+                        sel = paging.previous_page();
                     }
                 }
                 Key::ArrowRight | Key::Char('l') => {
-                    if self.paged {
-                        if page == pages - 1 {
-                            page = 0;
-                        } else {
-                            page += 1;
-                        }
-
-                        sel = page * capacity;
+                    if paging.active {
+                        sel = paging.next_page();
                     }
                 }
                 Key::Char(' ') => {
@@ -273,11 +249,13 @@ impl<'a> MultiSelect<'a> {
                 _ => {}
             }
 
-            if sel < page * capacity || sel >= (page + 1) * capacity {
-                page = sel / capacity;
-            }
+            paging.update(sel)?;
 
-            render.clear_preserve_prompt(&size_vec)?;
+            if paging.active {
+                render.clear()?;
+            } else {
+                render.clear_preserve_prompt(&size_vec)?;
+            }
         }
     }
 }

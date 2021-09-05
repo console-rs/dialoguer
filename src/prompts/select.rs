@@ -1,5 +1,6 @@
 use std::{io, ops::Rem};
 
+use crate::paging::Paging;
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::{Key, Term};
@@ -39,7 +40,6 @@ pub struct Select<'a> {
     prompt: Option<String>,
     clear: bool,
     theme: &'a dyn Theme,
-    paged: bool,
 }
 
 impl<'a> Default for Select<'a> {
@@ -79,16 +79,7 @@ impl<'a> Select<'a> {
             prompt: None,
             clear: true,
             theme,
-            paged: false,
         }
-    }
-
-    /// Enables or disables paging
-    ///
-    /// Paging is disabled by default
-    pub fn paged(&mut self, val: bool) -> &mut Select<'a> {
-        self.paged = val;
-        self
     }
 
     /// Indicates whether select menu should be erased from the screen after interaction.
@@ -244,8 +235,6 @@ impl<'a> Select<'a> {
 
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
-        let mut page = 0;
-
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -253,20 +242,9 @@ impl<'a> Select<'a> {
             ));
         }
 
-        let capacity = if self.paged {
-            term.size().0 as usize - 1
-        } else {
-            self.items.len()
-        };
-
-        let pages = (self.items.len() as f64 / capacity as f64).ceil() as usize;
-
+        let mut paging = Paging::new(term, self.items.len());
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
-
-        if let Some(ref prompt) = self.prompt {
-            render.select_prompt(prompt)?;
-        }
 
         let mut size_vec = Vec::new();
 
@@ -280,18 +258,23 @@ impl<'a> Select<'a> {
             size_vec.push(*size);
         }
 
+        term.hide_cursor()?;
+
         loop {
+            if let Some(ref prompt) = self.prompt {
+                paging.render_prompt(|paging_info| render.select_prompt(prompt, paging_info))?;
+            }
+
             for (idx, item) in self
                 .items
                 .iter()
                 .enumerate()
-                .skip(page * capacity)
-                .take(capacity)
+                .skip(paging.current_page * paging.capacity)
+                .take(paging.capacity)
             {
                 render.select_prompt_item(item, sel == idx)?;
             }
 
-            term.hide_cursor()?;
             term.flush()?;
 
             match term.read_key()? {
@@ -322,25 +305,13 @@ impl<'a> Select<'a> {
                     }
                 }
                 Key::ArrowLeft | Key::Char('h') => {
-                    if self.paged {
-                        if page == 0 {
-                            page = pages - 1;
-                        } else {
-                            page -= 1;
-                        }
-
-                        sel = page * capacity;
+                    if paging.active {
+                        sel = paging.previous_page();
                     }
                 }
                 Key::ArrowRight | Key::Char('l') => {
-                    if self.paged {
-                        if page == pages - 1 {
-                            page = 0;
-                        } else {
-                            page += 1;
-                        }
-
-                        sel = page * capacity;
+                    if paging.active {
+                        sel = paging.next_page();
                     }
                 }
 
@@ -361,11 +332,13 @@ impl<'a> Select<'a> {
                 _ => {}
             }
 
-            if sel != !0 && (sel < page * capacity || sel >= (page + 1) * capacity) {
-                page = sel / capacity;
-            }
+            paging.update(sel)?;
 
-            render.clear_preserve_prompt(&size_vec)?;
+            if paging.active {
+                render.clear()?;
+            } else {
+                render.clear_preserve_prompt(&size_vec)?;
+            }
         }
     }
 }
