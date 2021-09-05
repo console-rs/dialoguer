@@ -6,9 +6,9 @@ fn main() {
         "Vanilla Cupcake",
         "Chocolate Muffin",
         "A Pile of sweet, sweet mustard",
-        "Foo",
-        "Bar",
-        "Baz",
+        "Carrots",
+        "Peas",
+        "Pistacio",
         "Mustard",
         "Cream",
         "Banana",
@@ -17,7 +17,7 @@ fn main() {
         "Corn",
         "Cake",
         "Tarte",
-        "Clear glaze",
+        "Cheddar",
         "Vanilla",
         "Hazelnut",
         "Flour",
@@ -29,7 +29,7 @@ fn main() {
         "Mousse au chocolat",
         "Brown sugar",
         "Blueberry",
-        "Blanc",
+        "Burger",
     ];
 
     let selection = Select::with_theme(&ColorfulTheme::default())
@@ -40,5 +40,4 @@ fn main() {
         .unwrap();
 
     println!("Enjoy your {}!", selections[selection]);
-
 }

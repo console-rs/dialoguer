@@ -22,11 +22,11 @@ pub use console;
 pub use edit::Editor;
 #[cfg(feature = "history")]
 pub use history::History;
+use paging::Paging;
 pub use prompts::{
     confirm::Confirm, input::Input, multi_select::MultiSelect, select::Select, sort::Sort,
 };
 pub use validate::Validator;
-use paging::Paging;
 
 #[cfg(feature = "fuzzy-select")]
 pub use prompts::fuzzy_select::FuzzySelect;
@@ -38,7 +38,7 @@ pub use prompts::password::Password;
 mod edit;
 #[cfg(feature = "history")]
 mod history;
+mod paging;
 mod prompts;
 pub mod theme;
 mod validate;
-mod paging;

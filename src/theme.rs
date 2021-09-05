@@ -685,10 +685,7 @@ impl<'a> TermThemeRenderer<'a> {
         Ok(())
     }
 
-    fn write_paging_info(
-        buf: &mut dyn fmt::Write,
-        paging_info: (usize, usize),
-    ) -> fmt::Result {
+    fn write_paging_info(buf: &mut dyn fmt::Write, paging_info: (usize, usize)) -> fmt::Result {
         write!(buf, " [Page {}/{}] ", paging_info.0, paging_info.1)
     }
 

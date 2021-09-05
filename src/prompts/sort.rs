@@ -1,6 +1,9 @@
 use std::{io, ops::Rem};
 
-use crate::{Paging, theme::{SimpleTheme, TermThemeRenderer, Theme}};
+use crate::{
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    Paging,
+};
 
 use console::{Key, Term};
 
@@ -91,7 +94,6 @@ impl<'a> Sort<'a> {
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
-
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -112,7 +114,7 @@ impl<'a> Sort<'a> {
 
         let mut order: Vec<_> = (0..self.items.len()).collect();
         let mut checked: bool = false;
-        
+
         term.hide_cursor()?;
 
         loop {
@@ -165,7 +167,7 @@ impl<'a> Sort<'a> {
                         let old_page = paging.current_page;
 
                         sel = paging.previous_page();
-                        
+
                         if checked {
                             let indexes: Vec<_> = if old_page == 0 {
                                 let indexes1: Vec<_> = (0..=old_sel).rev().collect();
