@@ -114,14 +114,76 @@ impl<'a> MultiSelect<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// The user can select the items with the space bar and on enter
-    /// the selected items will be returned.
+    /// The user can select the items with the space bar and on enter the indices of selected items will be returned.
+    /// The dialog is rendered on stderr.
+    /// Result contains `Vec<index>` if user hit 'Enter'.
+    /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
+    #[inline]
     pub fn interact(&self) -> io::Result<Vec<usize>> {
         self.interact_on(&Term::stderr())
     }
 
+    /// Enables user interaction and returns the result.
+    ///
+    /// The user can select the items with the space bar and on enter the indices of selected items will be returned.
+    /// The dialog is rendered on stderr.
+    /// Result contains `Some(Vec<index>)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
+    #[inline]
+    pub fn interact_opt(&self) -> io::Result<Option<Vec<usize>>> {
+        self.interact_on_opt(&Term::stderr())
+    }
+
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
+    ///
+    /// ## Examples
+    ///```rust,no_run
+    /// use dialoguer::Select;
+    /// use console::Term;
+    ///
+    /// fn main() -> std::io::Result<()> {
+    ///     let selections = MultiSelect::new()
+    ///         .item("Option A")
+    ///         .item("Option B")
+    ///         .interact_on(&Term::stderr())?;
+    ///
+    ///     println!("User selected options at indices {:?}", selections);
+    ///
+    ///     Ok(())
+    /// }
+    ///```
+    #[inline]
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
+        self._interact_on(term, false)?
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
+    }
+
+    /// Like [interact_opt](#method.interact_opt) but allows a specific terminal to be set.
+    ///
+    /// ## Examples
+    /// ```rust,no_run
+    /// use dialoguer::Select;
+    /// use console::Term;
+    ///
+    /// fn main() -> std::io::Result<()> {
+    ///     let selections = MultiSelect::new()
+    ///         .item("Option A")
+    ///         .item("Option B")
+    ///         .interact_on_opt(&Term::stdout())?;
+    ///
+    ///     match selections {
+    ///         Some(positions) => println!("User selected options at indices {:?}", positions),
+    ///         None => println!("User exited using Esc or q")
+    ///     }
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    #[inline]
+    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<Vec<usize>>> {
+        self._interact_on(term, true)
+    }
+
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<Vec<usize>>> {
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -196,25 +258,17 @@ impl<'a> MultiSelect<'a> {
                 Key::Char(' ') => {
                     checked[sel] = !checked[sel];
                 }
-                Key::Escape => {
-                    if self.clear {
-                        render.clear()?;
+                Key::Escape | Key::Char('q') => {
+                    if allow_quit {
+                        if self.clear {
+                            render.clear()?;
+                        }
+
+                        term.show_cursor()?;
+                        term.flush()?;
+
+                        return Ok(None);
                     }
-
-                    if let Some(ref prompt) = self.prompt {
-                        render.multi_select_prompt_selection(prompt, &[][..])?;
-                    }
-
-                    term.show_cursor()?;
-                    term.flush()?;
-
-                    return Ok(self
-                        .defaults
-                        .clone()
-                        .into_iter()
-                        .enumerate()
-                        .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
-                        .collect());
                 }
                 Key::Enter => {
                     if self.clear {
@@ -240,11 +294,13 @@ impl<'a> MultiSelect<'a> {
                     term.show_cursor()?;
                     term.flush()?;
 
-                    return Ok(checked
-                        .into_iter()
-                        .enumerate()
-                        .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
-                        .collect());
+                    return Ok(Some(
+                        checked
+                            .into_iter()
+                            .enumerate()
+                            .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
+                            .collect(),
+                    ));
                 }
                 _ => {}
             }

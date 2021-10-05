@@ -111,19 +111,22 @@ impl<'a> Confirm<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// If the user confirms the result is `true`, `false` if declines or default (configured in [default](#method.default)) if pushes enter.
-    /// Otherwise function discards input waiting for valid one.
-    ///
     /// The dialog is rendered on stderr.
+    ///
+    /// Result contains `bool` if user answered "yes" or "no" or `default` (configured in [default](#method.default)) if pushes enter.
+    /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
+    #[inline]
     pub fn interact(&self) -> io::Result<bool> {
         self.interact_on(&Term::stderr())
     }
 
     /// Enables user interaction and returns the result.
     ///
-    /// This method is similar to [interact_on_opt](#method.interact_on_opt) except for the fact that it does not allow selection of the terminal.
     /// The dialog is rendered on stderr.
-    /// Result contains `Some(bool)` if user answered "yes" or "no" or `None` if user cancelled with 'Esc' or 'q'.
+    ///
+    /// Result contains `Some(bool)` if user answered "yes" or "no" or `Some(default)` (configured in [default](#method.default)) if pushes enter,
+    /// or `None` if user cancelled with 'Esc' or 'q'.
+    #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<bool>> {
         self.interact_on_opt(&Term::stderr())
     }
@@ -143,6 +146,7 @@ impl<'a> Confirm<'a> {
     /// #   Ok(())
     /// # }
     /// ```
+    #[inline]
     pub fn interact_on(&self, term: &Term) -> io::Result<bool> {
         self._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
@@ -167,6 +171,7 @@ impl<'a> Confirm<'a> {
     ///     Ok(())
     /// }
     /// ```
+    #[inline]
     pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<bool>> {
         self._interact_on(term, true)
     }
