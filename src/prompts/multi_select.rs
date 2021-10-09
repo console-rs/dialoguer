@@ -114,7 +114,7 @@ impl<'a> MultiSelect<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// The user can select the items with the space bar and on enter the indices of selected items will be returned.
+    /// The user can select the items with the 'Space' bar and on 'Enter' the indices of selected items will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `Vec<index>` if user hit 'Enter'.
     /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
@@ -125,7 +125,7 @@ impl<'a> MultiSelect<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// The user can select the items with the space bar and on enter the indices of selected items will be returned.
+    /// The user can select the items with the 'Space' bar and on 'Enter' the indices of selected items will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `Some(Vec<index>)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]

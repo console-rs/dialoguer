@@ -97,7 +97,7 @@ impl<'a> FuzzySelect<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// The user can select the items using enter and the index of selected item will be returned.
+    /// The user can select the items using 'Enter' and the index of selected item will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `index` of selected item if user hit 'Enter'.
     /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
@@ -108,7 +108,7 @@ impl<'a> FuzzySelect<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// The user can select the items using enter and the index of selected item will be returned.
+    /// The user can select the items using 'Enter' and the index of selected item will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `Some(index)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]

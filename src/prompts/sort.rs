@@ -86,7 +86,7 @@ impl<'a> Sort<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// The user can order the items with the space bar and the arrows. On enter ordered list of the incides of items will be returned.
+    /// The user can order the items with the 'Space' bar and the arrows. On 'Enter' ordered list of the incides of items will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `Vec<index>` if user hit 'Enter'.
     /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
@@ -97,7 +97,7 @@ impl<'a> Sort<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// The user can order the items with the space bar and the arrows. On enter ordered list of the incides of items will be returned.
+    /// The user can order the items with the 'Space' bar and the arrows. On 'Enter' ordered list of the incides of items will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `Some(Vec<index>)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]

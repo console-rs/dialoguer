@@ -168,9 +168,9 @@ impl<'a> Select<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// The user can select the items with the space bar or enter and the index of selected item will be returned.
+    /// The user can select the items with the 'Space' bar or 'Enter' and the index of selected item will be returned.
     /// The dialog is rendered on stderr.
-    /// Result contains `Vec<index>` if user selected one of items using 'Enter'.
+    /// Result contains `index` if user selected one of items using 'Enter'.
     /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<usize> {
@@ -179,7 +179,7 @@ impl<'a> Select<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// The user can select the items with the space bar or enter and the index of selected item will be returned.
+    /// The user can select the items with the 'Space' bar or 'Enter' and the index of selected item will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `Some(index)` if user selected one of items using 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
