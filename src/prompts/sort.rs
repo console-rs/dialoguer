@@ -86,14 +86,76 @@ impl<'a> Sort<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// The user can order the items with the space bar and the arrows.
-    /// On enter the ordered list will be returned.
+    /// The user can order the items with the 'Space' bar and the arrows. On 'Enter' ordered list of the incides of items will be returned.
+    /// The dialog is rendered on stderr.
+    /// Result contains `Vec<index>` if user hit 'Enter'.
+    /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
+    #[inline]
     pub fn interact(&self) -> io::Result<Vec<usize>> {
         self.interact_on(&Term::stderr())
     }
 
+    /// Enables user interaction and returns the result.
+    ///
+    /// The user can order the items with the 'Space' bar and the arrows. On 'Enter' ordered list of the incides of items will be returned.
+    /// The dialog is rendered on stderr.
+    /// Result contains `Some(Vec<index>)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
+    #[inline]
+    pub fn interact_opt(&self) -> io::Result<Option<Vec<usize>>> {
+        self.interact_on_opt(&Term::stderr())
+    }
+
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
+    ///
+    /// ## Examples
+    ///```rust,no_run
+    /// use dialoguer::Select;
+    /// use console::Term;
+    ///
+    /// fn main() -> std::io::Result<()> {
+    ///     let selections = Sort::new()
+    ///         .item("Option A")
+    ///         .item("Option B")
+    ///         .interact_on(&Term::stderr())?;
+    ///
+    ///     println!("User sorted options as indices {:?}", selections);
+    ///
+    ///     Ok(())
+    /// }
+    ///```
+    #[inline]
     pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
+        self._interact_on(term, false)?
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
+    }
+
+    /// Like [interact_opt](#method.interact_opt) but allows a specific terminal to be set.
+    ///
+    /// ## Examples
+    /// ```rust,no_run
+    /// use dialoguer::Select;
+    /// use console::Term;
+    ///
+    /// fn main() -> std::io::Result<()> {
+    ///     let selections = MultiSelect::new()
+    ///         .item("Option A")
+    ///         .item("Option B")
+    ///         .interact_on_opt(&Term::stdout())?;
+    ///
+    ///     match selections {
+    ///         Some(positions) => println!("User sorted options as indices {:?}", positions),
+    ///         None => println!("User exited using Esc or q")
+    ///     }
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    #[inline]
+    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<Vec<usize>>> {
+        self._interact_on(term, true)
+    }
+
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<Vec<usize>>> {
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -208,7 +270,18 @@ impl<'a> Sort<'a> {
                 Key::Char(' ') => {
                     checked = !checked;
                 }
-                // TODO: Key::Escape
+                Key::Escape | Key::Char('q') => {
+                    if allow_quit {
+                        if self.clear {
+                            term.clear_last_lines(self.items.len())?;
+                        }
+
+                        term.show_cursor()?;
+                        term.flush()?;
+
+                        return Ok(None);
+                    }
+                }
                 Key::Enter => {
                     if self.clear {
                         render.clear()?;
@@ -226,7 +299,7 @@ impl<'a> Sort<'a> {
                     term.show_cursor()?;
                     term.flush()?;
 
-                    return Ok(order);
+                    return Ok(Some(order));
                 }
                 _ => {}
             }

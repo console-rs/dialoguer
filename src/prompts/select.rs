@@ -168,18 +168,21 @@ impl<'a> Select<'a> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// Similar to [interact_on](#method.interact_on) except for the fact that it does not allow selection of the terminal.
+    /// The user can select the items with the 'Space' bar or 'Enter' and the index of selected item will be returned.
     /// The dialog is rendered on stderr.
-    /// Result contains index of a selected item.
+    /// Result contains `index` if user selected one of items using 'Enter'.
+    /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
+    #[inline]
     pub fn interact(&self) -> io::Result<usize> {
         self.interact_on(&Term::stderr())
     }
 
     /// Enables user interaction and returns the result.
     ///
-    /// This method is similar to [interact_on_opt](#method.interact_on_opt) except for the fact that it does not allow selection of the terminal.
+    /// The user can select the items with the 'Space' bar or 'Enter' and the index of selected item will be returned.
     /// The dialog is rendered on stderr.
-    /// Result contains `Some(index)` if user selected one of items or `None` if user cancelled with 'Esc' or 'q'.
+    /// Result contains `Some(index)` if user selected one of items using 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
+    #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<usize>> {
         self.interact_on_opt(&Term::stderr())
     }
@@ -202,6 +205,7 @@ impl<'a> Select<'a> {
     ///     Ok(())
     /// }
     ///```
+    #[inline]
     pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
         self._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
@@ -222,7 +226,7 @@ impl<'a> Select<'a> {
     ///
     ///     match selection {
     ///         Some(position) => println!("User selected option at index {}", position),
-    ///         None => println!("User did not select anything")
+    ///         None => println!("User did not select anything or exited using Esc or q")
     ///     }
     ///
     ///     Ok(())
@@ -289,9 +293,10 @@ impl<'a> Select<'a> {
                     if allow_quit {
                         if self.clear {
                             term.clear_last_lines(self.items.len())?;
-                            term.show_cursor()?;
-                            term.flush()?;
                         }
+
+                        term.show_cursor()?;
+                        term.flush()?;
 
                         return Ok(None);
                     }
