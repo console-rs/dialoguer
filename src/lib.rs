@@ -14,6 +14,7 @@
 //! * Input prompts (regular and password)
 //! * Input validation
 //! * Selections prompts (single and multi)
+//! * Fuzzy select prompt
 //! * Other kind of prompts
 //! * Editor launching
 
