@@ -6,7 +6,9 @@ fn main() {
     println!("In this example, history is limited to 4 entries");
     println!("Use the Up/Down arrows to scroll through history");
     println!();
+
     let mut history = MyHistory::default();
+
     loop {
         if let Ok(cmd) = Input::<String>::with_theme(&ColorfulTheme::default())
             .with_prompt("dialoguer")

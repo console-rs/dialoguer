@@ -13,7 +13,7 @@
 
 * Updated MSRV to `1.51.0`
 * `Editor` is gated behind `editor` feature
-* `Password` is gated behind `password` feature
+* `Password`, `Theme::format_password_prompt` and `Theme::format_password_prompt_selection` are gated behind `password` feature
 * Remove `Select::paged()`, `Sort::paged()` and `MultiSelect::paged()` in favor of automatic paging based on terminal size
 
 ## 0.8.0

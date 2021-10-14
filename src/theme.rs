@@ -85,12 +85,14 @@ pub trait Theme {
 
     /// Formats a password prompt.
     #[inline]
+    #[cfg(feature = "password")]
     fn format_password_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_input_prompt(f, prompt, None)
     }
 
     /// Formats a password prompt after selection.
     #[inline]
+    #[cfg(feature = "password")]
     fn format_password_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
@@ -456,6 +458,7 @@ impl Theme for ColorfulTheme {
     }
 
     /// Formats a password prompt after selection.
+    #[cfg(feature = "password")]
     fn format_password_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
@@ -635,10 +638,12 @@ impl<'a> TermThemeRenderer<'a> {
         }
     }
 
+    #[cfg(feature = "password")]
     pub fn set_prompts_reset_height(&mut self, val: bool) {
         self.prompts_reset_height = val;
     }
 
+    #[cfg(feature = "password")]
     pub fn term(&self) -> &Term {
         self.term
     }
@@ -726,6 +731,7 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
+    #[cfg(feature = "password")]
     pub fn password_prompt(&mut self, prompt: &str) -> io::Result<()> {
         self.write_formatted_str(|this, buf| {
             write!(buf, "\r")?;
@@ -733,6 +739,7 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
+    #[cfg(feature = "password")]
     pub fn password_prompt_selection(&mut self, prompt: &str) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_password_prompt_selection(buf, prompt)

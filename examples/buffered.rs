@@ -1,5 +1,5 @@
 use console::Term;
-use dialoguer::{theme::ColorfulTheme, Confirm, Input, MultiSelect, Password, Select, Sort};
+use dialoguer::{theme::ColorfulTheme, Confirm, Input, MultiSelect, Select, Sort};
 
 fn main() {
     let items = &[
@@ -19,12 +19,6 @@ fn main() {
 
     let _: String = Input::with_theme(&theme)
         .with_prompt("Your name")
-        .interact_on(&term)
-        .unwrap();
-
-    Password::with_theme(&theme)
-        .with_prompt("Your password")
-        .with_confirmation("Confirm", "Passwords do not match")
         .interact_on(&term)
         .unwrap();
 
