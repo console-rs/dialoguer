@@ -46,6 +46,7 @@ pub struct Input<'a, T> {
     initial_text: Option<String>,
     theme: &'a dyn Theme,
     permit_empty: bool,
+    mapper: Option<Box<dyn FnMut(T) -> T + 'a>>,
     validator: Option<Box<dyn FnMut(&T) -> Option<String> + 'a>>,
     #[cfg(feature = "history")]
     history: Option<&'a mut dyn History<T>>,
@@ -80,6 +81,7 @@ where
             initial_text: None,
             theme,
             permit_empty: false,
+            mapper: None,
             validator: None,
             #[cfg(feature = "history")]
             history: None,
@@ -124,6 +126,40 @@ where
     /// This method does not affect existance of default value, only its display in the prompt!
     pub fn show_default(&mut self, val: bool) -> &mut Input<'a, T> {
         self.show_default = val;
+        self
+    }
+
+    /// Registers a mapper for changing inputted value into another one.
+    ///
+    /// All mappers are called before validators.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use dialoguer::Input;
+    /// let project_name = "NewProject";
+    /// let project_root: String = Input::new()
+    ///     .with_prompt("Enter project root path (e.g. ~/MyProject, ~/Projects/)")
+    ///     .default("~/".to_string() + project_name)
+    ///     .map(|mut input: String| -> String {
+    ///         if input.ends_with('/') {
+    ///             input += project_name;
+    ///         }
+    ///         input
+    ///     })
+    ///     .interact()
+    ///     .unwrap();
+    /// ```
+    pub fn map(&mut self, mut mapper: impl FnMut(T) -> T + 'a) -> &mut Input<'a, T> {
+        let mut old_mapper_func = self.mapper.take();
+
+        self.mapper = Some(Box::new(move |mut value: T| {
+            if let Some(old) = old_mapper_func.as_mut() {
+                value = old(value);
+            }
+            mapper(value)
+        }));
+
         self
     }
 
@@ -381,6 +417,11 @@ where
 
             match input.parse::<T>() {
                 Ok(value) => {
+                    let value = match self.mapper.as_mut() {
+                        None => value,
+                        Some(m) => m(value)
+                    };
+
                     if let Some(ref mut validator) = self.validator {
                         if let Some(err) = validator(&value) {
                             render.error(&err)?;
@@ -393,7 +434,7 @@ where
                         history.write(&value);
                     }
 
-                    render.input_prompt_selection(&self.prompt, &input)?;
+                    render.input_prompt_selection(&self.prompt, &format!("{}", value))?;
                     term.flush()?;
 
                     return Ok(value);
