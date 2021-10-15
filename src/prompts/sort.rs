@@ -125,11 +125,11 @@ impl Sort<'_> {
     ///
     /// ## Examples
     /// ```rust,no_run
-    /// use dialoguer::MultiSelect;
+    /// use dialoguer::Sort;
     /// use console::Term;
     ///
     /// fn main() -> std::io::Result<()> {
-    ///     let selections = MultiSelect::new()
+    ///     let selections = Sort::new()
     ///         .item("Option A")
     ///         .item("Option B")
     ///         .interact_on_opt(&Term::stdout())?;
