@@ -41,45 +41,42 @@ pub struct FuzzySelect<'a> {
     theme: &'a dyn Theme,
 }
 
-impl<'a> FuzzySelect<'a> {
+impl Default for FuzzySelect<'static> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl FuzzySelect<'static> {
     /// Creates the prompt with a specific text.
-    pub fn new() -> FuzzySelect<'static> {
-        FuzzySelect::with_theme(&SimpleTheme)
+    pub fn new() -> Self {
+        Self::with_theme(&SimpleTheme)
     }
+}
 
-    /// Same as `new` but with a specific theme.
-    pub fn with_theme(theme: &'a dyn Theme) -> FuzzySelect<'a> {
-        FuzzySelect {
-            default: !0,
-            items: vec![],
-            prompt: "".into(),
-            clear: true,
-            theme,
-        }
-    }
-
+impl FuzzySelect<'_> {
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu.
-    pub fn clear(&mut self, val: bool) -> &mut FuzzySelect<'a> {
+    pub fn clear(&mut self, val: bool) -> &mut Self {
         self.clear = val;
         self
     }
 
     /// Sets a default for the menu
-    pub fn default(&mut self, val: usize) -> &mut FuzzySelect<'a> {
+    pub fn default(&mut self, val: usize) -> &mut Self {
         self.default = val;
         self
     }
 
     /// Add a single item to the fuzzy selector.
-    pub fn item<T: ToString>(&mut self, item: T) -> &mut FuzzySelect<'a> {
+    pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
         self.items.push(item.to_string());
         self
     }
 
     /// Adds multiple items to the fuzzy selector.
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut FuzzySelect<'a> {
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
         for item in items {
             self.items.push(item.to_string());
         }
@@ -90,7 +87,7 @@ impl<'a> FuzzySelect<'a> {
     ///
     /// When a prompt is set the system also prints out a confirmation after
     /// the fuzzy selection.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut FuzzySelect<'a> {
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
         self
     }
@@ -232,6 +229,19 @@ impl<'a> FuzzySelect<'a> {
             }
 
             render.clear_preserve_prompt(&size_vec)?;
+        }
+    }
+}
+
+impl<'a> FuzzySelect<'a> {
+    /// Same as `new` but with a specific theme.
+    pub fn with_theme(theme: &'a dyn Theme) -> Self {
+        Self {
+            default: !0,
+            items: vec![],
+            prompt: "".into(),
+            clear: true,
+            theme,
         }
     }
 }

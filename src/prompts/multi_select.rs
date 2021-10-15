@@ -29,39 +29,30 @@ pub struct MultiSelect<'a> {
     theme: &'a dyn Theme,
 }
 
-impl<'a> Default for MultiSelect<'a> {
-    fn default() -> MultiSelect<'a> {
-        MultiSelect::new()
+impl Default for MultiSelect<'static> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-impl<'a> MultiSelect<'a> {
+impl MultiSelect<'static> {
     /// Creates a multi select prompt.
-    pub fn new() -> MultiSelect<'static> {
-        MultiSelect::with_theme(&SimpleTheme)
+    pub fn new() -> Self {
+        Self::with_theme(&SimpleTheme)
     }
+}
 
-    /// Creates a multi select prompt with a specific theme.
-    pub fn with_theme(theme: &'a dyn Theme) -> MultiSelect<'a> {
-        MultiSelect {
-            items: vec![],
-            defaults: vec![],
-            clear: true,
-            prompt: None,
-            theme,
-        }
-    }
-
+impl MultiSelect<'_> {
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu.
-    pub fn clear(&mut self, val: bool) -> &mut MultiSelect<'a> {
+    pub fn clear(&mut self, val: bool) -> &mut Self {
         self.clear = val;
         self
     }
 
     /// Sets a defaults for the menu.
-    pub fn defaults(&mut self, val: &[bool]) -> &mut MultiSelect<'a> {
+    pub fn defaults(&mut self, val: &[bool]) -> &mut Self {
         self.defaults = val
             .to_vec()
             .iter()
@@ -74,19 +65,19 @@ impl<'a> MultiSelect<'a> {
 
     /// Add a single item to the selector.
     #[inline]
-    pub fn item<T: ToString>(&mut self, item: T) -> &mut MultiSelect<'a> {
+    pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
         self.item_checked(item, false)
     }
 
     /// Add a single item to the selector with a default checked state.
-    pub fn item_checked<T: ToString>(&mut self, item: T, checked: bool) -> &mut MultiSelect<'a> {
+    pub fn item_checked<T: ToString>(&mut self, item: T, checked: bool) -> &mut Self {
         self.items.push(item.to_string());
         self.defaults.push(checked);
         self
     }
 
     /// Adds multiple items to the selector.
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut MultiSelect<'a> {
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
         for item in items {
             self.items.push(item.to_string());
             self.defaults.push(false);
@@ -95,7 +86,7 @@ impl<'a> MultiSelect<'a> {
     }
 
     /// Adds multiple items to the selector with checked state
-    pub fn items_checked<T: ToString>(&mut self, items: &[(T, bool)]) -> &mut MultiSelect<'a> {
+    pub fn items_checked<T: ToString>(&mut self, items: &[(T, bool)]) -> &mut Self {
         for &(ref item, checked) in items {
             self.items.push(item.to_string());
             self.defaults.push(checked);
@@ -107,7 +98,7 @@ impl<'a> MultiSelect<'a> {
     ///
     /// When a prompt is set the system also prints out a confirmation after
     /// the selection.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut MultiSelect<'a> {
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = Some(prompt.into());
         self
     }
@@ -137,7 +128,7 @@ impl<'a> MultiSelect<'a> {
     ///
     /// ## Examples
     ///```rust,no_run
-    /// use dialoguer::Select;
+    /// use dialoguer::MultiSelect;
     /// use console::Term;
     ///
     /// fn main() -> std::io::Result<()> {
@@ -161,7 +152,7 @@ impl<'a> MultiSelect<'a> {
     ///
     /// ## Examples
     /// ```rust,no_run
-    /// use dialoguer::Select;
+    /// use dialoguer::MultiSelect;
     /// use console::Term;
     ///
     /// fn main() -> std::io::Result<()> {
@@ -312,6 +303,19 @@ impl<'a> MultiSelect<'a> {
             } else {
                 render.clear_preserve_prompt(&size_vec)?;
             }
+        }
+    }
+}
+
+impl<'a> MultiSelect<'a> {
+    /// Creates a multi select prompt with a specific theme.
+    pub fn with_theme(theme: &'a dyn Theme) -> Self {
+        Self {
+            items: vec![],
+            defaults: vec![],
+            clear: true,
+            prompt: None,
+            theme,
         }
     }
 }

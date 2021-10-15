@@ -42,50 +42,24 @@ pub struct Select<'a> {
     theme: &'a dyn Theme,
 }
 
-impl<'a> Default for Select<'a> {
-    fn default() -> Select<'a> {
-        Select::new()
+impl Default for Select<'static> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-impl<'a> Select<'a> {
+impl Select<'static> {
     /// Creates a select prompt builder with default theme.
-    pub fn new() -> Select<'static> {
-        Select::with_theme(&SimpleTheme)
+    pub fn new() -> Self {
+        Self::with_theme(&SimpleTheme)
     }
+}
 
-    /// Creates a select prompt builder with a specific theme.
-    ///
-    /// ## Examples
-    /// ```rust,no_run
-    /// use dialoguer::{
-    ///     Select,
-    ///     theme::ColorfulTheme
-    /// };
-    ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let selection = Select::with_theme(&ColorfulTheme::default())
-    ///         .item("Option A")
-    ///         .item("Option B")
-    ///         .interact()?;
-    ///
-    ///     Ok(())
-    /// }
-    /// ```
-    pub fn with_theme(theme: &'a dyn Theme) -> Select<'a> {
-        Select {
-            default: !0,
-            items: vec![],
-            prompt: None,
-            clear: true,
-            theme,
-        }
-    }
-
+impl Select<'_> {
     /// Indicates whether select menu should be erased from the screen after interaction.
     ///
     /// The default is to clear the menu.
-    pub fn clear(&mut self, val: bool) -> &mut Select<'a> {
+    pub fn clear(&mut self, val: bool) -> &mut Self {
         self.clear = val;
         self
     }
@@ -93,7 +67,7 @@ impl<'a> Select<'a> {
     /// Sets initial selected element when select menu is rendered
     ///
     /// Element is indicated by the index at which it appears in `item` method invocation or `items` slice.
-    pub fn default(&mut self, val: usize) -> &mut Select<'a> {
+    pub fn default(&mut self, val: usize) -> &mut Self {
         self.default = val;
         self
     }
@@ -113,7 +87,7 @@ impl<'a> Select<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn item<T: ToString>(&mut self, item: T) -> &mut Select<'a> {
+    pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
         self.items.push(item.to_string());
         self
     }
@@ -135,7 +109,7 @@ impl<'a> Select<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Select<'a> {
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
         for item in items {
             self.items.push(item.to_string());
         }
@@ -161,7 +135,7 @@ impl<'a> Select<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Select<'a> {
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = Some(prompt.into());
         self
     }
@@ -344,6 +318,36 @@ impl<'a> Select<'a> {
             } else {
                 render.clear_preserve_prompt(&size_vec)?;
             }
+        }
+    }
+}
+
+impl<'a> Select<'a> {
+    /// Creates a select prompt builder with a specific theme.
+    ///
+    /// ## Examples
+    /// ```rust,no_run
+    /// use dialoguer::{
+    ///     Select,
+    ///     theme::ColorfulTheme
+    /// };
+    ///
+    /// fn main() -> std::io::Result<()> {
+    ///     let selection = Select::with_theme(&ColorfulTheme::default())
+    ///         .item("Option A")
+    ///         .item("Option B")
+    ///         .interact()?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn with_theme(theme: &'a dyn Theme) -> Self {
+        Self {
+            default: !0,
+            items: vec![],
+            prompt: None,
+            clear: true,
+            theme,
         }
     }
 }

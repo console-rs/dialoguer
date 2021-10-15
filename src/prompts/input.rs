@@ -1,8 +1,4 @@
-use std::{
-    fmt::{Debug, Display},
-    io, iter,
-    str::FromStr,
-};
+use std::{fmt::Debug, io, iter, str::FromStr};
 
 #[cfg(feature = "history")]
 use crate::history::History;
@@ -51,49 +47,26 @@ pub struct Input<'a, T> {
     history: Option<&'a mut dyn History<T>>,
 }
 
-impl<'a, T> Default for Input<'a, T>
-where
-    T: Clone + FromStr + Display,
-    T::Err: Display + Debug,
-{
-    fn default() -> Input<'a, T> {
-        Input::new()
+impl<T> Default for Input<'static, T> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-impl<'a, T> Input<'a, T>
-where
-    T: Clone + FromStr + Display,
-    T::Err: Display + Debug,
-{
+impl<T> Input<'_, T> {
     /// Creates an input prompt.
-    pub fn new() -> Input<'a, T> {
-        Input::with_theme(&SimpleTheme)
-    }
-
-    /// Creates an input prompt with a specific theme.
-    pub fn with_theme(theme: &'a dyn Theme) -> Input<'a, T> {
-        Input {
-            prompt: "".into(),
-            default: None,
-            show_default: true,
-            initial_text: None,
-            theme,
-            permit_empty: false,
-            validator: None,
-            #[cfg(feature = "history")]
-            history: None,
-        }
+    pub fn new() -> Self {
+        Self::with_theme(&SimpleTheme)
     }
 
     /// Sets the input prompt.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Input<'a, T> {
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
         self
     }
 
     /// Sets initial text that user can accept or erase.
-    pub fn with_initial_text<S: Into<String>>(&mut self, val: S) -> &mut Input<'a, T> {
+    pub fn with_initial_text<S: Into<String>>(&mut self, val: S) -> &mut Self {
         self.initial_text = Some(val.into());
         self
     }
@@ -103,7 +76,7 @@ where
     /// Out of the box the prompt does not have a default and will continue
     /// to display until the user inputs something and hits enter. If a default is set the user
     /// can instead accept the default with enter.
-    pub fn default(&mut self, value: T) -> &mut Input<'a, T> {
+    pub fn default(&mut self, value: T) -> &mut Self {
         self.default = Some(value);
         self
     }
@@ -111,7 +84,7 @@ where
     /// Enables or disables an empty input
     ///
     /// By default, if there is no default value set for the input, the user must input a non-empty string.
-    pub fn allow_empty(&mut self, val: bool) -> &mut Input<'a, T> {
+    pub fn allow_empty(&mut self, val: bool) -> &mut Self {
         self.permit_empty = val;
         self
     }
@@ -122,50 +95,26 @@ where
     /// user what is the default value.
     ///
     /// This method does not affect existance of default value, only its display in the prompt!
-    pub fn show_default(&mut self, val: bool) -> &mut Input<'a, T> {
+    pub fn show_default(&mut self, val: bool) -> &mut Self {
         self.show_default = val;
         self
     }
+}
 
-    /// Registers a validator.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use dialoguer::Input;
-    /// let mail: String = Input::new()
-    ///     .with_prompt("Enter email")
-    ///     .validate_with(|input: &String| -> Result<(), &str> {
-    ///         if input.contains('@') {
-    ///             Ok(())
-    ///         } else {
-    ///             Err("This is not a mail address")
-    ///         }
-    ///     })
-    ///     .interact()
-    ///     .unwrap();
-    /// ```
-    pub fn validate_with<V>(&mut self, mut validator: V) -> &mut Input<'a, T>
-    where
-        V: Validator<T> + 'a,
-        T: 'a,
-    {
-        let mut old_validator_func = self.validator.take();
-
-        self.validator = Some(Box::new(move |value: &T| -> Option<String> {
-            if let Some(old) = old_validator_func.as_mut() {
-                if let Some(err) = old(value) {
-                    return Some(err);
-                }
-            }
-
-            match validator.validate(value) {
-                Ok(()) => None,
-                Err(err) => Some(err.to_string()),
-            }
-        }));
-
-        self
+impl<'a, T> Input<'a, T> {
+    /// Creates an input prompt with a specific theme.
+    pub fn with_theme(theme: &'a dyn Theme) -> Self {
+        Self {
+            prompt: "".into(),
+            default: None,
+            show_default: true,
+            initial_text: None,
+            theme,
+            permit_empty: false,
+            validator: None,
+            #[cfg(feature = "history")]
+            history: None,
+        }
     }
 
     /// Enable history processing
@@ -197,29 +146,79 @@ where
     /// #     }
     /// # }
     /// #
-    /// # impl<T> History<T> for MyHistory {
+    /// # impl<T: ToString> History<T> for MyHistory {
     /// #     fn read(&self, pos: usize) -> Option<String> {
     /// #         self.history.get(pos).cloned()
     /// #     }
     /// #
     /// #     fn write(&mut self, val: &T)
     /// #     where
-    /// #         T: Clone + Display,
     /// #     {
     /// #         self.history.push_front(val.to_string());
     /// #     }
     /// # }
     /// ```
     #[cfg(feature = "history")]
-    pub fn history_with<H>(&mut self, history: &'a mut H) -> &mut Input<'a, T>
+    pub fn history_with<H>(&mut self, history: &'a mut H) -> &mut Self
     where
-        H: History<T> + 'a,
-        T: 'a,
+        H: History<T>,
     {
         self.history = Some(history);
         self
     }
+}
 
+impl<'a, T> Input<'a, T>
+where
+    T: 'a,
+{
+    /// Registers a validator.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use dialoguer::Input;
+    /// let mail: String = Input::new()
+    ///     .with_prompt("Enter email")
+    ///     .validate_with(|input: &String| -> Result<(), &str> {
+    ///         if input.contains('@') {
+    ///             Ok(())
+    ///         } else {
+    ///             Err("This is not a mail address")
+    ///         }
+    ///     })
+    ///     .interact()
+    ///     .unwrap();
+    /// ```
+    pub fn validate_with<V>(&mut self, mut validator: V) -> &mut Self
+    where
+        V: Validator<T> + 'a,
+        V::Err: ToString,
+    {
+        let mut old_validator_func = self.validator.take();
+
+        self.validator = Some(Box::new(move |value: &T| -> Option<String> {
+            if let Some(old) = old_validator_func.as_mut() {
+                if let Some(err) = old(value) {
+                    return Some(err);
+                }
+            }
+
+            match validator.validate(value) {
+                Ok(()) => None,
+                Err(err) => Some(err.to_string()),
+            }
+        }));
+
+        self
+    }
+}
+
+impl<T> Input<'_, T>
+where
+    T: Clone + ToString + FromStr,
+    <T as FromStr>::Err: Debug + ToString,
+{
     /// Enables the user to enter a printable ascii sequence and returns the result.
     ///
     /// Its difference from [`interact`](#method.interact) is that it only allows ascii characters for string,
@@ -235,7 +234,7 @@ where
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
-            let default_string = self.default.as_ref().map(|x| x.to_string());
+            let default_string = self.default.as_ref().map(ToString::to_string);
 
             render.input_prompt(
                 &self.prompt,
@@ -405,7 +404,13 @@ where
             }
         }
     }
+}
 
+impl<T> Input<'_, T>
+where
+    T: Clone + ToString + FromStr,
+    <T as FromStr>::Err: ToString,
+{
     /// Enables user interaction and returns the result.
     ///
     /// Allows any characters as input, including e.g arrow keys.
@@ -423,7 +428,7 @@ where
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
-            let default_string = self.default.as_ref().map(|x| x.to_string());
+            let default_string = self.default.as_ref().map(ToString::to_string);
 
             render.input_prompt(
                 &self.prompt,
