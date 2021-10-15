@@ -47,7 +47,7 @@ pub struct Input<'a, T> {
     history: Option<&'a mut dyn History<T>>,
 }
 
-impl<T> Default for Input<'_, T> {
+impl<T> Default for Input<'static, T> {
     fn default() -> Self {
         Self::new()
     }
