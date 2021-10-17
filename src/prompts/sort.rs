@@ -188,7 +188,7 @@ impl Sort<'_> {
             term.flush()?;
 
             match term.read_key()? {
-                Key::ArrowDown | Key::Char('j') => {
+                Key::ArrowDown | Key::Tab | Key::Char('j') => {
                     let old_sel = sel;
 
                     if sel == !0 {
@@ -201,7 +201,7 @@ impl Sort<'_> {
                         order.swap(old_sel, sel);
                     }
                 }
-                Key::ArrowUp | Key::Char('k') => {
+                Key::ArrowUp | Key::BackTab | Key::Char('k') => {
                     let old_sel = sel;
 
                     if sel == !0 {

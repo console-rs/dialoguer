@@ -221,14 +221,14 @@ impl MultiSelect<'_> {
             term.flush()?;
 
             match term.read_key()? {
-                Key::ArrowDown | Key::Char('j') => {
+                Key::ArrowDown | Key::Tab | Key::Char('j') => {
                     if sel == !0 {
                         sel = 0;
                     } else {
                         sel = (sel as u64 + 1).rem(self.items.len() as u64) as usize;
                     }
                 }
-                Key::ArrowUp | Key::Char('k') => {
+                Key::ArrowUp | Key::BackTab | Key::Char('k') => {
                     if sel == !0 {
                         sel = self.items.len() - 1;
                     } else {

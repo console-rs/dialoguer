@@ -174,7 +174,7 @@ impl FuzzySelect<'_> {
                     term.show_cursor()?;
                     return Ok(None);
                 }
-                Key::ArrowUp if filtered_list.len() > 0 => {
+                Key::ArrowUp | Key::BackTab if filtered_list.len() > 0 => {
                     if sel == !0 {
                         sel = filtered_list.len() - 1;
                     } else {
@@ -183,7 +183,7 @@ impl FuzzySelect<'_> {
                     }
                     term.flush()?;
                 }
-                Key::ArrowDown if filtered_list.len() > 0 => {
+                Key::ArrowDown | Key::Tab if filtered_list.len() > 0 => {
                     if sel == !0 {
                         sel = 0;
                     } else {
