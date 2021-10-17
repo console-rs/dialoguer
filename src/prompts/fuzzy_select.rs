@@ -1,3 +1,4 @@
+use crate::paging::Paging;
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 use console::{Key, Term};
 use fuzzy_matcher::FuzzyMatcher;
@@ -131,6 +132,7 @@ impl FuzzySelect<'_> {
         let mut position = 0;
         let mut search_term = String::new();
 
+        let mut paging = Paging::new(term, self.items.len());
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
@@ -147,7 +149,6 @@ impl FuzzySelect<'_> {
 
         loop {
             render.clear()?;
-            render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, position)?;
 
             // Maps all items to a tuple of item and its match score.
             let mut filtered_list = self
@@ -159,8 +160,25 @@ impl FuzzySelect<'_> {
 
             // Renders all matching items, from best match to worst.
             filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(&s1));
+            
+            paging.pages = (filtered_list.len() as f64 / paging.capacity as f64).ceil() as usize;
+            paging.active = true;
+            paging.render_prompt(|paging_info| {
+                render.fuzzy_select_prompt(
+                    self.prompt.as_str(),
+                    &search_term,
+                    position,
+                    paging_info,
+                )
+            })?;
 
-            for (idx, (item, _)) in filtered_list.iter().enumerate() {
+
+            for (idx, (item, _)) in filtered_list
+                .iter()
+                .enumerate()
+                .skip(paging.current_page * paging.capacity)
+                .take(paging.capacity)
+            {
                 render.select_prompt_item(item, idx == sel)?;
                 term.flush()?;
             }
@@ -191,13 +209,17 @@ impl FuzzySelect<'_> {
                     }
                     term.flush()?;
                 }
-                Key::ArrowLeft if position > 0 => {
-                    position -= 1;
-                    term.flush()?;
+                Key::ArrowLeft => {
+                    if paging.active {
+                        sel = paging.previous_page();
+                        term.flush();
+                    }
                 }
-                Key::ArrowRight if position < search_term.len() => {
-                    position += 1;
-                    term.flush()?;
+                Key::ArrowRight => {
+                    if paging.active {
+                        sel = paging.next_page();
+                        term.flush();
+                    }
                 }
                 Key::Enter if filtered_list.len() > 0 => {
                     if self.clear {
@@ -223,12 +245,19 @@ impl FuzzySelect<'_> {
                     position += 1;
                     term.flush()?;
                     sel = 0;
+                    paging.current_page = 0;
                 }
 
                 _ => {}
             }
 
-            render.clear_preserve_prompt(&size_vec)?;
+            paging.update(sel)?;
+
+            if paging.active {
+                render.clear()?;
+            } else {
+                render.clear_preserve_prompt(&size_vec)?;
+            }
         }
     }
 }

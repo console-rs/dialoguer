@@ -714,10 +714,17 @@ impl<'a> TermThemeRenderer<'a> {
         prompt: &str,
         search_term: &str,
         cursor_pos: usize,
+        paging_info: Option<(usize, usize)>,
     ) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
             this.theme
-                .format_fuzzy_select_prompt(buf, prompt, search_term, cursor_pos)
+                .format_fuzzy_select_prompt(buf, prompt, search_term, cursor_pos)?;
+
+            if let Some(paging_info) = paging_info {
+                TermThemeRenderer::write_paging_info(buf, paging_info)?;
+            }
+
+            Ok(())
         })
     }
 
