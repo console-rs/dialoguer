@@ -18,6 +18,8 @@
 //! * Other kind of prompts
 //! * Editor launching
 
+#[cfg(feature = "completion")]
+pub use completion::Completion;
 pub use console;
 #[cfg(feature = "editor")]
 pub use edit::Editor;
@@ -35,6 +37,8 @@ pub use prompts::fuzzy_select::FuzzySelect;
 #[cfg(feature = "password")]
 pub use prompts::password::Password;
 
+#[cfg(feature = "completion")]
+mod completion;
 #[cfg(feature = "editor")]
 mod edit;
 #[cfg(feature = "history")]
