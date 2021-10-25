@@ -1,5 +1,7 @@
 use std::{fmt::Debug, io, iter, str::FromStr};
 
+#[cfg(feature = "completion")]
+use crate::completion::Completion;
 #[cfg(feature = "history")]
 use crate::history::History;
 use crate::{
@@ -45,6 +47,8 @@ pub struct Input<'a, T> {
     validator: Option<Box<dyn FnMut(&T) -> Option<String> + 'a>>,
     #[cfg(feature = "history")]
     history: Option<&'a mut dyn History<T>>,
+    #[cfg(feature = "completion")]
+    completion: Option<&'a dyn Completion>,
 }
 
 impl<T> Default for Input<'static, T> {
@@ -114,6 +118,8 @@ impl<'a, T> Input<'a, T> {
             validator: None,
             #[cfg(feature = "history")]
             history: None,
+            #[cfg(feature = "completion")]
+            completion: None,
         }
     }
 
@@ -164,6 +170,16 @@ impl<'a, T> Input<'a, T> {
         H: History<T>,
     {
         self.history = Some(history);
+        self
+    }
+
+    /// Enable completion
+    #[cfg(feature = "completion")]
+    pub fn completion_with<C>(&mut self, completion: &'a C) -> &mut Self
+    where
+        C: Completion,
+    {
+        self.completion = Some(completion);
         self
     }
 }
@@ -296,6 +312,23 @@ where
                         term.move_cursor_right(1)?;
                         position += 1;
                         term.flush()?;
+                    }
+                    #[cfg(feature = "completion")]
+                    Key::ArrowRight | Key::Tab => {
+                        if let Some(completion) = &self.completion {
+                            let input: String = chars.clone().into_iter().collect();
+                            if let Some(x) = completion.get(&input) {
+                                term.clear_chars(chars.len())?;
+                                chars.clear();
+                                position = 0;
+                                for ch in x.chars() {
+                                    chars.insert(position, ch);
+                                    position += 1;
+                                }
+                                term.write_str(&x)?;
+                                term.flush()?;
+                            }
+                        }
                     }
                     #[cfg(feature = "history")]
                     Key::ArrowUp => {
