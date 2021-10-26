@@ -40,6 +40,7 @@ pub struct Select<'a> {
     prompt: Option<String>,
     clear: bool,
     theme: &'a dyn Theme,
+    max_length: Option<usize>,
 }
 
 impl Default for Select<'static> {
@@ -69,6 +70,17 @@ impl Select<'_> {
     /// Element is indicated by the index at which it appears in `item` method invocation or `items` slice.
     pub fn default(&mut self, val: usize) -> &mut Self {
         self.default = val;
+        self
+    }
+    /// Sets an optional max length for a page.
+    ///
+    /// Max length is disabled by None
+    pub fn max_length(&mut self, val: usize) -> &mut Self {
+        // Paging subtracts two from the capacity, paging does this to
+        // make an offset for the page indicator. So to make sure that
+        // we can show the intended amount of items we need to add two
+        // to our value.
+        self.max_length = Some(val + 2);
         self
     }
 
@@ -220,7 +232,7 @@ impl Select<'_> {
             ));
         }
 
-        let mut paging = Paging::new(term, self.items.len());
+        let mut paging = Paging::new(term, self.items.len(), self.max_length);
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
@@ -347,6 +359,7 @@ impl<'a> Select<'a> {
             items: vec![],
             prompt: None,
             clear: true,
+            max_length: None,
             theme,
         }
     }

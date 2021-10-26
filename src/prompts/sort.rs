@@ -28,6 +28,7 @@ pub struct Sort<'a> {
     items: Vec<String>,
     prompt: Option<String>,
     clear: bool,
+    max_length: Option<usize>,
     theme: &'a dyn Theme,
 }
 
@@ -53,6 +54,17 @@ impl Sort<'_> {
         self
     }
 
+    /// Sets an optional max length for a page
+    ///
+    /// Max length is disabled by None
+    pub fn max_length(&mut self, val: usize) -> &mut Self {
+        // Paging subtracts two from the capacity, paging does this to
+        // make an offset for the page indicator. So to make sure that
+        // we can show the intended amount of items we need to add two
+        // to our value.
+        self.max_length = Some(val + 2);
+        self
+    }
     /// Add a single item to the selector.
     pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
         self.items.push(item.to_string());
@@ -155,7 +167,7 @@ impl Sort<'_> {
             ));
         }
 
-        let mut paging = Paging::new(term, self.items.len());
+        let mut paging = Paging::new(term, self.items.len(), self.max_length);
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
 
@@ -314,6 +326,7 @@ impl<'a> Sort<'a> {
             items: vec![],
             clear: true,
             prompt: None,
+            max_length: None,
             theme,
         }
     }
