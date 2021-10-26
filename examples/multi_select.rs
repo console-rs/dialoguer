@@ -23,4 +23,20 @@ fn main() {
             println!("  {}", multiselected[selection]);
         }
     }
+
+    let selections = MultiSelect::with_theme(&ColorfulTheme::default())
+        .with_prompt("Pick your food")
+        .items(&multiselected[..])
+        .defaults(&defaults[..])
+        .max_length(2)
+        .interact()
+        .unwrap();
+    if selections.is_empty() {
+        println!("You did not select anything :(");
+    } else {
+        println!("You selected these things:");
+        for selection in selections {
+            println!("  {}", multiselected[selection]);
+        }
+    }
 }
