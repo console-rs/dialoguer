@@ -278,7 +278,9 @@ impl Select<'_> {
                 Key::Escape | Key::Char('q') => {
                     if allow_quit {
                         if self.clear {
-                            term.clear_last_lines(self.items.len())?;
+                            render.clear()?;
+                        } else {
+                            term.clear_last_lines(paging.capacity)?;
                         }
 
                         term.show_cursor()?;
