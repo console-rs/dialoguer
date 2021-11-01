@@ -25,6 +25,7 @@ pub struct MultiSelect<'a> {
     defaults: Vec<bool>,
     items: Vec<String>,
     prompt: Option<String>,
+    report: bool,
     clear: bool,
     max_length: Option<usize>,
     theme: &'a dyn Theme,
@@ -109,10 +110,18 @@ impl MultiSelect<'_> {
 
     /// Prefaces the menu with a prompt.
     ///
-    /// When a prompt is set the system also prints out a confirmation after
-    /// the selection.
+    /// By default, when a prompt is set the system also prints out a confirmation after
+    /// the selection. You can opt-out of this with [report](#method.report).
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = Some(prompt.into());
+        self
+    }
+
+    /// Indicates whether to report the selected values after interaction.
+    ///
+    /// The default is to report the selections.
+    pub fn report(&mut self, val: bool) -> &mut Self {
+        self.report = val;
         self
     }
 
@@ -280,19 +289,21 @@ impl MultiSelect<'_> {
                     }
 
                     if let Some(ref prompt) = self.prompt {
-                        let selections: Vec<_> = checked
-                            .iter()
-                            .enumerate()
-                            .filter_map(|(idx, &checked)| {
-                                if checked {
-                                    Some(self.items[idx].as_str())
-                                } else {
-                                    None
-                                }
-                            })
-                            .collect();
+                        if self.report {
+                            let selections: Vec<_> = checked
+                                .iter()
+                                .enumerate()
+                                .filter_map(|(idx, &checked)| {
+                                    if checked {
+                                        Some(self.items[idx].as_str())
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .collect();
 
-                        render.multi_select_prompt_selection(prompt, &selections[..])?;
+                            render.multi_select_prompt_selection(prompt, &selections[..])?;
+                        }
                     }
 
                     term.show_cursor()?;
@@ -328,6 +339,7 @@ impl<'a> MultiSelect<'a> {
             defaults: vec![],
             clear: true,
             prompt: None,
+            report: true,
             max_length: None,
             theme,
         }

@@ -21,6 +21,7 @@ use zeroize::Zeroizing;
 /// ```
 pub struct Password<'a> {
     prompt: String,
+    report: bool,
     theme: &'a dyn Theme,
     allow_empty_password: bool,
     confirmation_prompt: Option<(String, String)>,
@@ -43,6 +44,14 @@ impl Password<'_> {
     /// Sets the password input prompt.
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
+        self
+    }
+
+    /// Indicates whether to report confirmation after interaction.
+    ///
+    /// The default is to report.
+    pub fn report(&mut self, val: bool) -> &mut Self {
+        self.report = val;
         self
     }
 
@@ -85,7 +94,9 @@ impl Password<'_> {
 
                 if *password == *pw2 {
                     render.clear()?;
-                    render.password_prompt_selection(&self.prompt)?;
+                    if self.report {
+                        render.password_prompt_selection(&self.prompt)?;
+                    }
                     term.flush()?;
                     return Ok((*password).clone());
                 }
@@ -93,7 +104,9 @@ impl Password<'_> {
                 render.error(err)?;
             } else {
                 render.clear()?;
-                render.password_prompt_selection(&self.prompt)?;
+                if self.report {
+                    render.password_prompt_selection(&self.prompt)?;
+                }
                 term.flush()?;
 
                 return Ok((*password).clone());
@@ -122,6 +135,7 @@ impl<'a> Password<'a> {
     pub fn with_theme(theme: &'a dyn Theme) -> Self {
         Self {
             prompt: "".into(),
+            report: true,
             theme,
             allow_empty_password: false,
             confirmation_prompt: None,
