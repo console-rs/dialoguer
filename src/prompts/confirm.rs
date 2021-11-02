@@ -21,6 +21,7 @@ use console::{Key, Term};
 /// ```
 pub struct Confirm<'a> {
     prompt: String,
+    report: bool,
     default: Option<bool>,
     show_default: bool,
     wait_for_newline: bool,
@@ -44,6 +45,14 @@ impl Confirm<'_> {
     /// Sets the confirm prompt.
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
+        self
+    }
+
+    /// Indicates whether or not to report the chosen selection after interaction.
+    ///
+    /// The default is to report the chosen selection.
+    pub fn report(&mut self, val: bool) -> &mut Self {
+        self.report = val;
         self
     }
 
@@ -226,7 +235,9 @@ impl Confirm<'_> {
         }
 
         term.clear_line()?;
-        render.confirm_prompt_selection(&self.prompt, rv)?;
+        if self.report {
+            render.confirm_prompt_selection(&self.prompt, rv)?;
+        }
         term.show_cursor()?;
         term.flush()?;
 
@@ -254,6 +265,7 @@ impl<'a> Confirm<'a> {
     pub fn with_theme(theme: &'a dyn Theme) -> Self {
         Self {
             prompt: "".into(),
+            report: true,
             default: None,
             show_default: true,
             wait_for_newline: false,

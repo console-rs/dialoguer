@@ -38,6 +38,7 @@ pub struct Select<'a> {
     default: usize,
     items: Vec<String>,
     prompt: Option<String>,
+    report: bool,
     clear: bool,
     theme: &'a dyn Theme,
     max_length: Option<usize>,
@@ -130,8 +131,8 @@ impl Select<'_> {
 
     /// Sets the select prompt.
     ///
-    /// When a prompt is set the system also prints out a confirmation after
-    /// the selection.
+    /// By default, when a prompt is set the system also prints out a confirmation after
+    /// the selection. You can opt-out of this with [`report`](#method.report).
     ///
     /// ## Examples
     /// ```rust,no_run
@@ -149,6 +150,15 @@ impl Select<'_> {
     /// ```
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = Some(prompt.into());
+        self.report = true;
+        self
+    }
+
+    /// Indicates whether to report the selected value after interaction.
+    ///
+    /// The default is to report the selection.
+    pub fn report(&mut self, val: bool) -> &mut Self {
+        self.report = val;
         self
     }
 
@@ -314,7 +324,9 @@ impl Select<'_> {
                     }
 
                     if let Some(ref prompt) = self.prompt {
-                        render.select_prompt_selection(prompt, &self.items[sel])?;
+                        if self.report {
+                            render.select_prompt_selection(prompt, &self.items[sel])?;
+                        }
                     }
 
                     term.show_cursor()?;
@@ -360,6 +372,7 @@ impl<'a> Select<'a> {
             default: !0,
             items: vec![],
             prompt: None,
+            report: false,
             clear: true,
             max_length: None,
             theme,

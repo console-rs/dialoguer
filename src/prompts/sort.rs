@@ -27,6 +27,7 @@ use console::{Key, Term};
 pub struct Sort<'a> {
     items: Vec<String>,
     prompt: Option<String>,
+    report: bool,
     clear: bool,
     max_length: Option<usize>,
     theme: &'a dyn Theme,
@@ -81,10 +82,18 @@ impl Sort<'_> {
 
     /// Prefaces the menu with a prompt.
     ///
-    /// When a prompt is set the system also prints out a confirmation after
-    /// the selection.
+    /// By default, when a prompt is set the system also prints out a confirmation after
+    /// the selection. You can opt-out of this with [`report`](#method.report).
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = Some(prompt.into());
+        self
+    }
+
+    /// Indicates whether to report the selected order after interaction.
+    ///
+    /// The default is to report the selected order.
+    pub fn report(&mut self, val: bool) -> &mut Self {
+        self.report = val;
         self
     }
 
@@ -294,12 +303,14 @@ impl Sort<'_> {
                     }
 
                     if let Some(ref prompt) = self.prompt {
-                        let list: Vec<_> = order
-                            .iter()
-                            .enumerate()
-                            .map(|(_, item)| self.items[*item].as_str())
-                            .collect();
-                        render.sort_prompt_selection(prompt, &list[..])?;
+                        if self.report {
+                            let list: Vec<_> = order
+                                .iter()
+                                .enumerate()
+                                .map(|(_, item)| self.items[*item].as_str())
+                                .collect();
+                            render.sort_prompt_selection(prompt, &list[..])?;
+                        }
                     }
 
                     term.show_cursor()?;
@@ -328,6 +339,7 @@ impl<'a> Sort<'a> {
             items: vec![],
             clear: true,
             prompt: None,
+            report: true,
             max_length: None,
             theme,
         }

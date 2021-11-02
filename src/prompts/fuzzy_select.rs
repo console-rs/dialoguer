@@ -37,6 +37,7 @@ pub struct FuzzySelect<'a> {
     default: usize,
     items: Vec<String>,
     prompt: String,
+    report: bool,
     clear: bool,
     theme: &'a dyn Theme,
 }
@@ -89,6 +90,14 @@ impl FuzzySelect<'_> {
     /// the fuzzy selection.
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
+        self
+    }
+
+    /// Indicates whether to report the selected value after interaction.
+    ///
+    /// The default is to report the selection.
+    pub fn report(&mut self, val: bool) -> &mut Self {
+        self.report = val;
         self
     }
 
@@ -204,7 +213,10 @@ impl FuzzySelect<'_> {
                         render.clear()?;
                     }
 
-                    render.input_prompt_selection(self.prompt.as_str(), &filtered_list[sel].0)?;
+                    if self.report {
+                        render
+                            .input_prompt_selection(self.prompt.as_str(), &filtered_list[sel].0)?;
+                    }
 
                     let sel_string = filtered_list[sel].0;
                     let sel_string_pos_in_items =
@@ -240,6 +252,7 @@ impl<'a> FuzzySelect<'a> {
             default: !0,
             items: vec![],
             prompt: "".into(),
+            report: true,
             clear: true,
             theme,
         }

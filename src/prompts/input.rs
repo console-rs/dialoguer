@@ -39,6 +39,7 @@ use console::{Key, Term};
 /// ```
 pub struct Input<'a, T> {
     prompt: String,
+    report: bool,
     default: Option<T>,
     show_default: bool,
     initial_text: Option<String>,
@@ -66,6 +67,14 @@ impl<T> Input<'_, T> {
     /// Sets the input prompt.
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
+        self
+    }
+
+    /// Indicates whether to report the input value after interaction.
+    ///
+    /// The default is to report the input value.
+    pub fn report(&mut self, val: bool) -> &mut Self {
+        self.report = val;
         self
     }
 
@@ -110,6 +119,7 @@ impl<'a, T> Input<'a, T> {
     pub fn with_theme(theme: &'a dyn Theme) -> Self {
         Self {
             prompt: "".into(),
+            report: true,
             default: None,
             show_default: true,
             initial_text: None,
@@ -403,7 +413,9 @@ where
                         }
                     }
 
-                    render.input_prompt_selection(&self.prompt, &default.to_string())?;
+                    if self.report {
+                        render.input_prompt_selection(&self.prompt, &default.to_string())?;
+                    }
                     term.flush()?;
                     return Ok(default.clone());
                 } else if !self.permit_empty {
@@ -425,7 +437,9 @@ where
                         history.write(&value);
                     }
 
-                    render.input_prompt_selection(&self.prompt, &input)?;
+                    if self.report {
+                        render.input_prompt_selection(&self.prompt, &input)?;
+                    }
                     term.flush()?;
 
                     return Ok(value);
@@ -492,7 +506,9 @@ where
                         }
                     }
 
-                    render.input_prompt_selection(&self.prompt, &default.to_string())?;
+                    if self.report {
+                        render.input_prompt_selection(&self.prompt, &default.to_string())?;
+                    }
                     term.flush()?;
                     return Ok(default.clone());
                 } else if !self.permit_empty {
@@ -509,7 +525,9 @@ where
                         }
                     }
 
-                    render.input_prompt_selection(&self.prompt, &input)?;
+                    if self.report {
+                        render.input_prompt_selection(&self.prompt, &input)?;
+                    }
                     term.flush()?;
 
                     return Ok(value);
