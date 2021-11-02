@@ -132,7 +132,7 @@ impl Select<'_> {
     /// Sets the select prompt.
     ///
     /// By default, when a prompt is set the system also prints out a confirmation after
-    /// the selection. You can opt-out of this with [report](#method.report).
+    /// the selection. You can opt-out of this with [`report`](#method.report).
     ///
     /// ## Examples
     /// ```rust,no_run

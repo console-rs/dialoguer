@@ -111,7 +111,7 @@ impl MultiSelect<'_> {
     /// Prefaces the menu with a prompt.
     ///
     /// By default, when a prompt is set the system also prints out a confirmation after
-    /// the selection. You can opt-out of this with [report](#method.report).
+    /// the selection. You can opt-out of this with [`report`](#method.report).
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = Some(prompt.into());
         self
