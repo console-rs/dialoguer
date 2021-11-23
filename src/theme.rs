@@ -298,8 +298,8 @@ impl Default for ColorfulTheme {
             inactive_item_style: Style::new().for_stderr(),
             active_item_prefix: style("❯".to_string()).for_stderr().green(),
             inactive_item_prefix: style(" ".to_string()).for_stderr(),
-            checked_item_prefix: style("✔".to_string()).for_stderr().green(),
-            unchecked_item_prefix: style("✔".to_string()).for_stderr().black(),
+            checked_item_prefix: style("☑️".to_string()).for_stderr().green(),
+            unchecked_item_prefix: style("◻".to_string()).for_stderr().green(),
             picked_item_prefix: style("❯".to_string()).for_stderr().green(),
             unpicked_item_prefix: style(" ".to_string()).for_stderr(),
             #[cfg(feature = "fuzzy-select")]
