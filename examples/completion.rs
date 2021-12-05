@@ -1,3 +1,4 @@
+#![cfg(feature = "completion")]
 use dialoguer::{theme::ColorfulTheme, Completion, Input};
 
 fn main() -> Result<(), std::io::Error> {
