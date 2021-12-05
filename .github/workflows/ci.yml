@@ -86,6 +86,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
+          args: --tests --examples
       - name: Format check
         uses: actions-rs/cargo@v1
         with:
