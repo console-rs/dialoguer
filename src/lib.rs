@@ -18,6 +18,8 @@
 //! * Other kind of prompts
 //! * Editor launching
 
+#![deny(clippy::all)]
+
 #[cfg(feature = "completion")]
 pub use completion::Completion;
 pub use console;

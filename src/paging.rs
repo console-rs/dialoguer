@@ -59,13 +59,13 @@ impl<'a> Paging<'a> {
             self.pages = (self.items_len as f64 / self.capacity as f64).ceil() as usize;
         }
 
-        if self.active != (self.pages > 1) {
+        if self.active == (self.pages > 1) {
+            self.activity_transition = false;
+        } else {
             self.active = self.pages > 1;
             self.activity_transition = true;
             // Clear everything to prevent "ghost" lines in terminal when a resize happened
             self.term.clear_last_lines(self.capacity)?;
-        } else {
-            self.activity_transition = false;
         }
 
         if cursor_pos != !0
