@@ -58,7 +58,7 @@ impl MultiSelect<'_> {
         self.defaults = val
             .to_vec()
             .iter()
-            .cloned()
+            .copied()
             .chain(repeat(false))
             .take(self.items.len())
             .collect();
@@ -130,7 +130,7 @@ impl MultiSelect<'_> {
     /// The user can select the items with the 'Space' bar and on 'Enter' the indices of selected items will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `Vec<index>` if user hit 'Enter'.
-    /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
+    /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<Vec<usize>> {
         self.interact_on(&Term::stderr())
@@ -170,7 +170,7 @@ impl MultiSelect<'_> {
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
-    /// Like [interact_opt](#method.interact_opt) but allows a specific terminal to be set.
+    /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
     ///
     /// ## Examples
     /// ```rust,no_run

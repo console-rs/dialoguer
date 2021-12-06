@@ -98,8 +98,8 @@ impl Confirm<'_> {
     ///
     /// The dialog is rendered on stderr.
     ///
-    /// Result contains `bool` if user answered "yes" or "no" or `default` (configured in [default](#method.default)) if pushes enter.
-    /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
+    /// Result contains `bool` if user answered "yes" or "no" or `default` (configured in [`default`](Self::default) if pushes enter.
+    /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<bool> {
         self.interact_on(&Term::stderr())
@@ -109,7 +109,7 @@ impl Confirm<'_> {
     ///
     /// The dialog is rendered on stderr.
     ///
-    /// Result contains `Some(bool)` if user answered "yes" or "no" or `Some(default)` (configured in [default](#method.default)) if pushes enter,
+    /// Result contains `Some(bool)` if user answered "yes" or "no" or `Some(default)` (configured in [`default`](Self::default)) if pushes enter,
     /// or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<bool>> {
@@ -137,7 +137,7 @@ impl Confirm<'_> {
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
-    /// Like [interact_opt](#method.interact_opt) but allows a specific terminal to be set.
+    /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
     ///
     /// ## Examples
     /// ```rust,no_run

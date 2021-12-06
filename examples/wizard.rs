@@ -5,6 +5,7 @@ use console::Style;
 use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Config {
     interface: IpAddr,
     hostname: String,

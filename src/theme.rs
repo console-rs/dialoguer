@@ -506,15 +506,16 @@ impl Theme for ColorfulTheme {
         text: &str,
         active: bool,
     ) -> fmt::Result {
-        let details = match active {
-            true => (
+        let details = if active {
+            (
                 &self.active_item_prefix,
                 self.active_item_style.apply_to(text),
-            ),
-            false => (
+            )
+        } else {
+            (
                 &self.inactive_item_prefix,
                 self.inactive_item_style.apply_to(text),
-            ),
+            )
         };
 
         write!(f, "{} {}", details.0, details.1)
