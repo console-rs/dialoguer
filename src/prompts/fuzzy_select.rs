@@ -152,6 +152,12 @@ impl FuzzySelect<'_> {
         // Fuzzy matcher
         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
 
+        let term_size_rows = term.size().0 as usize;
+        // Subtract -2 because we need space to render the prompt.
+        let visible_term_rows = term_size_rows
+            .max(3) // Safeguard in case term_size_rows is 2 or less.
+            - 2;
+
         term.hide_cursor()?;
 
         loop {
@@ -164,6 +170,7 @@ impl FuzzySelect<'_> {
                 .iter()
                 .map(|item| (item, matcher.fuzzy_match(item, &search_term)))
                 .filter_map(|(item, score)| score.map(|s| (item, s)))
+                .take(visible_term_rows)
                 .collect::<Vec<_>>();
 
             // Renders all matching items, from best match to worst.
