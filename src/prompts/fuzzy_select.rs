@@ -146,7 +146,7 @@ impl FuzzySelect<'_> {
         let mut size_vec = Vec::new();
         for items in self.items.iter().as_slice() {
             let size = &items.len();
-            size_vec.push(size.clone());
+            size_vec.push(*size);
         }
 
         // Fuzzy matcher
@@ -172,7 +172,7 @@ impl FuzzySelect<'_> {
                 .collect::<Vec<_>>();
 
             // Renders all matching items, from best match to worst.
-            filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(&s1));
+            filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(s1));
 
             for (idx, (item, _)) in filtered_list
                 .iter()
@@ -193,7 +193,7 @@ impl FuzzySelect<'_> {
                     term.show_cursor()?;
                     return Ok(None);
                 }
-                Key::ArrowUp | Key::BackTab if filtered_list.len() > 0 => {
+                Key::ArrowUp | Key::BackTab if !filtered_list.is_empty() => {
                     if sel == 0 {
                         starting_row =
                             filtered_list.len().max(visible_term_rows) - visible_term_rows;
@@ -208,7 +208,7 @@ impl FuzzySelect<'_> {
                     }
                     term.flush()?;
                 }
-                Key::ArrowDown | Key::Tab if filtered_list.len() > 0 => {
+                Key::ArrowDown | Key::Tab if !filtered_list.is_empty() => {
                     if sel == !0 {
                         sel = 0;
                     } else {
@@ -229,14 +229,14 @@ impl FuzzySelect<'_> {
                     position += 1;
                     term.flush()?;
                 }
-                Key::Enter if filtered_list.len() > 0 => {
+                Key::Enter if !filtered_list.is_empty() => {
                     if self.clear {
                         render.clear()?;
                     }
 
                     if self.report {
                         render
-                            .input_prompt_selection(self.prompt.as_str(), &filtered_list[sel].0)?;
+                            .input_prompt_selection(self.prompt.as_str(), filtered_list[sel].0)?;
                     }
 
                     let sel_string = filtered_list[sel].0;
