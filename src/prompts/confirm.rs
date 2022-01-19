@@ -210,8 +210,10 @@ impl Confirm<'_> {
                         continue;
                     }
                 };
-
+                // `prompt` may be a multi-line string, hence we may need to clear more than the current line.
+                // `clear_last_lines` clears the n lines *before* the current line.
                 term.clear_line()?;
+                term.clear_last_lines(self.prompt.lines().count() - 1)?;
                 render.confirm_prompt(&self.prompt, value)?;
             }
         } else {
@@ -234,7 +236,10 @@ impl Confirm<'_> {
             }
         }
 
+        // `prompt` may be a multi-line string, hence we may need to clear more than the current line.
+        // `clear_last_lines` clears the n lines *before* the current line.
         term.clear_line()?;
+        term.clear_last_lines(self.prompt.lines().count() - 1)?;
         if self.report {
             render.confirm_prompt_selection(&self.prompt, rv)?;
         }
