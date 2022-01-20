@@ -619,7 +619,7 @@ impl Theme for ColorfulTheme {
     }
 }
 
-/// Helper struct to conveniently render a theme ot a term.
+/// Helper struct to conveniently render a theme to a term.
 pub(crate) struct TermThemeRenderer<'a> {
     term: &'a Term,
     theme: &'a dyn Theme,
