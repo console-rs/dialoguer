@@ -29,10 +29,9 @@ impl Default for MyCompletion {
 impl Completion for MyCompletion {
     /// Simple completion implementation based on substring
     fn get(&self, input: &str) -> Option<String> {
-        let s = input.to_string();
-        let ss: Vec<&String> = self.options.iter().filter(|x| s == x[..s.len()]).collect();
-        if ss.len() == 1 {
-            Some(ss[0].to_string())
+        let matches = self.options.iter().filter(|x| x.starts_with(input)).collect::<Vec<_>>();
+        if matches.len() == 1 {
+            Some(matches[0].to_string())
         } else {
             None
         }
