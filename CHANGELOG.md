@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.10.0
+
+### Enhancements
+
+* Loosen some trait bounds
+* Improve keyboard interactions (#141, #162)
+* Added `max_length` to `MultiSelect`, `Select` and `Sort`
+* Allow completion support for `Input::interact_text*` behind `completion` feature
+
+### Breaking
+
+* All prompts `*::new` will now don't report selected values unless `report(true)` is called on them.
+
 ## 0.9.0
 
 ### Enhancements
