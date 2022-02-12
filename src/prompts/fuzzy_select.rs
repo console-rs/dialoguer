@@ -146,11 +146,16 @@ impl FuzzySelect<'_> {
         let mut size_vec = Vec::new();
         for items in self.items.iter().as_slice() {
             let size = &items.len();
-            size_vec.push(size.clone());
+            size_vec.push(*size);
         }
 
         // Fuzzy matcher
         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+
+        // Subtract -2 because we need space to render the prompt.
+        let visible_term_rows = (term.size().0 as usize).max(3) - 2;
+        // Variable used to determine if we need to scroll through the list.
+        let mut starting_row = 0;
 
         term.hide_cursor()?;
 
@@ -167,9 +172,14 @@ impl FuzzySelect<'_> {
                 .collect::<Vec<_>>();
 
             // Renders all matching items, from best match to worst.
-            filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(&s1));
+            filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(s1));
 
-            for (idx, (item, _)) in filtered_list.iter().enumerate() {
+            for (idx, (item, _)) in filtered_list
+                .iter()
+                .enumerate()
+                .skip(starting_row)
+                .take(visible_term_rows)
+            {
                 render.select_prompt_item(item, idx == sel)?;
                 term.flush()?;
             }
@@ -183,7 +193,13 @@ impl FuzzySelect<'_> {
                     term.show_cursor()?;
                     return Ok(None);
                 }
-                Key::ArrowUp | Key::BackTab if filtered_list.len() > 0 => {
+                Key::ArrowUp | Key::BackTab if !filtered_list.is_empty() => {
+                    if sel == 0 {
+                        starting_row =
+                            filtered_list.len().max(visible_term_rows) - visible_term_rows;
+                    } else if sel == starting_row {
+                        starting_row -= 1;
+                    }
                     if sel == !0 {
                         sel = filtered_list.len() - 1;
                     } else {
@@ -192,11 +208,16 @@ impl FuzzySelect<'_> {
                     }
                     term.flush()?;
                 }
-                Key::ArrowDown | Key::Tab if filtered_list.len() > 0 => {
+                Key::ArrowDown | Key::Tab if !filtered_list.is_empty() => {
                     if sel == !0 {
                         sel = 0;
                     } else {
                         sel = (sel as u64 + 1).rem(filtered_list.len() as u64) as usize;
+                    }
+                    if sel == visible_term_rows + starting_row {
+                        starting_row += 1;
+                    } else if sel == 0 {
+                        starting_row = 0;
                     }
                     term.flush()?;
                 }
@@ -208,14 +229,14 @@ impl FuzzySelect<'_> {
                     position += 1;
                     term.flush()?;
                 }
-                Key::Enter if filtered_list.len() > 0 => {
+                Key::Enter if !filtered_list.is_empty() => {
                     if self.clear {
                         render.clear()?;
                     }
 
                     if self.report {
                         render
-                            .input_prompt_selection(self.prompt.as_str(), &filtered_list[sel].0)?;
+                            .input_prompt_selection(self.prompt.as_str(), filtered_list[sel].0)?;
                     }
 
                     let sel_string = filtered_list[sel].0;
@@ -235,6 +256,7 @@ impl FuzzySelect<'_> {
                     position += 1;
                     term.flush()?;
                     sel = 0;
+                    starting_row = 0;
                 }
 
                 _ => {}
