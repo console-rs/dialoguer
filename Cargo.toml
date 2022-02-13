@@ -48,3 +48,6 @@ required-features = ["history"]
 [[example]]
 name = "completion"
 required-features = ["completion"]
+
+[workspace.metadata.workspaces]
+no_individual_tags = true

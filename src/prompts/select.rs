@@ -73,6 +73,7 @@ impl Select<'_> {
         self.default = val;
         self
     }
+
     /// Sets an optional max length for a page.
     ///
     /// Max length is disabled by None

@@ -66,6 +66,7 @@ impl Sort<'_> {
         self.max_length = Some(val + 2);
         self
     }
+
     /// Add a single item to the selector.
     pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
         self.items.push(item.to_string());
