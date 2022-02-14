@@ -35,12 +35,19 @@ use console::{Key, Term};
 /// }
 /// ```
 pub struct Select<'a> {
+    /// The initial selected element when the selection menu is rendered,
+    /// indicated by its index in [`items`](#field::items).
     default: usize,
+    /// Items the user can select.
     items: Vec<String>,
+    /// Message of the selection prompt.
     prompt: Option<String>,
+    /// whether to report the selected value after interaction
     report: bool,
+    /// whether the selection menu should be erased from the screen after interaction
     clear: bool,
     theme: &'a dyn Theme,
+    /// Maximal number of items on page (`None` if unbounded).
     max_length: Option<usize>,
 }
 
