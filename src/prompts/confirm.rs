@@ -210,8 +210,8 @@ impl Confirm<'_> {
                         continue;
                     }
                 };
-
-                term.clear_line()?;
+                // Since `prompt` may be a multi-line string, we clear the entire prompt and not just the current line.
+                render.clear()?;
                 render.confirm_prompt(&self.prompt, value)?;
             }
         } else {
@@ -234,7 +234,8 @@ impl Confirm<'_> {
             }
         }
 
-        term.clear_line()?;
+        // Since `prompt` may be a multi-line string, we clear the entire prompt and not just the current line.
+        render.clear()?;
         if self.report {
             render.confirm_prompt_selection(&self.prompt, rv)?;
         }
