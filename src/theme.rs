@@ -101,13 +101,13 @@ pub trait Theme {
         self.format_input_prompt_selection(f, prompt, "[hidden]")
     }
 
-    /// Format a select prompt.
+    /// Format a selection prompt.
     #[inline]
     fn format_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_prompt(f, prompt)
     }
 
-    /// Format a select prompt after selection.
+    /// Format a selection prompt after an item was selected.
     #[inline]
     fn format_select_prompt_selection(
         &self,
@@ -118,7 +118,7 @@ pub trait Theme {
         self.format_input_prompt_selection(f, prompt, sel)
     }
 
-    /// Format a multi select prompt.
+    /// Format a multi-selection prompt.
     #[inline]
     fn format_multi_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_prompt(f, prompt)
@@ -130,7 +130,7 @@ pub trait Theme {
         self.format_prompt(f, prompt)
     }
 
-    /// Format a multi_select prompt after selection.
+    /// Format a multi-selection prompt after an item was selected.
     fn format_multi_select_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
@@ -144,7 +144,7 @@ pub trait Theme {
         Ok(())
     }
 
-    /// Format a sort prompt after selection.
+    /// Format a sort prompt after an item was selected.
     #[inline]
     fn format_sort_prompt_selection(
         &self,
@@ -155,7 +155,7 @@ pub trait Theme {
         self.format_multi_select_prompt_selection(f, prompt, selections)
     }
 
-    /// Format a select prompt item.
+    /// Format a single selection prompt item.
     fn format_select_prompt_item(
         &self,
         f: &mut dyn fmt::Write,
@@ -165,7 +165,7 @@ pub trait Theme {
         write!(f, "{} {}", if active { ">" } else { " " }, text)
     }
 
-    /// Formats a multi select prompt item.
+    /// Format a single multi-selection prompt item.
     fn format_multi_select_prompt_item(
         &self,
         f: &mut dyn fmt::Write,
@@ -206,7 +206,7 @@ pub trait Theme {
         )
     }
 
-    /// Format a fuzzy select prompt.
+    /// Format a fuzzy selection prompt.
     #[cfg(feature = "fuzzy-select")]
     fn format_fuzzy_select_prompt(
         &self,
@@ -848,7 +848,7 @@ impl<'a> TermThemeRenderer<'a> {
 
     pub fn clear_preserve_prompt(&mut self, size_vec: &[usize]) -> io::Result<()> {
         let mut new_height = self.height;
-        //Check each item size, increment on finding an overflow
+        // Check each item size, increment on finding an overflow
         for size in size_vec {
             if *size > self.term.size().1 as usize {
                 new_height += 1;
