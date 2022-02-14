@@ -5,19 +5,19 @@ use console::{style, Style, StyledObject, Term};
 
 /// Implements a theme for dialoguer.
 pub trait Theme {
-    /// Formats a prompt.
+    /// Format a prompt.
     #[inline]
     fn format_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         write!(f, "{}:", prompt)
     }
 
-    /// Formats out an error.
+    /// Format out an error.
     #[inline]
     fn format_error(&self, f: &mut dyn fmt::Write, err: &str) -> fmt::Result {
         write!(f, "error: {}", err)
     }
 
-    /// Formats a confirm prompt.
+    /// Format a confirmation prompt.
     fn format_confirm_prompt(
         &self,
         f: &mut dyn fmt::Write,
@@ -35,7 +35,7 @@ pub trait Theme {
         Ok(())
     }
 
-    /// Formats a confirm prompt after selection.
+    /// Format a confirmation prompt after selection.
     fn format_confirm_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
@@ -58,7 +58,7 @@ pub trait Theme {
         }
     }
 
-    /// Formats an input prompt.
+    /// Format an input prompt.
     fn format_input_prompt(
         &self,
         f: &mut dyn fmt::Write,
@@ -72,7 +72,7 @@ pub trait Theme {
         }
     }
 
-    /// Formats an input prompt after selection.
+    /// Format an input prompt after selection.
     #[inline]
     fn format_input_prompt_selection(
         &self,
@@ -83,14 +83,14 @@ pub trait Theme {
         write!(f, "{}: {}", prompt, sel)
     }
 
-    /// Formats a password prompt.
+    /// Format a password prompt.
     #[inline]
     #[cfg(feature = "password")]
     fn format_password_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_input_prompt(f, prompt, None)
     }
 
-    /// Formats a password prompt after selection.
+    /// Format a password prompt after selection.
     #[inline]
     #[cfg(feature = "password")]
     fn format_password_prompt_selection(
@@ -101,13 +101,13 @@ pub trait Theme {
         self.format_input_prompt_selection(f, prompt, "[hidden]")
     }
 
-    /// Formats a select prompt.
+    /// Format a select prompt.
     #[inline]
     fn format_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_prompt(f, prompt)
     }
 
-    /// Formats a select prompt after selection.
+    /// Format a select prompt after selection.
     #[inline]
     fn format_select_prompt_selection(
         &self,
@@ -118,19 +118,19 @@ pub trait Theme {
         self.format_input_prompt_selection(f, prompt, sel)
     }
 
-    /// Formats a multi select prompt.
+    /// Format a multi select prompt.
     #[inline]
     fn format_multi_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_prompt(f, prompt)
     }
 
-    /// Formats a sort prompt.
+    /// Format a sort prompt.
     #[inline]
     fn format_sort_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_prompt(f, prompt)
     }
 
-    /// Formats a multi_select prompt after selection.
+    /// Format a multi_select prompt after selection.
     fn format_multi_select_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
@@ -144,7 +144,7 @@ pub trait Theme {
         Ok(())
     }
 
-    /// Formats a sort prompt after selection.
+    /// Format a sort prompt after selection.
     #[inline]
     fn format_sort_prompt_selection(
         &self,
@@ -155,7 +155,7 @@ pub trait Theme {
         self.format_multi_select_prompt_selection(f, prompt, selections)
     }
 
-    /// Formats a select prompt item.
+    /// Format a select prompt item.
     fn format_select_prompt_item(
         &self,
         f: &mut dyn fmt::Write,
@@ -186,7 +186,7 @@ pub trait Theme {
         )
     }
 
-    /// Formats a sort prompt item.
+    /// Format a sort prompt item.
     fn format_sort_prompt_item(
         &self,
         f: &mut dyn fmt::Write,
@@ -206,7 +206,7 @@ pub trait Theme {
         )
     }
 
-    /// Formats a fuzzy select prompt.
+    /// Format a fuzzy select prompt.
     #[cfg(feature = "fuzzy-select")]
     fn format_fuzzy_select_prompt(
         &self,
