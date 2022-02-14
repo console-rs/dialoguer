@@ -68,19 +68,17 @@ impl Select<'_> {
 
     /// Set the initial selected element when the selection menu is rendered.
     ///
-    /// Element is indicated by the index at which it appears in `item` method invocation or `items` slice.
+    /// The default element is indicated by the index at which it appears in the `item` method invocation or the `items` slice.
     pub fn default(&mut self, val: usize) -> &mut Self {
         self.default = val;
         self
     }
 
-    /// Sets an optional max length for a page.
-    ///
-    /// Max length is disabled by None
+    /// Set an optional max length for a page.
     pub fn max_length(&mut self, val: usize) -> &mut Self {
         // Paging subtracts two from the capacity, paging does this to
         // make an offset for the page indicator. So to make sure that
-        // we can show the intended amount of items we need to add two
+        // we can show the intended amount of items, we need to add two
         // to our value.
         self.max_length = Some(val + 2);
         self
@@ -168,7 +166,7 @@ impl Select<'_> {
     /// The user can select the items with the 'Space' bar or 'Enter' and the index of selected item will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `index` if user selected one of items using 'Enter'.
-    /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
+    /// Unlike [`interact_opt`](Self::interact_opt), this does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<usize> {
         self.interact_on(&Term::stderr())
