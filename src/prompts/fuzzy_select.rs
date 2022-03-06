@@ -39,6 +39,7 @@ pub struct FuzzySelect<'a> {
     prompt: String,
     report: bool,
     clear: bool,
+    highlight_matches: bool,
     theme: &'a dyn Theme,
 }
 
@@ -98,6 +99,14 @@ impl FuzzySelect<'_> {
     /// The default is to report the selection.
     pub fn report(&mut self, val: bool) -> &mut Self {
         self.report = val;
+        self
+    }
+
+    /// Indicates whether to highlight matched indices
+    ///
+    /// The default is to highlight the indices
+    pub fn highlight_matches(&mut self, val: bool) -> &mut Self {
+        self.highlight_matches = val;
         self
     }
 
@@ -180,7 +189,13 @@ impl FuzzySelect<'_> {
                 .skip(starting_row)
                 .take(visible_term_rows)
             {
-                render.select_prompt_item(item, idx == sel)?;
+                render.fuzzy_select_prompt_item(
+                    item,
+                    idx == sel,
+                    self.highlight_matches,
+                    &matcher,
+                    &search_term,
+                )?;
                 term.flush()?;
             }
 
@@ -276,6 +291,7 @@ impl<'a> FuzzySelect<'a> {
             prompt: "".into(),
             report: true,
             clear: true,
+            highlight_matches: true,
             theme,
         }
     }

@@ -2,6 +2,8 @@
 use std::{fmt, io};
 
 use console::{style, Style, StyledObject, Term};
+#[cfg(feature = "fuzzy-select")]
+use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 
 /// Implements a theme for dialoguer.
 pub trait Theme {
@@ -206,6 +208,36 @@ pub trait Theme {
         )
     }
 
+    /// Formats a fuzzy select prompt item.
+    #[cfg(feature = "fuzzy-select")]
+    fn format_fuzzy_select_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        active: bool,
+        highlight_matches: bool,
+        matcher: &SkimMatcherV2,
+        search_term: &str,
+    ) -> fmt::Result {
+        write!(f, "{} ", if active { ">" } else { " " })?;
+
+        if highlight_matches {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
+                for (idx, c) in text.chars().into_iter().enumerate() {
+                    if indices.contains(&idx) {
+                        write!(f, "{}", style(c).for_stderr().bold())?;
+                    } else {
+                        write!(f, "{}", c)?;
+                    }
+                }
+
+                return Ok(());
+            }
+        }
+
+        write!(f, "{}", text)
+    }
+
     /// Formats a fuzzy select prompt.
     #[cfg(feature = "fuzzy-select")]
     fn format_fuzzy_select_prompt(
@@ -277,6 +309,9 @@ pub struct ColorfulTheme {
     /// Formats the cursor for a fuzzy select prompt
     #[cfg(feature = "fuzzy-select")]
     pub fuzzy_cursor_style: Style,
+    // Formats the highlighting if matched characters
+    #[cfg(feature = "fuzzy-select")]
+    pub fuzzy_match_highlight_style: Style,
     /// Show the selections from certain prompts inline
     pub inline_selections: bool,
 }
@@ -304,6 +339,8 @@ impl Default for ColorfulTheme {
             unpicked_item_prefix: style(" ".to_string()).for_stderr(),
             #[cfg(feature = "fuzzy-select")]
             fuzzy_cursor_style: Style::new().for_stderr().black().on_white(),
+            #[cfg(feature = "fuzzy-select")]
+            fuzzy_match_highlight_style: Style::new().for_stderr().bold().yellow(),
             inline_selections: true,
         }
     }
@@ -577,6 +614,36 @@ impl Theme for ColorfulTheme {
         write!(f, "{} {}", details.0, details.1)
     }
 
+    /// Formats a fuzzy select prompt item.
+    #[cfg(feature = "fuzzy-select")]
+    fn format_fuzzy_select_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        active: bool,
+        highlight_matches: bool,
+        matcher: &SkimMatcherV2,
+        search_term: &str,
+    ) -> fmt::Result {
+        write!(f, "{} ", if active { ">" } else { " " })?;
+
+        if highlight_matches {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
+                for (idx, c) in text.chars().into_iter().enumerate() {
+                    if indices.contains(&idx) {
+                        write!(f, "{}", self.fuzzy_match_highlight_style.apply_to(c))?;
+                    } else {
+                        write!(f, "{}", c)?;
+                    }
+                }
+
+                return Ok(());
+            }
+        }
+
+        write!(f, "{}", text)
+    }
+
     /// Formats a fuzzy-selectprompt after selection.
     #[cfg(feature = "fuzzy-select")]
     fn format_fuzzy_select_prompt(
@@ -772,6 +839,27 @@ impl<'a> TermThemeRenderer<'a> {
     pub fn select_prompt_item(&mut self, text: &str, active: bool) -> io::Result<()> {
         self.write_formatted_line(|this, buf| {
             this.theme.format_select_prompt_item(buf, text, active)
+        })
+    }
+
+    #[cfg(feature = "fuzzy-select")]
+    pub fn fuzzy_select_prompt_item(
+        &mut self,
+        text: &str,
+        active: bool,
+        highlight: bool,
+        matcher: &SkimMatcherV2,
+        search_term: &str,
+    ) -> io::Result<()> {
+        self.write_formatted_line(|this, buf| {
+            this.theme.format_fuzzy_select_prompt_item(
+                buf,
+                text,
+                active,
+                highlight,
+                matcher,
+                search_term,
+            )
         })
     }
 
