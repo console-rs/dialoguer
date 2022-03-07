@@ -667,11 +667,10 @@ impl Theme for ColorfulTheme {
         if cursor_pos < search_term.len() {
             let split = search_term.split_at(cursor_pos);
             let head = split.0.concat();
-            let cursor = split.1.get(0).unwrap();
+            let cursor = self.fuzzy_cursor_style.apply_to(split.1.get(0).unwrap());
             let tail = split.1[1..].concat();
 
-            let st_cursor = self.fuzzy_cursor_style.apply_to(cursor);
-            write!(f, "{} {}{}{}", &self.prompt_suffix, head, st_cursor, tail)
+            write!(f, "{} {}{}{}", &self.prompt_suffix, head, cursor, tail)
         } else {
             let cursor = self.fuzzy_cursor_style.apply_to(" ");
             write!(
