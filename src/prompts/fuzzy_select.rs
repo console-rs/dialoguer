@@ -202,7 +202,7 @@ impl FuzzySelect<'_> {
                     idx == sel,
                     self.highlight_matches,
                     &matcher,
-                    &search_term,
+                    &search_term.concat(),
                 )?;
                 term.flush()?;
             }
