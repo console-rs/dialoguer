@@ -212,7 +212,7 @@ pub trait Theme {
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
-        search_term: &str,
+        search_term: &Vec<String>,
         cursor_pos: usize,
     ) -> fmt::Result {
         if !prompt.is_empty() {
@@ -220,13 +220,15 @@ pub trait Theme {
         }
 
         if cursor_pos < search_term.len() {
-            let st_head = search_term[0..cursor_pos].to_string();
-            let st_tail = search_term[cursor_pos..search_term.len()].to_string();
-            let st_cursor = "|".to_string();
-            write!(f, "{}{}{}", st_head, st_cursor, st_tail)
+            let split = search_term.split_at(cursor_pos);
+            let head = split.0.concat();
+            let cursor = "|".to_string();
+            let tail = split.1.concat();
+            
+            write!(f, "{}{}{}", head, cursor, tail)
         } else {
             let cursor = "|".to_string();
-            write!(f, "{}{}", search_term.to_string(), cursor)
+            write!(f, "{}{}", search_term.concat(), cursor)
         }
     }
 }
@@ -583,7 +585,7 @@ impl Theme for ColorfulTheme {
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
-        search_term: &str,
+        search_term: &Vec<String>, // This should be Vec<str>
         cursor_pos: usize,
     ) -> fmt::Result {
         if !prompt.is_empty() {
@@ -596,15 +598,18 @@ impl Theme for ColorfulTheme {
         }
 
         if cursor_pos < search_term.len() {
-            let st_head = search_term[0..cursor_pos].to_string();
-            let st_tail = search_term[cursor_pos + 1..search_term.len()].to_string();
+            let split = search_term.split_at(cursor_pos);
+            let head = split.0.concat();
+            let cursor = split.1.get(0).unwrap();
+            let tail = split.1[1..].concat();
+
             let st_cursor = self
                 .fuzzy_cursor_style
-                .apply_to(search_term.to_string().chars().nth(cursor_pos).unwrap());
+                .apply_to(cursor);
             write!(
                 f,
                 "{} {}{}{}",
-                &self.prompt_suffix, st_head, st_cursor, st_tail
+                &self.prompt_suffix, head, st_cursor, tail
             )
         } else {
             let cursor = self.fuzzy_cursor_style.apply_to(" ");
@@ -612,7 +617,7 @@ impl Theme for ColorfulTheme {
                 f,
                 "{} {}{}",
                 &self.prompt_suffix,
-                search_term.to_string(),
+                search_term.concat(),
                 cursor
             )
         }
@@ -713,7 +718,7 @@ impl<'a> TermThemeRenderer<'a> {
     pub fn fuzzy_select_prompt(
         &mut self,
         prompt: &str,
-        search_term: &str,
+        search_term: &Vec<String>,
         cursor_pos: usize,
     ) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {

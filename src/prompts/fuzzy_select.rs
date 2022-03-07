@@ -2,6 +2,7 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 use console::{Key, Term};
 use fuzzy_matcher::FuzzyMatcher;
 use std::{io, ops::Rem};
+use unicode_segmentation::UnicodeSegmentation;
 
 /// Renders a selection menu that user can fuzzy match to reduce set.
 ///
@@ -137,8 +138,9 @@ impl FuzzySelect<'_> {
 
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
+        // This cursor iterates over the graphemes vec rather than the search term
         let mut cursor_pos = 0;
-        let mut search_term = String::new();
+        let mut search_term: Vec<String> = Vec::new();
 
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
@@ -160,6 +162,9 @@ impl FuzzySelect<'_> {
         term.hide_cursor()?;
 
         loop {
+            let concatted_search_term = search_term.concat();
+            search_term = concatted_search_term.graphemes(true).map(|s| s.to_string()).collect::<Vec<String>>();
+
             render.clear()?;
             render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, cursor_pos)?;
 
@@ -167,7 +172,7 @@ impl FuzzySelect<'_> {
             let mut filtered_list = self
                 .items
                 .iter()
-                .map(|item| (item, matcher.fuzzy_match(item, &search_term)))
+                .map(|item| (item, matcher.fuzzy_match(item, &search_term.concat())))
                 .filter_map(|(item, score)| score.map(|s| (item, s)))
                 .collect::<Vec<_>>();
 
@@ -252,7 +257,7 @@ impl FuzzySelect<'_> {
                     term.flush()?;
                 }
                 Key::Char(chr) if !chr.is_ascii_control() => {
-                    search_term.insert(cursor_pos, chr);
+                    search_term.insert(cursor_pos, chr.to_string());
                     cursor_pos += 1;
                     term.flush()?;
                     sel = 0;
