@@ -311,7 +311,7 @@ pub struct ColorfulTheme {
     /// Formats the cursor for a fuzzy select prompt
     #[cfg(feature = "fuzzy-select")]
     pub fuzzy_cursor_style: Style,
-    // Formats the highlighting if matched characters
+    // Formats the highlighting of matched characters
     #[cfg(feature = "fuzzy-select")]
     pub fuzzy_match_highlight_style: Style,
     /// Show the selections from certain prompts inline
