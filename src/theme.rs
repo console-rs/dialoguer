@@ -256,7 +256,7 @@ pub trait Theme {
             let head = split.0.concat();
             let cursor = "|".to_string();
             let tail = split.1.concat();
-            
+
             write!(f, "{}{}{}", head, cursor, tail)
         } else {
             let cursor = "|".to_string();
@@ -670,14 +670,8 @@ impl Theme for ColorfulTheme {
             let cursor = split.1.get(0).unwrap();
             let tail = split.1[1..].concat();
 
-            let st_cursor = self
-                .fuzzy_cursor_style
-                .apply_to(cursor);
-            write!(
-                f,
-                "{} {}{}{}",
-                &self.prompt_suffix, head, st_cursor, tail
-            )
+            let st_cursor = self.fuzzy_cursor_style.apply_to(cursor);
+            write!(f, "{} {}{}{}", &self.prompt_suffix, head, st_cursor, tail)
         } else {
             let cursor = self.fuzzy_cursor_style.apply_to(" ");
             write!(

@@ -172,7 +172,10 @@ impl FuzzySelect<'_> {
 
         loop {
             let concatted_search_term = search_term.concat();
-            search_term = concatted_search_term.graphemes(true).map(|s| s.to_string()).collect::<Vec<String>>();
+            search_term = concatted_search_term
+                .graphemes(true)
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>();
 
             render.clear()?;
             render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, cursor_pos)?;

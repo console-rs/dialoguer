@@ -32,7 +32,7 @@ fn main() {
         "Burger",
         "Käse",
         "Döner",
-        "Blåbär"
+        "Blåbär",
     ];
 
     let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
