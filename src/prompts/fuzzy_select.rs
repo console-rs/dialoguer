@@ -137,7 +137,7 @@ impl FuzzySelect<'_> {
 
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
-        let mut position = 0;
+        let mut cursor_pos = 0;
         let mut search_term = String::new();
 
         let mut render = TermThemeRenderer::new(term, self.theme);
@@ -161,7 +161,7 @@ impl FuzzySelect<'_> {
 
         loop {
             render.clear()?;
-            render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, position)?;
+            render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, cursor_pos)?;
 
             // Maps all items to a tuple of item and its match score.
             let mut filtered_list = self
@@ -221,12 +221,12 @@ impl FuzzySelect<'_> {
                     }
                     term.flush()?;
                 }
-                Key::ArrowLeft if position > 0 => {
-                    position -= 1;
+                Key::ArrowLeft if cursor_pos > 0 => {
+                    cursor_pos -= 1;
                     term.flush()?;
                 }
-                Key::ArrowRight if position < search_term.len() => {
-                    position += 1;
+                Key::ArrowRight if cursor_pos < search_term.len() => {
+                    cursor_pos += 1;
                     term.flush()?;
                 }
                 Key::Enter if !filtered_list.is_empty() => {
@@ -246,14 +246,14 @@ impl FuzzySelect<'_> {
                     term.show_cursor()?;
                     return Ok(sel_string_pos_in_items);
                 }
-                Key::Backspace if position > 0 => {
-                    position -= 1;
-                    search_term.remove(position);
+                Key::Backspace if cursor_pos > 0 => {
+                    cursor_pos -= 1;
+                    search_term.remove(cursor_pos);
                     term.flush()?;
                 }
                 Key::Char(chr) if !chr.is_ascii_control() => {
-                    search_term.insert(position, chr);
-                    position += 1;
+                    search_term.insert(cursor_pos, chr);
+                    cursor_pos += 1;
                     term.flush()?;
                     sel = 0;
                     starting_row = 0;
