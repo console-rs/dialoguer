@@ -628,7 +628,6 @@ pub(crate) struct TermThemeRenderer<'a> {
     theme: &'a dyn Theme,
     height: usize,
     prompt_height: usize,
-    prompts_reset_height: bool,
 }
 
 impl<'a> TermThemeRenderer<'a> {
@@ -638,7 +637,6 @@ impl<'a> TermThemeRenderer<'a> {
             theme,
             height: 0,
             prompt_height: 0,
-            prompts_reset_height: true,
         }
     }
 
@@ -690,10 +688,8 @@ impl<'a> TermThemeRenderer<'a> {
         f: F,
     ) -> io::Result<()> {
         self.write_formatted_line(f)?;
-        if self.prompts_reset_height {
-            self.prompt_height = self.height;
-            self.height = 0;
-        }
+        self.prompt_height = self.height;
+        self.height = 0;
         Ok(())
     }
 
