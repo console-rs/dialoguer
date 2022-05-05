@@ -18,6 +18,9 @@ pub trait Theme {
     }
 
     /// Format a confirmation prompt.
+    ///
+    /// `prompt` is the message of the confirmation prompt,
+    /// `default` is the default choice for the prompt (if any).
     fn format_confirm_prompt(
         &self,
         f: &mut dyn fmt::Write,

@@ -20,10 +20,15 @@ use console::{Key, Term};
 /// # Ok(()) } fn main() { test().unwrap(); }
 /// ```
 pub struct Confirm<'a> {
+    /// Message of the confirmation prompt.
     prompt: String,
+    /// Whether to report the user's choice after selection.
     report: bool,
+    /// default option for the prompt (if any)
     default: Option<bool>,
+    /// if true, show the default value to the user, see [`show_default`](#method::show_default)
     show_default: bool,
+    /// when to react to user input, see [`wait_for_newline`](#methhod::wait_for_newline)
     wait_for_newline: bool,
     theme: &'a dyn Theme,
 }
