@@ -313,7 +313,7 @@ impl Default for ColorfulTheme {
 }
 
 impl Theme for ColorfulTheme {
-    /// Formats a prompt.
+    /// Format a prompt.
     fn format_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         if !prompt.is_empty() {
             write!(
@@ -327,7 +327,7 @@ impl Theme for ColorfulTheme {
         write!(f, "{}", &self.prompt_suffix)
     }
 
-    /// Formats an error
+    /// Format an error.
     fn format_error(&self, f: &mut dyn fmt::Write, err: &str) -> fmt::Result {
         write!(
             f,
@@ -337,7 +337,7 @@ impl Theme for ColorfulTheme {
         )
     }
 
-    /// Formats an input prompt.
+    /// Format an input prompt.
     fn format_input_prompt(
         &self,
         f: &mut dyn fmt::Write,
@@ -364,7 +364,7 @@ impl Theme for ColorfulTheme {
         }
     }
 
-    /// Formats a confirm prompt.
+    /// Format a confirmation prompt.
     fn format_confirm_prompt(
         &self,
         f: &mut dyn fmt::Write,
@@ -404,7 +404,7 @@ impl Theme for ColorfulTheme {
         }
     }
 
-    /// Formats a confirm prompt after selection.
+    /// Format a confirmation prompt after selection.
     fn format_confirm_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
