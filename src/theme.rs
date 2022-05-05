@@ -643,11 +643,6 @@ impl<'a> TermThemeRenderer<'a> {
     }
 
     #[cfg(feature = "password")]
-    pub fn set_prompts_reset_height(&mut self, val: bool) {
-        self.prompts_reset_height = val;
-    }
-
-    #[cfg(feature = "password")]
     pub fn term(&self) -> &Term {
         self.term
     }

@@ -92,8 +92,6 @@ impl Password<'_> {
     /// Like [`interact`](#method::interact), but allow a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<String> {
         let mut render = TermThemeRenderer::new(term, self.theme);
-        render.set_prompts_reset_height(false);
-
         loop {
             let password = Zeroizing::new(self.prompt_password(&mut render, &self.prompt)?);
 
