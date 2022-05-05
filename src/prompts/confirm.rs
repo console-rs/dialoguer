@@ -4,7 +4,7 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::{Key, Term};
 
-/// Renders a confirm prompt.
+/// Render a confirmation prompt.
 ///
 /// ## Example usage
 ///
@@ -35,20 +35,20 @@ impl Default for Confirm<'static> {
 }
 
 impl Confirm<'static> {
-    /// Creates a confirm prompt.
+    /// Create a confirmation prompt.
     pub fn new() -> Self {
         Self::with_theme(&SimpleTheme)
     }
 }
 
 impl Confirm<'_> {
-    /// Sets the confirm prompt.
+    /// Set the confirmation prompt message.
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
         self
     }
 
-    /// Indicates whether or not to report the chosen selection after interaction.
+    /// Indicate whether or not to report the chosen selection after interaction.
     ///
     /// The default is to report the chosen selection.
     pub fn report(&mut self, val: bool) -> &mut Self {
@@ -76,7 +76,7 @@ impl Confirm<'_> {
         self
     }
 
-    /// Sets a default.
+    /// Set a default choice for the prompt.
     ///
     /// Out of the box the prompt does not have a default and will continue
     /// to display until the user inputs something and hits enter. If a default is set the user
@@ -86,7 +86,7 @@ impl Confirm<'_> {
         self
     }
 
-    /// Disables or enables the default value display.
+    /// Disable or enable the default value display.
     ///
     /// The default is to append the default value to the prompt to tell the user.
     pub fn show_default(&mut self, val: bool) -> &mut Self {
@@ -94,7 +94,7 @@ impl Confirm<'_> {
         self
     }
 
-    /// Enables user interaction and returns the result.
+    /// Enable user interaction and return the result.
     ///
     /// The dialog is rendered on stderr.
     ///
@@ -105,7 +105,7 @@ impl Confirm<'_> {
         self.interact_on(&Term::stderr())
     }
 
-    /// Enables user interaction and returns the result.
+    /// Enable user interaction and return the result.
     ///
     /// The dialog is rendered on stderr.
     ///
@@ -116,7 +116,7 @@ impl Confirm<'_> {
         self.interact_on_opt(&Term::stderr())
     }
 
-    /// Like [interact](#method.interact) but allows a specific terminal to be set.
+    /// Like [interact](#method.interact) but allow a specific terminal to be set.
     ///
     /// ## Examples
     ///
@@ -178,7 +178,7 @@ impl Confirm<'_> {
         let rv;
 
         if self.wait_for_newline {
-            // Waits for user input and for the user to hit the Enter key
+            // Wait for user input and for the user to hit the Enter key
             // before validation.
             let mut value = default_if_show;
 
@@ -215,8 +215,8 @@ impl Confirm<'_> {
                 render.confirm_prompt(&self.prompt, value)?;
             }
         } else {
-            // Default behavior: matches continuously on every keystroke,
-            // and does not wait for user to hit the Enter key.
+            // Default behavior: match continuously on every keystroke,
+            // and do not wait for the user to hit the Enter key.
             loop {
                 let input = term.read_key()?;
                 let value = match input {
@@ -246,7 +246,7 @@ impl Confirm<'_> {
 }
 
 impl<'a> Confirm<'a> {
-    /// Creates a confirm prompt with a specific theme.
+    /// Create a confirm prompt with a specific theme.
     ///
     /// ## Examples
     /// ```rust,no_run
