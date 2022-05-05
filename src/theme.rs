@@ -652,10 +652,14 @@ impl<'a> TermThemeRenderer<'a> {
         self.term
     }
 
+    /// Enlarge the theme by one line: allow displaying one more line of input.
     pub fn add_line(&mut self) {
         self.height += 1;
     }
 
+    /// Write a formatted string to this terminal. The string can be span multiple lines.
+    ///
+    /// `F` is a closure prescribing the text to write into the current instance.
     fn write_formatted_str<
         F: FnOnce(&mut TermThemeRenderer, &mut dyn fmt::Write) -> fmt::Result,
     >(
@@ -668,6 +672,7 @@ impl<'a> TermThemeRenderer<'a> {
         self.term.write_str(&buf)
     }
 
+    /// Like [`write_formatted_string`](#method::write_formatted_string), but add a linebreak afterwards.
     fn write_formatted_line<
         F: FnOnce(&mut TermThemeRenderer, &mut dyn fmt::Write) -> fmt::Result,
     >(
@@ -680,6 +685,9 @@ impl<'a> TermThemeRenderer<'a> {
         self.term.write_line(&buf)
     }
 
+    /// Write a formatted prompt string to this terminal.
+    ///
+    /// `F` is a closure prescribing the text to write into the current instance.
     fn write_formatted_prompt<
         F: FnOnce(&mut TermThemeRenderer, &mut dyn fmt::Write) -> fmt::Result,
     >(
