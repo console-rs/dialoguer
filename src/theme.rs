@@ -846,9 +846,15 @@ impl<'a> TermThemeRenderer<'a> {
         Ok(())
     }
 
+    /// Clear all output after the last user prompt; leave the prompt behind.
+    ///
+    /// `size_vec` contains the lengths of all lines of output after the prompt.
     pub fn clear_preserve_prompt(&mut self, size_vec: &[usize]) -> io::Result<()> {
+        // Printing a selectable item (which should only take up one line)
+        // can yield several lines in the terminal: if the item is longer than the terminal.
+        // Take this into account, to fully clear all input after the prompt.
         let mut new_height = self.height;
-        //Check each item size, increment on finding an overflow
+        // Check each item size, increment if it overflows the terminal width.
         for size in size_vec {
             if *size > self.term.size().1 as usize {
                 new_height += 1;
