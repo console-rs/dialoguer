@@ -247,17 +247,11 @@ impl Select<'_> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
-        let mut size_vec = Vec::new();
-
-        for item in self
-            .items
-            .iter()
+        let size_vec: Vec<_> = self.items.iter()
             .flat_map(|i| i.split('\n'))
-            .collect::<Vec<_>>()
-        {
             // Formatting each item adds two more characters.
-            size_vec.push(item.len() + 2);
-        }
+            .map(|item| item.len() + 2)
+            .collect();
 
         term.hide_cursor()?;
 

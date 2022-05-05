@@ -143,11 +143,11 @@ impl FuzzySelect<'_> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
-        let mut size_vec = Vec::new();
-        for item in self.items.iter().as_slice() {
+        let size_vec: Vec<_> = self.items.iter()
+            .flat_map(|i| i.split('\n'))
             // Formatting each item adds two more characters.
-            size_vec.push(item.len() + 2);
-        }
+            .map(|item| item.len() + 2)
+            .collect();
 
         // Fuzzy matcher
         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
