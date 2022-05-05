@@ -144,9 +144,9 @@ impl FuzzySelect<'_> {
         let mut sel = self.default;
 
         let mut size_vec = Vec::new();
-        for items in self.items.iter().as_slice() {
-            let size = &items.len();
-            size_vec.push(*size);
+        for item in self.items.iter().as_slice() {
+            // Formatting each item adds two more characters.
+            size_vec.push(item.len() + 2);
         }
 
         // Fuzzy matcher

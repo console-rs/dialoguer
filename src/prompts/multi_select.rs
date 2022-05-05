@@ -210,14 +210,14 @@ impl MultiSelect<'_> {
 
         let mut size_vec = Vec::new();
 
-        for items in self
+        for item in self
             .items
             .iter()
             .flat_map(|i| i.split('\n'))
             .collect::<Vec<_>>()
         {
-            let size = &items.len();
-            size_vec.push(*size);
+            // Formatting each item adds two more characters.
+            size_vec.push(item.len() + 2);
         }
 
         let mut checked: Vec<bool> = self.defaults.clone();
