@@ -78,9 +78,9 @@ impl Confirm<'_> {
 
     /// Set a default choice for the prompt.
     ///
-    /// Out of the box the prompt does not have a default and will continue
-    /// to display until the user inputs something and hits enter. If a default is set the user
-    /// can instead accept the default with enter.
+    /// Out of the box, the prompt does not have a default choice and will continue
+    /// to display until the user inputs something and hits enter. If a default is set,
+    /// the user can also accept the default with enter.
     pub fn default(&mut self, val: bool) -> &mut Self {
         self.default = Some(val);
         self
@@ -98,8 +98,10 @@ impl Confirm<'_> {
     ///
     /// The dialog is rendered on stderr.
     ///
-    /// Result contains `bool` if user answered "yes" or "no" or `default` (configured in [`default`](Self::default) if pushes enter.
-    /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
+    /// Result contains `bool` if the user answered "yes" or "no" or `default`
+    /// (configured in [`default`](Self::default)) if they pushed enter.
+    /// Unlike [`interact_opt`](Self::interact_opt), this does not allow
+    /// to quit the dialog with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<bool> {
         self.interact_on(&Term::stderr())
@@ -109,8 +111,9 @@ impl Confirm<'_> {
     ///
     /// The dialog is rendered on stderr.
     ///
-    /// Result contains `Some(bool)` if user answered "yes" or "no" or `Some(default)` (configured in [`default`](Self::default)) if pushes enter,
-    /// or `None` if user cancelled with 'Esc' or 'q'.
+    /// Result contains `Some(bool)` if the user answered "yes" or "no" or `Some(default)`
+    /// (configured in [`default`](Self::default)) if they pushed enter,
+    /// or `None` if the user cancelled the prompt with 'Esc' or 'q'.
     #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<bool>> {
         self.interact_on_opt(&Term::stderr())
