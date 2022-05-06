@@ -51,3 +51,6 @@ required-features = ["completion"]
 
 [workspace.metadata.workspaces]
 no_individual_tags = true
+
+[package.metadata.docs.rs]
+ all-features = true
