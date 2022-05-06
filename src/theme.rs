@@ -626,7 +626,11 @@ impl Theme for ColorfulTheme {
 pub(crate) struct TermThemeRenderer<'a> {
     term: &'a Term,
     theme: &'a dyn Theme,
+    /// Height (number of lines, ignoring lines overflowing the terminal)
+    /// of output after the last prompt: not counting the current line.
     height: usize,
+    /// Height (number of output lines, ignoring overflowing items)
+    /// of the last completed prompt and everything above it.
     prompt_height: usize,
 }
 
