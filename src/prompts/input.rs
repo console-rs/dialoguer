@@ -390,12 +390,6 @@ where
                         }
                     }
                     Key::Enter => break,
-                    Key::Unknown => {
-                        return Err(io::Error::new(
-                            io::ErrorKind::NotConnected,
-                            "Not a terminal",
-                        ))
-                    }
                     _ => (),
                 }
             }
