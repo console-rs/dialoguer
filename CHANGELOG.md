@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.1
+
+### Enhancements
+
+* Allow matches highlighting for `FuzzySelect`
+
 ## 0.10.0
 
 ### Enhancements
