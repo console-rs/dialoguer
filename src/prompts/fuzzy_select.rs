@@ -147,7 +147,11 @@ impl FuzzySelect<'_> {
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<(usize, KeyModifiers)>> {
+    fn _interact_on(
+        &self,
+        term: &Term,
+        allow_quit: bool,
+    ) -> io::Result<Option<(usize, KeyModifiers)>> {
         let mut position = 0;
         let mut search_term = String::new();
 
@@ -222,7 +226,8 @@ impl FuzzySelect<'_> {
                             sel = filtered_list.len() - 1;
                         } else {
                             sel = ((sel as i64 - 1 + filtered_list.len() as i64)
-                                % (filtered_list.len() as i64)) as usize;
+                                % (filtered_list.len() as i64))
+                                as usize;
                         }
                         term.flush()?;
                     }
@@ -251,16 +256,21 @@ impl FuzzySelect<'_> {
                         if self.clear {
                             render.clear()?;
                         }
-    
+
                         if self.report {
-                            render
-                                .input_prompt_selection(self.prompt.as_str(), filtered_list[sel].0)?;
+                            render.input_prompt_selection(
+                                self.prompt.as_str(),
+                                filtered_list[sel].0,
+                            )?;
                         }
-    
+
                         let sel_string = filtered_list[sel].0;
-                        let sel_string_pos_in_items =
-                            self.items.iter().position(|item| item.eq(sel_string)).unwrap();
-    
+                        let sel_string_pos_in_items = self
+                            .items
+                            .iter()
+                            .position(|item| item.eq(sel_string))
+                            .unwrap();
+
                         term.show_cursor()?;
 
                         return Ok(Some((sel_string_pos_in_items, modifiers)));
@@ -277,7 +287,7 @@ impl FuzzySelect<'_> {
                         sel = 0;
                         starting_row = 0;
                     }
-    
+
                     _ => {}
                 }
             }

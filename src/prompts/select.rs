@@ -236,7 +236,11 @@ impl Select<'_> {
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<(usize, KeyModifiers)>> {
+    fn _interact_on(
+        &self,
+        term: &Term,
+        allow_quit: bool,
+    ) -> io::Result<Option<(usize, KeyModifiers)>> {
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -295,10 +299,10 @@ impl Select<'_> {
                             } else {
                                 term.clear_last_lines(paging.capacity)?;
                             }
-    
+
                             term.show_cursor()?;
                             term.flush()?;
-    
+
                             return Ok(None);
                         }
                     }
@@ -307,7 +311,8 @@ impl Select<'_> {
                             sel = self.items.len() - 1;
                         } else {
                             sel = ((sel as i64 - 1 + self.items.len() as i64)
-                                % (self.items.len() as i64)) as usize;
+                                % (self.items.len() as i64))
+                                as usize;
                         }
                     }
                     KeyCode::Left | KeyCode::Char('h') => {
@@ -320,21 +325,21 @@ impl Select<'_> {
                             sel = paging.next_page();
                         }
                     }
-    
+
                     KeyCode::Enter | KeyCode::Char(' ') if sel != !0 => {
                         if self.clear {
                             render.clear()?;
                         }
-    
+
                         if let Some(ref prompt) = self.prompt {
                             if self.report {
                                 render.select_prompt_selection(prompt, &self.items[sel])?;
                             }
                         }
-    
+
                         term.show_cursor()?;
                         term.flush()?;
-    
+
                         return Ok(Some((sel, modifiers)));
                     }
                     _ => {}
