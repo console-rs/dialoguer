@@ -222,7 +222,7 @@ pub trait Theme {
         write!(f, "{} ", if active { ">" } else { " " })?;
 
         if highlight_matches {
-            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, search_term) {
                 for (idx, c) in text.chars().into_iter().enumerate() {
                     if indices.contains(&idx) {
                         write!(f, "{}", style(c).for_stderr().bold())?;
@@ -244,7 +244,7 @@ pub trait Theme {
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
-        search_term: &Vec<String>,
+        search_term: &[String],
         cursor_pos: usize,
     ) -> fmt::Result {
         if !prompt.is_empty() {
@@ -630,7 +630,7 @@ impl Theme for ColorfulTheme {
         write!(f, "{} ", if active { ">" } else { " " })?;
 
         if highlight_matches {
-            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, search_term) {
                 for (idx, c) in text.chars().into_iter().enumerate() {
                     if indices.contains(&idx) {
                         write!(f, "{}", self.fuzzy_match_highlight_style.apply_to(c))?;
@@ -652,7 +652,7 @@ impl Theme for ColorfulTheme {
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
-        search_term: &Vec<String>, // This should be Vec<str>
+        search_term: &[String], // This should be Vec<str>
         cursor_pos: usize,
     ) -> fmt::Result {
         if !prompt.is_empty() {
@@ -778,7 +778,7 @@ impl<'a> TermThemeRenderer<'a> {
     pub fn fuzzy_select_prompt(
         &mut self,
         prompt: &str,
-        search_term: &Vec<String>,
+        search_term: &[String],
         cursor_pos: usize,
     ) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
