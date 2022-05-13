@@ -209,7 +209,7 @@ impl FuzzySelect<'_> {
                 match code {
                     KeyCode::Esc if allow_quit => {
                         if self.clear {
-                            term.clear_last_lines(filtered_list.len())?;
+                            render.clear()?;
                             term.flush()?;
                         }
                         term.show_cursor()?;
