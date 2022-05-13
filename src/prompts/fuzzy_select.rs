@@ -4,6 +4,7 @@ use crossterm::event::{read, Event, KeyCode, KeyEvent, KeyModifiers};
 
 use fuzzy_matcher::FuzzyMatcher;
 use std::{io, ops::Rem};
+use unicode_segmentation::UnicodeSegmentation;
 
 /// Renders a selection menu that user can fuzzy match to reduce set.
 ///
@@ -152,8 +153,9 @@ impl FuzzySelect<'_> {
         term: &Term,
         allow_quit: bool,
     ) -> io::Result<Option<(usize, KeyModifiers)>> {
-        let mut position = 0;
-        let mut search_term = String::new();
+        // This cursor iterates over the graphemes vec rather than the search term
+        let mut cursor_pos = 0;
+        let mut search_term: Vec<String> = Vec::new();
 
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
@@ -175,14 +177,20 @@ impl FuzzySelect<'_> {
         term.hide_cursor()?;
 
         loop {
+            let concatted_search_term = search_term.concat();
+            search_term = concatted_search_term
+                .graphemes(true)
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>();
+
             render.clear()?;
-            render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, position)?;
+            render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, cursor_pos)?;
 
             // Maps all items to a tuple of item and its match score.
             let mut filtered_list = self
                 .items
                 .iter()
-                .map(|item| (item, matcher.fuzzy_match(item, &search_term)))
+                .map(|item| (item, matcher.fuzzy_match(item, &search_term.concat())))
                 .filter_map(|(item, score)| score.map(|s| (item, s)))
                 .collect::<Vec<_>>();
 
@@ -200,7 +208,7 @@ impl FuzzySelect<'_> {
                     idx == sel,
                     self.highlight_matches,
                     &matcher,
-                    &search_term,
+                    &search_term.concat(),
                 )?;
                 term.flush()?;
             }
@@ -244,12 +252,12 @@ impl FuzzySelect<'_> {
                         }
                         term.flush()?;
                     }
-                    KeyCode::Left if position > 0 => {
-                        position -= 1;
+                    KeyCode::Left if cursor_pos > 0 => {
+                        cursor_pos -= 1;
                         term.flush()?;
                     }
-                    KeyCode::Right if position < search_term.len() => {
-                        position += 1;
+                    KeyCode::Right if cursor_pos < search_term.len() => {
+                        cursor_pos += 1;
                         term.flush()?;
                     }
                     KeyCode::Enter if !filtered_list.is_empty() => {
@@ -275,14 +283,14 @@ impl FuzzySelect<'_> {
 
                         return Ok(Some((sel_string_pos_in_items, modifiers)));
                     }
-                    KeyCode::Backspace if position > 0 => {
-                        position -= 1;
-                        search_term.remove(position);
+                    KeyCode::Backspace if cursor_pos > 0 => {
+                        cursor_pos -= 1;
+                        search_term.remove(cursor_pos);
                         term.flush()?;
                     }
                     KeyCode::Char(chr) if !chr.is_ascii_control() => {
-                        search_term.insert(position, chr);
-                        position += 1;
+                        search_term.insert(cursor_pos, chr.to_string());
+                        cursor_pos += 1;
                         term.flush()?;
                         sel = 0;
                         starting_row = 0;
