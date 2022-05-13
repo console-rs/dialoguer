@@ -30,6 +30,9 @@ fn main() {
         "Brown sugar",
         "Blueberry",
         "Burger",
+        "Käse",
+        "Döner",
+        "Blåbär",
     ];
 
     let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
