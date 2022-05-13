@@ -344,7 +344,7 @@ impl Default for ColorfulTheme {
             #[cfg(feature = "fuzzy-select")]
             fuzzy_cursor_style: Style::new().for_stderr().black().on_white(),
             #[cfg(feature = "fuzzy-select")]
-            fuzzy_match_highlight_style: Style::new().for_stderr().bold().yellow(),
+            fuzzy_match_highlight_style: Style::new().for_stderr().bold().italic(),
             inline_selections: true,
         }
     }
