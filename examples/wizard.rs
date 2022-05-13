@@ -43,7 +43,7 @@ fn init_config() -> Result<Option<Config>, Box<dyn Error>> {
         .item("automatic with ACME")
         .item("manual")
         .item("no")
-        .interact()?;
+        .interact()?.0;
 
     let (private_key, cert, use_acme) = match tls {
         0 => (Some("acme.pkey".into()), Some("acme.cert".into()), true),

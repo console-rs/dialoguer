@@ -15,7 +15,7 @@ fn main() {
         .interact()
         .unwrap();
 
-    println!("Enjoy your {}!", selections[selection]);
+    println!("Enjoy your {}!", selections[selection.0]);
 
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Optionally pick your flavor")
@@ -25,7 +25,7 @@ fn main() {
         .unwrap();
 
     if let Some(selection) = selection {
-        println!("Enjoy your {}!", selections[selection]);
+        println!("Enjoy your {}!", selections[selection.0]);
     } else {
         println!("You didn't select anything!");
     }
@@ -38,5 +38,5 @@ fn main() {
         .interact()
         .unwrap();
 
-    println!("Enjoy your {}!", selections[selection]);
+    println!("Enjoy your {}!", selections[selection.0]);
 }
