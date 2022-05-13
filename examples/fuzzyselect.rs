@@ -39,5 +39,5 @@ fn main() {
         .interact()
         .unwrap();
 
-    println!("Enjoy your {}!", selections[selection]);
+    println!("Enjoy your {}!", selections[selection.0]);
 }

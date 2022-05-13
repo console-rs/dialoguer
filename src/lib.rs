@@ -49,3 +49,5 @@ mod paging;
 mod prompts;
 pub mod theme;
 mod validate;
+
+pub use crossterm::event::KeyModifiers;
