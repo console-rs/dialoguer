@@ -634,7 +634,6 @@ impl Theme for ColorfulTheme {
                         if active {
                             write!(f, "{}", self.active_item_style.apply_to(self.fuzzy_match_highlight_style.apply_to(c)))?;
                         } else {
-                            // write!(f, "{}", self.fuzzy_match_highlight_style.apply_to(c).yellow())?;
                             write!(f, "{}", self.fuzzy_match_highlight_style.apply_to(c))?;
                         }
                     } else {
