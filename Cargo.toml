@@ -18,7 +18,7 @@ readme = "README.md"
 [features]
 default = ["editor", "password"]
 editor = ["tempfile"]
-fuzzy-select = ["fuzzy-matcher", "unicode-segmentation", "regex", "lazy_static"]
+fuzzy-select = ["fuzzy-matcher", "unicode-segmentation"]
 history = []
 password = ["zeroize"]
 completion = []
@@ -30,8 +30,6 @@ tempfile = { version = "3", optional = true }
 zeroize = { version = "1.1.1", optional = true }
 fuzzy-matcher = { version = "0.3.7", optional = true }
 unicode-segmentation = { version = "1.9.0", optional = true }
-regex = { version = "1.5.5", optional = true }
-lazy_static = { version = "1.4.0", optional = true }
 
 [[example]]
 name = "password"
