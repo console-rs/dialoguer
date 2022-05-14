@@ -625,14 +625,27 @@ impl Theme for ColorfulTheme {
         matcher: &SkimMatcherV2,
         search_term: &str,
     ) -> fmt::Result {
-        write!(f, "{} ", if active { &self.active_item_prefix } else { &self.inactive_item_prefix })?;
+        write!(
+            f,
+            "{} ",
+            if active {
+                &self.active_item_prefix
+            } else {
+                &self.inactive_item_prefix
+            }
+        )?;
 
         if highlight_matches {
             if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
                 for (idx, c) in text.chars().into_iter().enumerate() {
                     if indices.contains(&idx) {
                         if active {
-                            write!(f, "{}", self.active_item_style.apply_to(self.fuzzy_match_highlight_style.apply_to(c)))?;
+                            write!(
+                                f,
+                                "{}",
+                                self.active_item_style
+                                    .apply_to(self.fuzzy_match_highlight_style.apply_to(c))
+                            )?;
                         } else {
                             write!(f, "{}", self.fuzzy_match_highlight_style.apply_to(c))?;
                         }
