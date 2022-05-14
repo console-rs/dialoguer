@@ -4,8 +4,6 @@ use std::{fmt, io};
 use console::{style, Style, StyledObject, Term};
 #[cfg(feature = "fuzzy-select")]
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
-#[cfg(feature = "fuzzy-select")]
-use regex::Regex;
 
 /// Implements a theme for dialoguer.
 pub trait Theme {
@@ -630,11 +628,8 @@ impl Theme for ColorfulTheme {
         search_term: &str,
     ) -> fmt::Result {
         //check if char is right to left aligned (arabic/hebrew unicode range)
-        fn is_rle(ch: char) -> bool {
-            lazy_static::lazy_static! {
-                static ref REG: Regex = Regex::new(r"\p{IsArabic}|\p{IsHebrew}").unwrap();
-            }
-            REG.is_match(&ch.to_string())
+        fn is_rtl(c: char) -> bool {
+            ('\u{0591}'..='\u{07FF}').contains(&c) // c >= '\u{0591}' && c <= '\u{07FF}'
         }
 
         write!(
@@ -650,7 +645,7 @@ impl Theme for ColorfulTheme {
         if highlight_matches {
             if let Some((_score, indices)) = matcher.fuzzy_indices(text, search_term) {
                 for (idx, c) in text.chars().into_iter().enumerate() {
-                    if indices.contains(&idx) && !is_rle(c) {
+                    if indices.contains(&idx) && !is_rtl(c) {
                         if active {
                             write!(
                                 f,
