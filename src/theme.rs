@@ -344,7 +344,7 @@ impl Default for ColorfulTheme {
             #[cfg(feature = "fuzzy-select")]
             fuzzy_cursor_style: Style::new().for_stderr().black().on_white(),
             #[cfg(feature = "fuzzy-select")]
-            fuzzy_match_highlight_style: Style::new().for_stderr().bold().italic(),
+            fuzzy_match_highlight_style: Style::new().for_stderr().bold(),
             inline_selections: true,
         }
     }
@@ -637,13 +637,32 @@ impl Theme for ColorfulTheme {
             REG.is_match(&ch.to_string())
         }
 
-        write!(f, "{} ", if active { ">" } else { " " })?;
+        write!(
+            f,
+            "{} ",
+            if active {
+                &self.active_item_prefix
+            } else {
+                &self.inactive_item_prefix
+            }
+        )?;
 
         if highlight_matches {
             if let Some((_score, indices)) = matcher.fuzzy_indices(text, search_term) {
                 for (idx, c) in text.chars().into_iter().enumerate() {
                     if indices.contains(&idx) && !is_rle(c) {
-                        write!(f, "{}", self.fuzzy_match_highlight_style.apply_to(c))?;
+                        if active {
+                            write!(
+                                f,
+                                "{}",
+                                self.active_item_style
+                                    .apply_to(self.fuzzy_match_highlight_style.apply_to(c))
+                            )?;
+                        } else {
+                            write!(f, "{}", self.fuzzy_match_highlight_style.apply_to(c))?;
+                        }
+                    } else if active {
+                        write!(f, "{}", self.active_item_style.apply_to(c))?;
                     } else {
                         write!(f, "{}", c)?;
                     }
