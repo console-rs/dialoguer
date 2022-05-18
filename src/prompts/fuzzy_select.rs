@@ -1,6 +1,9 @@
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 use console::Term;
-use crossterm::event::{read, Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::{
+    event::{read, Event, KeyCode, KeyEvent, KeyModifiers},
+    terminal,
+};
 
 use fuzzy_matcher::FuzzyMatcher;
 use std::{io, ops::Rem};
@@ -213,6 +216,8 @@ impl FuzzySelect<'_> {
                 term.flush()?;
             }
 
+            terminal::enable_raw_mode()?;
+
             if let Event::Key(KeyEvent { code, modifiers }) = read().unwrap() {
                 match code {
                     KeyCode::Esc if allow_quit => {
@@ -278,6 +283,8 @@ impl FuzzySelect<'_> {
                             .iter()
                             .position(|item| item.eq(sel_string))
                             .unwrap();
+
+                        terminal::disable_raw_mode()?;
 
                         term.show_cursor()?;
 
