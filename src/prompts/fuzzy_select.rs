@@ -225,6 +225,7 @@ impl FuzzySelect<'_> {
                             render.clear()?;
                             term.flush()?;
                         }
+                        terminal::disable_raw_mode()?;
                         term.show_cursor()?;
                         return Ok(None);
                     }
@@ -307,6 +308,7 @@ impl FuzzySelect<'_> {
                 }
             }
 
+            terminal::disable_raw_mode()?;
             render.clear_preserve_prompt(&size_vec)?;
         }
     }

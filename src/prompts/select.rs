@@ -305,6 +305,7 @@ impl Select<'_> {
                                 term.clear_last_lines(paging.capacity)?;
                             }
 
+                            terminal::disable_raw_mode()?;
                             term.show_cursor()?;
                             term.flush()?;
 
@@ -342,6 +343,7 @@ impl Select<'_> {
                             }
                         }
 
+                        terminal::disable_raw_mode()?;
                         term.show_cursor()?;
                         term.flush()?;
 
