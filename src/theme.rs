@@ -333,7 +333,7 @@ impl Default for ColorfulTheme {
             values_style: Style::new().for_stderr().green(),
             active_item_style: Style::new().for_stderr().cyan(),
             inactive_item_style: Style::new().for_stderr(),
-            active_item_prefix: style("❯".to_string()).for_stderr().green(),
+            active_item_prefix: style((if Term::stderr().features().wants_emoji() {"❯"} else {">"}).to_string()).for_stderr().green(),
             inactive_item_prefix: style(" ".to_string()).for_stderr(),
             checked_item_prefix: style("✔".to_string()).for_stderr().green(),
             unchecked_item_prefix: style("✔".to_string()).for_stderr().black(),
