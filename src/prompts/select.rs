@@ -4,7 +4,10 @@ use crate::paging::Paging;
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::Term;
-use crossterm::event::{read, Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::{
+    event::{read, Event, KeyCode, KeyEvent, KeyModifiers},
+    terminal,
+};
 
 /// Renders a select prompt.
 ///
@@ -283,6 +286,8 @@ impl Select<'_> {
 
             term.flush()?;
 
+            terminal::enable_raw_mode()?;
+
             if let Event::Key(KeyEvent { code, modifiers }) = read().unwrap() {
                 match code {
                     KeyCode::Down | KeyCode::Tab | KeyCode::Char('j') => {
@@ -300,6 +305,7 @@ impl Select<'_> {
                                 term.clear_last_lines(paging.capacity)?;
                             }
 
+                            terminal::disable_raw_mode()?;
                             term.show_cursor()?;
                             term.flush()?;
 
@@ -337,6 +343,7 @@ impl Select<'_> {
                             }
                         }
 
+                        terminal::disable_raw_mode()?;
                         term.show_cursor()?;
                         term.flush()?;
 
@@ -345,6 +352,8 @@ impl Select<'_> {
                     _ => {}
                 }
             }
+
+            terminal::disable_raw_mode()?;
 
             paging.update(sel)?;
 
