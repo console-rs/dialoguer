@@ -7,19 +7,22 @@ use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 
 /// Implements a theme for dialoguer.
 pub trait Theme {
-    /// Formats a prompt.
+    /// Format a prompt.
     #[inline]
     fn format_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         write!(f, "{}:", prompt)
     }
 
-    /// Formats out an error.
+    /// Format out an error.
     #[inline]
     fn format_error(&self, f: &mut dyn fmt::Write, err: &str) -> fmt::Result {
         write!(f, "error: {}", err)
     }
 
-    /// Formats a confirm prompt.
+    /// Format a confirmation prompt.
+    ///
+    /// `prompt` is the message of the confirmation prompt,
+    /// `default` is the default choice for the prompt (if any).
     fn format_confirm_prompt(
         &self,
         f: &mut dyn fmt::Write,
@@ -37,7 +40,7 @@ pub trait Theme {
         Ok(())
     }
 
-    /// Formats a confirm prompt after selection.
+    /// Format a confirmation prompt after selection.
     fn format_confirm_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
@@ -60,7 +63,7 @@ pub trait Theme {
         }
     }
 
-    /// Formats an input prompt.
+    /// Format an input prompt.
     fn format_input_prompt(
         &self,
         f: &mut dyn fmt::Write,
@@ -74,7 +77,7 @@ pub trait Theme {
         }
     }
 
-    /// Formats an input prompt after selection.
+    /// Format an input prompt after selection.
     #[inline]
     fn format_input_prompt_selection(
         &self,
@@ -85,14 +88,14 @@ pub trait Theme {
         write!(f, "{}: {}", prompt, sel)
     }
 
-    /// Formats a password prompt.
+    /// Format a password prompt.
     #[inline]
     #[cfg(feature = "password")]
     fn format_password_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_input_prompt(f, prompt, None)
     }
 
-    /// Formats a password prompt after selection.
+    /// Format a password prompt after selection.
     #[inline]
     #[cfg(feature = "password")]
     fn format_password_prompt_selection(
@@ -103,13 +106,13 @@ pub trait Theme {
         self.format_input_prompt_selection(f, prompt, "[hidden]")
     }
 
-    /// Formats a select prompt.
+    /// Format a selection prompt.
     #[inline]
     fn format_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_prompt(f, prompt)
     }
 
-    /// Formats a select prompt after selection.
+    /// Format a selection prompt after an item was selected.
     #[inline]
     fn format_select_prompt_selection(
         &self,
@@ -120,19 +123,19 @@ pub trait Theme {
         self.format_input_prompt_selection(f, prompt, sel)
     }
 
-    /// Formats a multi select prompt.
+    /// Format a multi-selection prompt.
     #[inline]
     fn format_multi_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_prompt(f, prompt)
     }
 
-    /// Formats a sort prompt.
+    /// Format a sort prompt.
     #[inline]
     fn format_sort_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_prompt(f, prompt)
     }
 
-    /// Formats a multi_select prompt after selection.
+    /// Format a multi-selection prompt after an item was selected.
     fn format_multi_select_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
@@ -146,7 +149,7 @@ pub trait Theme {
         Ok(())
     }
 
-    /// Formats a sort prompt after selection.
+    /// Format a sort prompt after an item was selected.
     #[inline]
     fn format_sort_prompt_selection(
         &self,
@@ -157,7 +160,7 @@ pub trait Theme {
         self.format_multi_select_prompt_selection(f, prompt, selections)
     }
 
-    /// Formats a select prompt item.
+    /// Format a single selection prompt item.
     fn format_select_prompt_item(
         &self,
         f: &mut dyn fmt::Write,
@@ -167,7 +170,7 @@ pub trait Theme {
         write!(f, "{} {}", if active { ">" } else { " " }, text)
     }
 
-    /// Formats a multi select prompt item.
+    /// Format a single multi-selection prompt item.
     fn format_multi_select_prompt_item(
         &self,
         f: &mut dyn fmt::Write,
@@ -188,7 +191,7 @@ pub trait Theme {
         )
     }
 
-    /// Formats a sort prompt item.
+    /// Format a sort prompt item.
     fn format_sort_prompt_item(
         &self,
         f: &mut dyn fmt::Write,
@@ -208,37 +211,7 @@ pub trait Theme {
         )
     }
 
-    /// Formats a fuzzy select prompt item.
-    #[cfg(feature = "fuzzy-select")]
-    fn format_fuzzy_select_prompt_item(
-        &self,
-        f: &mut dyn fmt::Write,
-        text: &str,
-        active: bool,
-        highlight_matches: bool,
-        matcher: &SkimMatcherV2,
-        search_term: &str,
-    ) -> fmt::Result {
-        write!(f, "{} ", if active { ">" } else { " " })?;
-
-        if highlight_matches {
-            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
-                for (idx, c) in text.chars().into_iter().enumerate() {
-                    if indices.contains(&idx) {
-                        write!(f, "{}", style(c).for_stderr().bold())?;
-                    } else {
-                        write!(f, "{}", c)?;
-                    }
-                }
-
-                return Ok(());
-            }
-        }
-
-        write!(f, "{}", text)
-    }
-
-    /// Formats a fuzzy select prompt.
+    /// Format a fuzzy select prompt item.
     #[cfg(feature = "fuzzy-select")]
     fn format_fuzzy_select_prompt(
         &self,
@@ -347,7 +320,7 @@ impl Default for ColorfulTheme {
 }
 
 impl Theme for ColorfulTheme {
-    /// Formats a prompt.
+    /// Format a prompt.
     fn format_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         if !prompt.is_empty() {
             write!(
@@ -361,7 +334,7 @@ impl Theme for ColorfulTheme {
         write!(f, "{}", &self.prompt_suffix)
     }
 
-    /// Formats an error
+    /// Format an error.
     fn format_error(&self, f: &mut dyn fmt::Write, err: &str) -> fmt::Result {
         write!(
             f,
@@ -371,7 +344,7 @@ impl Theme for ColorfulTheme {
         )
     }
 
-    /// Formats an input prompt.
+    /// Format an input prompt.
     fn format_input_prompt(
         &self,
         f: &mut dyn fmt::Write,
@@ -398,7 +371,7 @@ impl Theme for ColorfulTheme {
         }
     }
 
-    /// Formats a confirm prompt.
+    /// Format a confirmation prompt.
     fn format_confirm_prompt(
         &self,
         f: &mut dyn fmt::Write,
@@ -438,7 +411,7 @@ impl Theme for ColorfulTheme {
         }
     }
 
-    /// Formats a confirm prompt after selection.
+    /// Format a confirmation prompt after selection.
     fn format_confirm_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
@@ -707,13 +680,16 @@ impl Theme for ColorfulTheme {
     }
 }
 
-/// Helper struct to conveniently render a theme ot a term.
+/// Helper struct to conveniently render a theme to a term.
 pub(crate) struct TermThemeRenderer<'a> {
     term: &'a Term,
     theme: &'a dyn Theme,
+    /// Height (number of lines, ignoring lines overflowing the terminal)
+    /// of output after the last prompt: not counting the current line.
     height: usize,
+    /// Height (number of output lines, ignoring overflowing items)
+    /// of the last completed prompt and everything above it.
     prompt_height: usize,
-    prompts_reset_height: bool,
 }
 
 impl<'a> TermThemeRenderer<'a> {
@@ -723,13 +699,7 @@ impl<'a> TermThemeRenderer<'a> {
             theme,
             height: 0,
             prompt_height: 0,
-            prompts_reset_height: true,
         }
-    }
-
-    #[cfg(feature = "password")]
-    pub fn set_prompts_reset_height(&mut self, val: bool) {
-        self.prompts_reset_height = val;
     }
 
     #[cfg(feature = "password")]
@@ -737,10 +707,14 @@ impl<'a> TermThemeRenderer<'a> {
         self.term
     }
 
+    /// Enlarge the theme by one line: allow displaying one more line of input.
     pub fn add_line(&mut self) {
         self.height += 1;
     }
 
+    /// Write a formatted string to this terminal. The string can be span multiple lines.
+    ///
+    /// `F` is a closure prescribing the text to write into the current instance.
     fn write_formatted_str<
         F: FnOnce(&mut TermThemeRenderer, &mut dyn fmt::Write) -> fmt::Result,
     >(
@@ -753,6 +727,7 @@ impl<'a> TermThemeRenderer<'a> {
         self.term.write_str(&buf)
     }
 
+    /// Like [`write_formatted_string`](#method::write_formatted_string), but add a linebreak afterwards.
     fn write_formatted_line<
         F: FnOnce(&mut TermThemeRenderer, &mut dyn fmt::Write) -> fmt::Result,
     >(
@@ -765,6 +740,9 @@ impl<'a> TermThemeRenderer<'a> {
         self.term.write_line(&buf)
     }
 
+    /// Write a formatted prompt string to this terminal.
+    ///
+    /// `F` is a closure prescribing the text to write into the current instance.
     fn write_formatted_prompt<
         F: FnOnce(&mut TermThemeRenderer, &mut dyn fmt::Write) -> fmt::Result,
     >(
@@ -772,10 +750,8 @@ impl<'a> TermThemeRenderer<'a> {
         f: F,
     ) -> io::Result<()> {
         self.write_formatted_line(f)?;
-        if self.prompts_reset_height {
-            self.prompt_height = self.height;
-            self.height = 0;
-        }
+        self.prompt_height = self.height;
+        self.height = 0;
         Ok(())
     }
 
@@ -957,7 +933,7 @@ impl<'a> TermThemeRenderer<'a> {
 
     pub fn clear_preserve_prompt(&mut self, size_vec: &[usize]) -> io::Result<()> {
         let mut new_height = self.height;
-        //Check each item size, increment on finding an overflow
+        // Check each item size, increment on finding an overflow
         for size in size_vec {
             if *size > self.term.size().1 as usize {
                 new_height += 1;

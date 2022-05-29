@@ -5,7 +5,7 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 use console::Term;
 use zeroize::Zeroizing;
 
-/// Renders a password input prompt.
+/// Render a password input prompt.
 ///
 /// ## Example usage
 ///
@@ -20,10 +20,14 @@ use zeroize::Zeroizing;
 /// # Ok(()) } fn main() { test().unwrap(); }
 /// ```
 pub struct Password<'a> {
+    /// Message of the confirmation prompt.
     prompt: String,
+    /// Whether to print a confirmation message after selecting a password.
     report: bool,
     theme: &'a dyn Theme,
+    /// Whether an empty password is allowed.
     allow_empty_password: bool,
+    // Confirmation prompt for passwords: see [`with_confirmation`](#method::with_confirmation).
     confirmation_prompt: Option<(String, String)>,
 }
 
@@ -34,20 +38,20 @@ impl Default for Password<'static> {
 }
 
 impl Password<'static> {
-    /// Creates a password input prompt.
+    /// Create a password input prompt.
     pub fn new() -> Password<'static> {
         Self::with_theme(&SimpleTheme)
     }
 }
 
 impl Password<'_> {
-    /// Sets the password input prompt.
+    /// Set the password input prompt.
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
         self
     }
 
-    /// Indicates whether to report confirmation after interaction.
+    /// Indicate whether to report a confirmation after interaction.
     ///
     /// The default is to report.
     pub fn report(&mut self, val: bool) -> &mut Self {
@@ -55,7 +59,11 @@ impl Password<'_> {
         self
     }
 
-    /// Enables confirmation prompting.
+    /// Enable prompting for confirmation of the password:
+    /// if set, the user must type the same password again to confirm their choice.
+    ///
+    /// `prompt` is the prompt message for the confirmation prompt,
+    /// `mismatch_err` the error message printed upon mismatching passwords.
     pub fn with_confirmation<A, B>(&mut self, prompt: A, mismatch_err: B) -> &mut Self
     where
         A: Into<String>,
@@ -65,15 +73,15 @@ impl Password<'_> {
         self
     }
 
-    /// Allows/Disables empty password.
+    /// Allow/disallow entering an empty password.
     ///
-    /// By default this setting is set to false (i.e. password is not empty).
+    /// By default this setting is set to false (i.e. empty passwords are not allowed).
     pub fn allow_empty_password(&mut self, allow_empty_password: bool) -> &mut Self {
         self.allow_empty_password = allow_empty_password;
         self
     }
 
-    /// Enables user interaction and returns the result.
+    /// Enable user interaction and return the result.
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
@@ -81,11 +89,9 @@ impl Password<'_> {
         self.interact_on(&Term::stderr())
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
+    /// Like [`interact`](#method::interact), but allow a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> io::Result<String> {
         let mut render = TermThemeRenderer::new(term, self.theme);
-        render.set_prompts_reset_height(false);
-
         loop {
             let password = Zeroizing::new(self.prompt_password(&mut render, &self.prompt)?);
 
@@ -131,7 +137,7 @@ impl Password<'_> {
 }
 
 impl<'a> Password<'a> {
-    /// Creates a password input prompt with a specific theme.
+    /// Create a password input prompt with a specific theme.
     pub fn with_theme(theme: &'a dyn Theme) -> Self {
         Self {
             prompt: "".into(),

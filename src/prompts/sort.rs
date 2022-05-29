@@ -57,7 +57,7 @@ impl Sort<'_> {
 
     /// Sets an optional max length for a page
     ///
-    /// Max length is disabled by None
+    /// Max length is disabled by `None`
     pub fn max_length(&mut self, val: usize) -> &mut Self {
         // Paging subtracts two from the capacity, paging does this to
         // make an offset for the page indicator. So to make sure that

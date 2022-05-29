@@ -5,7 +5,7 @@ use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::{Key, Term};
 
-/// Renders a select prompt.
+/// Render a selection prompt.
 ///
 /// User can select from one or more options.
 /// Interaction returns index of an item selected in the order they appear in `item` invocation or `items` slice.
@@ -35,12 +35,19 @@ use console::{Key, Term};
 /// }
 /// ```
 pub struct Select<'a> {
+    /// The initial selected element when the selection menu is rendered,
+    /// indicated by its index in [`items`](#field::items).
     default: usize,
+    /// Items the user can select.
     items: Vec<String>,
+    /// Message of the selection prompt.
     prompt: Option<String>,
+    /// whether to report the selected value after interaction
     report: bool,
+    /// whether the selection menu should be erased from the screen after interaction
     clear: bool,
     theme: &'a dyn Theme,
+    /// Maximal number of items on page (`None` if unbounded).
     max_length: Option<usize>,
 }
 
@@ -51,14 +58,14 @@ impl Default for Select<'static> {
 }
 
 impl Select<'static> {
-    /// Creates a select prompt builder with default theme.
+    /// Create a selection prompt builder with default theme.
     pub fn new() -> Self {
         Self::with_theme(&SimpleTheme)
     }
 }
 
 impl Select<'_> {
-    /// Indicates whether select menu should be erased from the screen after interaction.
+    /// Indicate whether the selection menu should be erased from the screen after interaction.
     ///
     /// The default is to clear the menu.
     pub fn clear(&mut self, val: bool) -> &mut Self {
@@ -66,21 +73,19 @@ impl Select<'_> {
         self
     }
 
-    /// Sets initial selected element when select menu is rendered
+    /// Set the initial selected element when the selection menu is rendered.
     ///
-    /// Element is indicated by the index at which it appears in `item` method invocation or `items` slice.
+    /// The default element is indicated by the index at which it appears in the `item` method invocation or the `items` slice.
     pub fn default(&mut self, val: usize) -> &mut Self {
         self.default = val;
         self
     }
 
-    /// Sets an optional max length for a page.
-    ///
-    /// Max length is disabled by None
+    /// Set an optional max length for a page.
     pub fn max_length(&mut self, val: usize) -> &mut Self {
         // Paging subtracts two from the capacity, paging does this to
         // make an offset for the page indicator. So to make sure that
-        // we can show the intended amount of items we need to add two
+        // we can show the intended amount of items, we need to add two
         // to our value.
         self.max_length = Some(val + 2);
         self
@@ -106,7 +111,7 @@ impl Select<'_> {
         self
     }
 
-    /// Adds multiple items to the selector.
+    /// Add multiple items to the selector.
     ///
     /// ## Examples
     /// ```rust,no_run
@@ -130,7 +135,7 @@ impl Select<'_> {
         self
     }
 
-    /// Sets the select prompt.
+    /// Set the selection prompt.
     ///
     /// By default, when a prompt is set the system also prints out a confirmation after
     /// the selection. You can opt-out of this with [`report`](#method.report).
@@ -155,7 +160,7 @@ impl Select<'_> {
         self
     }
 
-    /// Indicates whether to report the selected value after interaction.
+    /// Indicate whether to report the selected value after interaction.
     ///
     /// The default is to report the selection.
     pub fn report(&mut self, val: bool) -> &mut Self {
@@ -163,18 +168,18 @@ impl Select<'_> {
         self
     }
 
-    /// Enables user interaction and returns the result.
+    /// Enable user interaction and return the result.
     ///
     /// The user can select the items with the 'Space' bar or 'Enter' and the index of selected item will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `index` if user selected one of items using 'Enter'.
-    /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
+    /// Unlike [`interact_opt`](Self::interact_opt), this does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<usize> {
         self.interact_on(&Term::stderr())
     }
 
-    /// Enables user interaction and returns the result.
+    /// Enable user interaction and return the result.
     ///
     /// The user can select the items with the 'Space' bar or 'Enter' and the index of selected item will be returned.
     /// The dialog is rendered on stderr.
@@ -350,7 +355,7 @@ impl Select<'_> {
 }
 
 impl<'a> Select<'a> {
-    /// Creates a select prompt builder with a specific theme.
+    /// Create a selection prompt builder with a specific theme.
     ///
     /// ## Examples
     /// ```rust,no_run
