@@ -1,4 +1,4 @@
-use dialoguer::{theme::ColorfulTheme, Input};
+    use dialoguer::{theme::ColorfulTheme, Input};
 
 fn main() {
     let input: String = Input::with_theme(&ColorfulTheme::default())
