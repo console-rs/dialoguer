@@ -650,8 +650,6 @@ impl Theme for ColorfulTheme {
                             write!(f, "{}", self.fuzzy_match_highlight_style.apply_to(c))?;
                         }
                     } else if active {
-                        // since in lib.rs is deny clippy::all
-                        // the old else if was converted to this one
                         write!(f, "{}", self.active_item_style.apply_to(c))?;
                     } else {
                         write!(f, "{}", c)?;

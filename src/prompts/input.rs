@@ -435,10 +435,6 @@ where
                     _ => (),
                 }
             }
-            // when you got initial text already
-            // and you deleted all the chars with backspace or del
-            // and then you press enter, the initial text will reapear
-            // so the initial modified to "" to not appear anymore
             if self.initial_text.is_some() && chars.is_empty() {
                 self.initial_text = Some(String::from(""));
             }
