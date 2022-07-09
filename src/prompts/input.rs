@@ -443,7 +443,6 @@ where
                 self.initial_text = Some(String::from(""));
             }
 
-
             let input = chars.iter().collect::<String>();
 
             term.clear_line()?;

@@ -696,13 +696,7 @@ impl Theme for ColorfulTheme {
             )
         } else {
             let cursor = self.fuzzy_cursor_style.apply_to(" ");
-            write!(
-                f,
-                "{} {}{}",
-                &self.prompt_suffix,
-                search_term,
-                cursor
-            )
+            write!(f, "{} {}{}", &self.prompt_suffix, search_term, cursor)
         }
     }
 }
