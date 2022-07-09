@@ -65,10 +65,7 @@ impl<T> Input<'_, T> {
     }
 
     /// Sets the input prompt.
-    pub fn with_prompt<S: Into<String>>(
-        &mut self,
-        prompt: S,
-    ) -> &mut Self {
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
         self
     }
@@ -76,19 +73,13 @@ impl<T> Input<'_, T> {
     /// Indicates whether to report the input value after interaction.
     ///
     /// The default is to report the input value.
-    pub fn report(
-        &mut self,
-        val: bool,
-    ) -> &mut Self {
+    pub fn report(&mut self, val: bool) -> &mut Self {
         self.report = val;
         self
     }
 
     /// Sets initial text that user can accept or erase.
-    pub fn with_initial_text<S: Into<String>>(
-        &mut self,
-        val: S,
-    ) -> &mut Self {
+    pub fn with_initial_text<S: Into<String>>(&mut self, val: S) -> &mut Self {
         self.initial_text = Some(val.into());
         self
     }
@@ -98,10 +89,7 @@ impl<T> Input<'_, T> {
     /// Out of the box the prompt does not have a default and will continue
     /// to display until the user inputs something and hits enter. If a default is set the user
     /// can instead accept the default with enter.
-    pub fn default(
-        &mut self,
-        value: T,
-    ) -> &mut Self {
+    pub fn default(&mut self, value: T) -> &mut Self {
         self.default = Some(value);
         self
     }
@@ -109,10 +97,7 @@ impl<T> Input<'_, T> {
     /// Enables or disables an empty input
     ///
     /// By default, if there is no default value set for the input, the user must input a non-empty string.
-    pub fn allow_empty(
-        &mut self,
-        val: bool,
-    ) -> &mut Self {
+    pub fn allow_empty(&mut self, val: bool) -> &mut Self {
         self.permit_empty = val;
         self
     }
@@ -123,10 +108,7 @@ impl<T> Input<'_, T> {
     /// user what is the default value.
     ///
     /// This method does not affect existence of default value, only its display in the prompt!
-    pub fn show_default(
-        &mut self,
-        val: bool,
-    ) -> &mut Self {
+    pub fn show_default(&mut self, val: bool) -> &mut Self {
         self.show_default = val;
         self
     }
@@ -193,10 +175,7 @@ impl<'a, T> Input<'a, T> {
     /// # }
     /// ```
     #[cfg(feature = "history")]
-    pub fn history_with<H>(
-        &mut self,
-        history: &'a mut H,
-    ) -> &mut Self
+    pub fn history_with<H>(&mut self, history: &'a mut H) -> &mut Self
     where
         H: History<T>,
     {
@@ -206,10 +185,7 @@ impl<'a, T> Input<'a, T> {
 
     /// Enable completion
     #[cfg(feature = "completion")]
-    pub fn completion_with<C>(
-        &mut self,
-        completion: &'a C,
-    ) -> &mut Self
+    pub fn completion_with<C>(&mut self, completion: &'a C) -> &mut Self
     where
         C: Completion,
     {
@@ -240,29 +216,25 @@ where
     ///     .interact()
     ///     .unwrap();
     /// ```
-    pub fn validate_with<V>(
-        &mut self,
-        mut validator: V,
-    ) -> &mut Self
+    pub fn validate_with<V>(&mut self, mut validator: V) -> &mut Self
     where
         V: Validator<T> + 'a,
         V::Err: ToString,
     {
         let mut old_validator_func = self.validator.take();
 
-        self.validator =
-            Some(Box::new(move |value: &T| -> Option<String> {
-                if let Some(old) = old_validator_func.as_mut() {
-                    if let Some(err) = old(value) {
-                        return Some(err);
-                    }
+        self.validator = Some(Box::new(move |value: &T| -> Option<String> {
+            if let Some(old) = old_validator_func.as_mut() {
+                if let Some(err) = old(value) {
+                    return Some(err);
                 }
+            }
 
-                match validator.validate(value) {
-                    Ok(()) => None,
-                    Err(err) => Some(err.to_string()),
-                }
-            }));
+            match validator.validate(value) {
+                Ok(()) => None,
+                Err(err) => Some(err.to_string()),
+            }
+        }));
 
         self
     }
@@ -284,15 +256,11 @@ where
     }
 
     /// Like [`interact_text`](#method.interact_text) but allows a specific terminal to be set.
-    pub fn interact_text_on(
-        &mut self,
-        term: &Term,
-    ) -> io::Result<T> {
+    pub fn interact_text_on(&mut self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
-            let default_string =
-                self.default.as_ref().map(ToString::to_string);
+            let default_string = self.default.as_ref().map(ToString::to_string);
 
             render.input_prompt(
                 &self.prompt,
@@ -333,9 +301,7 @@ where
                         position = chars.len();
                         term.flush()?;
                     }
-                    Key::Del
-                        if 0 <= position && position < chars.len() =>
-                    {
+                    Key::Del if 0 <= position && position < chars.len() => {
                         let tail = chars[position + 1..].iter().collect::<String>();
 
                         term.move_cursor_right(1)?;
@@ -353,14 +319,13 @@ where
                         // }
 
                         term.flush()?;
-                    },
+                    }
                     Key::Backspace if position > 0 => {
                         position -= 1;
                         chars.remove(position);
                         term.clear_chars(1)?;
 
-                        let tail: String =
-                            chars[position..].iter().collect();
+                        let tail: String = chars[position..].iter().collect();
 
                         if !tail.is_empty() {
                             term.write_str(&tail)?;
@@ -368,32 +333,30 @@ where
                         }
 
                         term.flush()?;
-                    },
+                    }
                     Key::Char(chr) if !chr.is_ascii_control() => {
                         chars.insert(position, chr);
                         position += 1;
-                        let tail: String = iter::once(&chr)
-                            .chain(chars[position..].iter())
-                            .collect();
+                        let tail: String =
+                            iter::once(&chr).chain(chars[position..].iter()).collect();
                         term.write_str(&tail)?;
                         term.move_cursor_left(tail.len() - 1)?;
                         term.flush()?;
-                    },
+                    }
                     Key::ArrowLeft if position > 0 => {
                         term.move_cursor_left(1)?;
                         position -= 1;
                         term.flush()?;
-                    },
+                    }
                     Key::ArrowRight if position < chars.len() => {
                         term.move_cursor_right(1)?;
                         position += 1;
                         term.flush()?;
-                    },
+                    }
                     #[cfg(feature = "completion")]
                     Key::ArrowRight | Key::Tab => {
                         if let Some(completion) = &self.completion {
-                            let input: String =
-                                chars.clone().into_iter().collect();
+                            let input: String = chars.clone().into_iter().collect();
                             if let Some(x) = completion.get(&input) {
                                 term.clear_chars(chars.len())?;
                                 chars.clear();
@@ -406,12 +369,11 @@ where
                                 term.flush()?;
                             }
                         }
-                    },
+                    }
                     #[cfg(feature = "history")]
                     Key::ArrowUp => {
                         if let Some(history) = &self.history {
-                            if let Some(previous) = history.read(hist_pos)
-                            {
+                            if let Some(previous) = history.read(hist_pos) {
                                 hist_pos += 1;
                                 term.clear_chars(chars.len())?;
                                 chars.clear();
@@ -424,7 +386,7 @@ where
                                 term.flush()?;
                             }
                         }
-                    },
+                    }
                     #[cfg(feature = "history")]
                     Key::ArrowDown => {
                         if let Some(history) = &self.history {
@@ -434,9 +396,7 @@ where
                                 hist_pos = pos;
                                 // Move it back again to get the previous history entry
                                 if let Some(pos) = pos.checked_sub(1) {
-                                    if let Some(previous) =
-                                        history.read(pos)
-                                    {
+                                    if let Some(previous) = history.read(pos) {
                                         term.clear_chars(chars.len())?;
                                         chars.clear();
                                         position = 0;
@@ -458,14 +418,14 @@ where
                                 position = 0;
                             }
                         }
-                    },
+                    }
                     Key::Enter => break,
                     Key::Unknown => {
                         return Err(io::Error::new(
                             io::ErrorKind::NotConnected,
                             "Not a terminal",
                         ))
-                    },
+                    }
                     _ => (),
                 }
             }
@@ -484,10 +444,7 @@ where
                     }
 
                     if self.report {
-                        render.input_prompt_selection(
-                            &self.prompt,
-                            &default.to_string(),
-                        )?;
+                        render.input_prompt_selection(&self.prompt, &default.to_string())?;
                     }
                     term.flush()?;
                     return Ok(default.clone());
@@ -511,19 +468,16 @@ where
                     }
 
                     if self.report {
-                        render.input_prompt_selection(
-                            &self.prompt,
-                            &input,
-                        )?;
+                        render.input_prompt_selection(&self.prompt, &input)?;
                     }
                     term.flush()?;
 
                     return Ok(value);
-                },
+                }
                 Err(err) => {
                     render.error(&err.to_string())?;
                     continue;
-                },
+                }
             }
         }
     }
@@ -547,15 +501,11 @@ where
     }
 
     /// Like [`interact`](#method.interact) but allows a specific terminal to be set.
-    pub fn interact_on(
-        &mut self,
-        term: &Term,
-    ) -> io::Result<T> {
+    pub fn interact_on(&mut self, term: &Term) -> io::Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
-            let default_string =
-                self.default.as_ref().map(ToString::to_string);
+            let default_string = self.default.as_ref().map(ToString::to_string);
 
             render.input_prompt(
                 &self.prompt,
@@ -567,12 +517,11 @@ where
             )?;
             term.flush()?;
 
-            let input =
-                if let Some(initial_text) = self.initial_text.as_ref() {
-                    term.read_line_initial_text(initial_text)?
-                } else {
-                    term.read_line()?
-                };
+            let input = if let Some(initial_text) = self.initial_text.as_ref() {
+                term.read_line_initial_text(initial_text)?
+            } else {
+                term.read_line()?
+            };
 
             render.add_line();
             term.clear_line()?;
@@ -588,10 +537,7 @@ where
                     }
 
                     if self.report {
-                        render.input_prompt_selection(
-                            &self.prompt,
-                            &default.to_string(),
-                        )?;
+                        render.input_prompt_selection(&self.prompt, &default.to_string())?;
                     }
                     term.flush()?;
                     return Ok(default.clone());
@@ -610,19 +556,16 @@ where
                     }
 
                     if self.report {
-                        render.input_prompt_selection(
-                            &self.prompt,
-                            &input,
-                        )?;
+                        render.input_prompt_selection(&self.prompt, &input)?;
                     }
                     term.flush()?;
 
                     return Ok(value);
-                },
+                }
                 Err(err) => {
                     render.error(&err.to_string())?;
                     continue;
-                },
+                }
             }
         }
     }

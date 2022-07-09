@@ -31,7 +31,7 @@ struct MyHistory {
 impl Default for MyHistory {
     fn default() -> Self {
         MyHistory {
-            max: 100,
+            max: 4,
             history: VecDeque::new(),
         }
     }

@@ -21,7 +21,6 @@ impl Default for MyCompletion {
                 "orange".to_string(),
                 "apple".to_string(),
                 "banana".to_string(),
-                "banana2".to_string(),
             ],
         }
     }
