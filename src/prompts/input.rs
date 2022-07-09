@@ -309,7 +309,7 @@ where
                     }
                     // press Del key to delete the char in front of the cursor
                     // cursor stays in the same position
-                    Key::Del if 0 <= position && position < chars.len() => {
+                    Key::Del if position < chars.len() => {
                         // first get the tail before deletion
                         let tail = chars[position + 1..].iter().collect::<String>();
                         // move visually 1 unit to right
@@ -317,6 +317,7 @@ where
                         // delete all the chars from right to the pos of cursor (which is to left side)
                         term.clear_chars(1)?;
                         chars.remove(position);
+
                         // append visually the tail to the user written text
                         term.write_str(&tail)?;
                         // move visually to the left length of tail; why ?
@@ -434,6 +435,15 @@ where
                     _ => (),
                 }
             }
+            // when you got initial text already
+            // and you deleted all the chars with backspace or del
+            // and then you press enter, the initial text will reapear
+            // so the initial modified to "" to not appear anymore
+            if self.initial_text.is_some() && chars.is_empty() {
+                self.initial_text = Some(String::from(""));
+            }
+
+
             let input = chars.iter().collect::<String>();
 
             term.clear_line()?;

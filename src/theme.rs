@@ -222,7 +222,7 @@ pub trait Theme {
         write!(f, "{} ", if active { ">" } else { " " })?;
 
         if highlight_matches {
-            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, search_term) {
                 for (idx, c) in text.chars().into_iter().enumerate() {
                     if indices.contains(&idx) {
                         write!(f, "{}", style(c).for_stderr().bold())?;
@@ -258,7 +258,7 @@ pub trait Theme {
             write!(f, "{}{}{}", st_head, st_cursor, st_tail)
         } else {
             let cursor = "|".to_string();
-            write!(f, "{}{}", search_term.to_string(), cursor)
+            write!(f, "{}{}", search_term, cursor)
         }
     }
 }
@@ -636,7 +636,7 @@ impl Theme for ColorfulTheme {
         )?;
 
         if highlight_matches {
-            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, search_term) {
                 for (idx, c) in text.chars().into_iter().enumerate() {
                     if indices.contains(&idx) {
                         if active {
@@ -649,12 +649,12 @@ impl Theme for ColorfulTheme {
                         } else {
                             write!(f, "{}", self.fuzzy_match_highlight_style.apply_to(c))?;
                         }
+                    } else if active {
+                        // since in lib.rs is deny clippy::all
+                        // the old else if was converted to this one
+                        write!(f, "{}", self.active_item_style.apply_to(c))?;
                     } else {
-                        if active {
-                            write!(f, "{}", self.active_item_style.apply_to(c))?;
-                        } else {
-                            write!(f, "{}", c)?;
-                        }
+                        write!(f, "{}", c)?;
                     }
                 }
 
@@ -700,7 +700,7 @@ impl Theme for ColorfulTheme {
                 f,
                 "{} {}{}",
                 &self.prompt_suffix,
-                search_term.to_string(),
+                search_term,
                 cursor
             )
         }
