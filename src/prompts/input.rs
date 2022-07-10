@@ -10,7 +10,10 @@ use crate::{
 };
 
 use console::Term;
-use crossterm::{event::{Event, KeyCode, KeyEvent, read}, terminal};
+use crossterm::{
+    event::{read, Event, KeyCode, KeyEvent},
+    terminal,
+};
 
 /// Renders an input prompt.
 ///

@@ -3,7 +3,10 @@ use std::io;
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::Term;
-use crossterm::{event::{Event, KeyCode, KeyEvent, read}, terminal};
+use crossterm::{
+    event::{read, Event, KeyCode, KeyEvent},
+    terminal,
+};
 
 /// Renders a confirm prompt.
 ///
