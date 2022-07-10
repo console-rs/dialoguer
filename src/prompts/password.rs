@@ -2,7 +2,6 @@ use std::io;
 
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
-use console::Term;
 use zeroize::Zeroizing;
 
 /// Renders a password input prompt.
@@ -78,11 +77,11 @@ impl Password<'_> {
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
     pub fn interact(&self) -> io::Result<String> {
-        self.interact_on(&Term::stderr())
+        self.interact_on(&mut io::stderr())
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    pub fn interact_on(&self, term: &Term) -> io::Result<String> {
+    pub fn interact_on(&self, term: &mut dyn io::Write) -> io::Result<String> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         render.set_prompts_reset_height(false);
 

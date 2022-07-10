@@ -3,7 +3,6 @@ use std::{io, ops::Rem};
 use crate::paging::Paging;
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
-use console::Term;
 use crossterm::event::{read, Event, KeyCode, KeyEvent};
 use crossterm::terminal;
 
@@ -19,14 +18,14 @@ use crossterm::terminal;
 ///     Select,
 ///     theme::ColorfulTheme
 /// };
-/// use console::Term;
+/// use std::io;
 ///
 /// fn main() -> std::io::Result<()> {
 ///     let items = vec!["Item 1", "item 2"];
 ///     let selection = Select::with_theme(&ColorfulTheme::default())
 ///         .items(&items)
 ///         .default(0)
-///         .interact_on_opt(&Term::stderr())?;
+///         .interact_on_opt(&mut io::stderr())?;
 ///
 ///     match selection {
 ///         Some(index) => println!("User selected item : {}", items[index]),
@@ -173,7 +172,7 @@ impl Select<'_> {
     /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<usize> {
-        self.interact_on(&Term::stderr())
+        self.interact_on(&mut io::stderr())
     }
 
     /// Enables user interaction and returns the result.
@@ -183,7 +182,7 @@ impl Select<'_> {
     /// Result contains `Some(index)` if user selected one of items using 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<usize>> {
-        self.interact_on_opt(&Term::stderr())
+        self.interact_on_opt(&mut io::stderr())
     }
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
@@ -191,13 +190,13 @@ impl Select<'_> {
     /// ## Examples
     ///```rust,no_run
     /// use dialoguer::Select;
-    /// use console::Term;
+    /// use std::io;
     ///
     /// fn main() -> std::io::Result<()> {
     ///     let selection = Select::new()
     ///         .item("Option A")
     ///         .item("Option B")
-    ///         .interact_on(&Term::stderr())?;
+    ///         .interact_on(&mut io::stderr())?;
     ///
     ///     println!("User selected option at index {}", selection);
     ///
@@ -205,7 +204,7 @@ impl Select<'_> {
     /// }
     ///```
     #[inline]
-    pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
+    pub fn interact_on(&self, term: &mut dyn io::Write) -> io::Result<usize> {
         self._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
@@ -215,13 +214,13 @@ impl Select<'_> {
     /// ## Examples
     /// ```rust,no_run
     /// use dialoguer::Select;
-    /// use console::Term;
+    /// use std::io;
     ///
     /// fn main() -> std::io::Result<()> {
     ///     let selection = Select::new()
     ///         .item("Option A")
     ///         .item("Option B")
-    ///         .interact_on_opt(&Term::stdout())?;
+    ///         .interact_on_opt(&mut io::stdout())?;
     ///
     ///     match selection {
     ///         Some(position) => println!("User selected option at index {}", position),
@@ -232,12 +231,12 @@ impl Select<'_> {
     /// }
     /// ```
     #[inline]
-    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<usize>> {
+    pub fn interact_on_opt(&self, term: &mut dyn io::Write) -> io::Result<Option<usize>> {
         self._interact_on(term, true)
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
+    fn _interact_on(&self, term: &mut dyn io::Write, allow_quit: bool) -> io::Result<Option<usize>> {
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,

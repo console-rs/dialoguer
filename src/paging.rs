@@ -1,7 +1,5 @@
 use std::io;
 
-use console::Term;
-
 /// Creates a paging module
 ///
 /// The paging module serves as tracking structure to allow paged views
@@ -12,14 +10,14 @@ pub struct Paging<'a> {
     pub capacity: usize,
     pub active: bool,
     pub max_capacity: Option<usize>,
-    term: &'a Term,
+    term: &'a mut dyn io::Write,
     current_term_size: (u16, u16),
     items_len: usize,
     activity_transition: bool,
 }
 
 impl<'a> Paging<'a> {
-    pub fn new(term: &'a Term, items_len: usize, max_capacity: Option<usize>) -> Paging<'a> {
+    pub fn new(term: &'a mut dyn io::Write, items_len: usize, max_capacity: Option<usize>) -> Paging<'a> {
         let term_size = term.size();
         // Subtract -2 because we need space to render the prompt, if paging is active
         let capacity = max_capacity
