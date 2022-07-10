@@ -5,7 +5,8 @@ use crate::{
     Paging,
 };
 
-use console::{Key, Term};
+use console::Term;
+use crossterm::{event::{Event, KeyCode, KeyEvent, read}, terminal};
 
 /// Renders a sort prompt.
 ///
@@ -209,117 +210,121 @@ impl Sort<'_> {
 
             term.flush()?;
 
-            match term.read_key()? {
-                Key::ArrowDown | Key::Tab | Key::Char('j') => {
-                    let old_sel = sel;
-
-                    if sel == !0 {
-                        sel = 0;
-                    } else {
-                        sel = (sel as u64 + 1).rem(self.items.len() as u64) as usize;
-                    }
-
-                    if checked && old_sel != sel {
-                        order.swap(old_sel, sel);
-                    }
-                }
-                Key::ArrowUp | Key::BackTab | Key::Char('k') => {
-                    let old_sel = sel;
-
-                    if sel == !0 {
-                        sel = self.items.len() - 1;
-                    } else {
-                        sel = ((sel as i64 - 1 + self.items.len() as i64)
-                            % (self.items.len() as i64)) as usize;
-                    }
-
-                    if checked && old_sel != sel {
-                        order.swap(old_sel, sel);
-                    }
-                }
-                Key::ArrowLeft | Key::Char('h') => {
-                    if paging.active {
+            terminal::enable_raw_mode()?;
+            if let Event::Key(KeyEvent { code, modifiers: _ }) = read().unwrap() {
+                terminal::disable_raw_mode()?;
+                match code {
+                    KeyCode::Down | KeyCode::Tab | KeyCode::Char('j') => {
                         let old_sel = sel;
-                        let old_page = paging.current_page;
 
-                        sel = paging.previous_page();
+                        if sel == !0 {
+                            sel = 0;
+                        } else {
+                            sel = (sel as u64 + 1).rem(self.items.len() as u64) as usize;
+                        }
 
-                        if checked {
-                            let indexes: Vec<_> = if old_page == 0 {
-                                let indexes1: Vec<_> = (0..=old_sel).rev().collect();
-                                let indexes2: Vec<_> = (sel..self.items.len()).rev().collect();
-                                [indexes1, indexes2].concat()
-                            } else {
-                                (sel..=old_sel).rev().collect()
-                            };
+                        if checked && old_sel != sel {
+                            order.swap(old_sel, sel);
+                        }
+                    }
+                    KeyCode::Up | KeyCode::BackTab | KeyCode::Char('k') => {
+                        let old_sel = sel;
 
-                            for index in 0..(indexes.len() - 1) {
-                                order.swap(indexes[index], indexes[index + 1]);
+                        if sel == !0 {
+                            sel = self.items.len() - 1;
+                        } else {
+                            sel = ((sel as i64 - 1 + self.items.len() as i64)
+                                % (self.items.len() as i64)) as usize;
+                        }
+
+                        if checked && old_sel != sel {
+                            order.swap(old_sel, sel);
+                        }
+                    }
+                    KeyCode::Left | KeyCode::Char('h') => {
+                        if paging.active {
+                            let old_sel = sel;
+                            let old_page = paging.current_page;
+
+                            sel = paging.previous_page();
+
+                            if checked {
+                                let indexes: Vec<_> = if old_page == 0 {
+                                    let indexes1: Vec<_> = (0..=old_sel).rev().collect();
+                                    let indexes2: Vec<_> = (sel..self.items.len()).rev().collect();
+                                    [indexes1, indexes2].concat()
+                                } else {
+                                    (sel..=old_sel).rev().collect()
+                                };
+
+                                for index in 0..(indexes.len() - 1) {
+                                    order.swap(indexes[index], indexes[index + 1]);
+                                }
                             }
                         }
                     }
-                }
-                Key::ArrowRight | Key::Char('l') => {
-                    if paging.active {
-                        let old_sel = sel;
-                        let old_page = paging.current_page;
+                    KeyCode::Right | KeyCode::Char('l') => {
+                        if paging.active {
+                            let old_sel = sel;
+                            let old_page = paging.current_page;
 
-                        sel = paging.next_page();
+                            sel = paging.next_page();
 
-                        if checked {
-                            let indexes: Vec<_> = if old_page == paging.pages - 1 {
-                                let indexes1: Vec<_> = (old_sel..self.items.len()).collect();
-                                let indexes2: Vec<_> = vec![0];
-                                [indexes1, indexes2].concat()
-                            } else {
-                                (old_sel..=sel).collect()
-                            };
+                            if checked {
+                                let indexes: Vec<_> = if old_page == paging.pages - 1 {
+                                    let indexes1: Vec<_> = (old_sel..self.items.len()).collect();
+                                    let indexes2: Vec<_> = vec![0];
+                                    [indexes1, indexes2].concat()
+                                } else {
+                                    (old_sel..=sel).collect()
+                                };
 
-                            for index in 0..(indexes.len() - 1) {
-                                order.swap(indexes[index], indexes[index + 1]);
+                                for index in 0..(indexes.len() - 1) {
+                                    order.swap(indexes[index], indexes[index + 1]);
+                                }
                             }
                         }
                     }
-                }
-                Key::Char(' ') => {
-                    checked = !checked;
-                }
-                Key::Escape | Key::Char('q') => {
-                    if allow_quit {
+                    KeyCode::Char(' ') => {
+                        checked = !checked;
+                    }
+                    KeyCode::Esc | KeyCode::Char('q') => {
+                        if allow_quit {
+                            if self.clear {
+                                render.clear()?;
+                            } else {
+                                term.clear_last_lines(paging.capacity)?;
+                            }
+
+                            term.show_cursor()?;
+                            term.flush()?;
+
+                            return Ok(None);
+                        }
+                    }
+                    KeyCode::Enter => {
                         if self.clear {
                             render.clear()?;
-                        } else {
-                            term.clear_last_lines(paging.capacity)?;
+                        }
+
+                        if let Some(ref prompt) = self.prompt {
+                            if self.report {
+                                let list: Vec<_> = order
+                                    .iter()
+                                    .enumerate()
+                                    .map(|(_, item)| self.items[*item].as_str())
+                                    .collect();
+                                render.sort_prompt_selection(prompt, &list[..])?;
+                            }
                         }
 
                         term.show_cursor()?;
                         term.flush()?;
 
-                        return Ok(None);
+                        return Ok(Some(order));
                     }
+                    _ => {}
                 }
-                Key::Enter => {
-                    if self.clear {
-                        render.clear()?;
-                    }
-
-                    if let Some(ref prompt) = self.prompt {
-                        if self.report {
-                            let list: Vec<_> = order
-                                .iter()
-                                .enumerate()
-                                .map(|(_, item)| self.items[*item].as_str())
-                                .collect();
-                            render.sort_prompt_selection(prompt, &list[..])?;
-                        }
-                    }
-
-                    term.show_cursor()?;
-                    term.flush()?;
-
-                    return Ok(Some(order));
-                }
-                _ => {}
             }
 
             paging.update(sel)?;

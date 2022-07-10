@@ -9,7 +9,8 @@ use crate::{
     validate::Validator,
 };
 
-use console::{Key, Term};
+use console::Term;
+use crossterm::{event::{Event, KeyCode, KeyEvent, read}, terminal};
 
 /// Renders an input prompt.
 ///
@@ -289,114 +290,118 @@ where
             }
 
             loop {
-                match term.read_key()? {
-                    Key::Backspace if position > 0 => {
-                        position -= 1;
-                        chars.remove(position);
-                        term.clear_chars(1)?;
+                terminal::enable_raw_mode()?;
+                if let Event::Key(KeyEvent { code, modifiers: _ }) = read().unwrap() {
+                    terminal::disable_raw_mode()?;
+                    match code {
+                        KeyCode::Backspace if position > 0 => {
+                            position -= 1;
+                            chars.remove(position);
+                            term.clear_chars(1)?;
 
-                        let tail: String = chars[position..].iter().collect();
+                            let tail: String = chars[position..].iter().collect();
 
-                        if !tail.is_empty() {
+                            if !tail.is_empty() {
+                                term.write_str(&tail)?;
+                                term.move_cursor_left(tail.len())?;
+                            }
+
+                            term.flush()?;
+                        }
+                        KeyCode::Char(chr) if !chr.is_ascii_control() => {
+                            chars.insert(position, chr);
+                            position += 1;
+                            let tail: String =
+                                iter::once(&chr).chain(chars[position..].iter()).collect();
                             term.write_str(&tail)?;
-                            term.move_cursor_left(tail.len())?;
+                            term.move_cursor_left(tail.len() - 1)?;
+                            term.flush()?;
                         }
-
-                        term.flush()?;
-                    }
-                    Key::Char(chr) if !chr.is_ascii_control() => {
-                        chars.insert(position, chr);
-                        position += 1;
-                        let tail: String =
-                            iter::once(&chr).chain(chars[position..].iter()).collect();
-                        term.write_str(&tail)?;
-                        term.move_cursor_left(tail.len() - 1)?;
-                        term.flush()?;
-                    }
-                    Key::ArrowLeft if position > 0 => {
-                        term.move_cursor_left(1)?;
-                        position -= 1;
-                        term.flush()?;
-                    }
-                    Key::ArrowRight if position < chars.len() => {
-                        term.move_cursor_right(1)?;
-                        position += 1;
-                        term.flush()?;
-                    }
-                    #[cfg(feature = "completion")]
-                    Key::ArrowRight | Key::Tab => {
-                        if let Some(completion) = &self.completion {
-                            let input: String = chars.clone().into_iter().collect();
-                            if let Some(x) = completion.get(&input) {
-                                term.clear_chars(chars.len())?;
-                                chars.clear();
-                                position = 0;
-                                for ch in x.chars() {
-                                    chars.insert(position, ch);
-                                    position += 1;
+                        KeyCode::Left if position > 0 => {
+                            term.move_cursor_left(1)?;
+                            position -= 1;
+                            term.flush()?;
+                        }
+                        KeyCode::Right if position < chars.len() => {
+                            term.move_cursor_right(1)?;
+                            position += 1;
+                            term.flush()?;
+                        }
+                        #[cfg(feature = "completion")]
+                        KeyCode::Right | KeyCode::Tab => {
+                            if let Some(completion) = &self.completion {
+                                let input: String = chars.clone().into_iter().collect();
+                                if let Some(x) = completion.get(&input) {
+                                    term.clear_chars(chars.len())?;
+                                    chars.clear();
+                                    position = 0;
+                                    for ch in x.chars() {
+                                        chars.insert(position, ch);
+                                        position += 1;
+                                    }
+                                    term.write_str(&x)?;
+                                    term.flush()?;
                                 }
-                                term.write_str(&x)?;
-                                term.flush()?;
                             }
                         }
-                    }
-                    #[cfg(feature = "history")]
-                    Key::ArrowUp => {
-                        if let Some(history) = &self.history {
-                            if let Some(previous) = history.read(hist_pos) {
-                                hist_pos += 1;
-                                term.clear_chars(chars.len())?;
-                                chars.clear();
-                                position = 0;
-                                for ch in previous.chars() {
-                                    chars.insert(position, ch);
-                                    position += 1;
+                        #[cfg(feature = "history")]
+                        KeyCode::Up => {
+                            if let Some(history) = &self.history {
+                                if let Some(previous) = history.read(hist_pos) {
+                                    hist_pos += 1;
+                                    term.clear_chars(chars.len())?;
+                                    chars.clear();
+                                    position = 0;
+                                    for ch in previous.chars() {
+                                        chars.insert(position, ch);
+                                        position += 1;
+                                    }
+                                    term.write_str(&previous)?;
+                                    term.flush()?;
                                 }
-                                term.write_str(&previous)?;
-                                term.flush()?;
                             }
                         }
-                    }
-                    #[cfg(feature = "history")]
-                    Key::ArrowDown => {
-                        if let Some(history) = &self.history {
-                            // Move the history position back one in case we have up arrowed into it
-                            // and the position is sitting on the next to read
-                            if let Some(pos) = hist_pos.checked_sub(1) {
-                                hist_pos = pos;
-                                // Move it back again to get the previous history entry
-                                if let Some(pos) = pos.checked_sub(1) {
-                                    if let Some(previous) = history.read(pos) {
+                        #[cfg(feature = "history")]
+                        KeyCode::Down => {
+                            if let Some(history) = &self.history {
+                                // Move the history position back one in case we have up arrowed into it
+                                // and the position is sitting on the next to read
+                                if let Some(pos) = hist_pos.checked_sub(1) {
+                                    hist_pos = pos;
+                                    // Move it back again to get the previous history entry
+                                    if let Some(pos) = pos.checked_sub(1) {
+                                        if let Some(previous) = history.read(pos) {
+                                            term.clear_chars(chars.len())?;
+                                            chars.clear();
+                                            position = 0;
+                                            for ch in previous.chars() {
+                                                chars.insert(position, ch);
+                                                position += 1;
+                                            }
+                                            term.write_str(&previous)?;
+                                            term.flush()?;
+                                        }
+                                    } else {
                                         term.clear_chars(chars.len())?;
                                         chars.clear();
                                         position = 0;
-                                        for ch in previous.chars() {
-                                            chars.insert(position, ch);
-                                            position += 1;
-                                        }
-                                        term.write_str(&previous)?;
-                                        term.flush()?;
                                     }
                                 } else {
                                     term.clear_chars(chars.len())?;
                                     chars.clear();
                                     position = 0;
                                 }
-                            } else {
-                                term.clear_chars(chars.len())?;
-                                chars.clear();
-                                position = 0;
                             }
                         }
+                        KeyCode::Enter => break,
+                        KeyCode::Null => {
+                            return Err(io::Error::new(
+                                io::ErrorKind::NotConnected,
+                                "Not a terminal",
+                            ))
+                        }
+                        _ => (),
                     }
-                    Key::Enter => break,
-                    Key::Unknown => {
-                        return Err(io::Error::new(
-                            io::ErrorKind::NotConnected,
-                            "Not a terminal",
-                        ))
-                    }
-                    _ => (),
                 }
             }
             let input = chars.iter().collect::<String>();
