@@ -1,4 +1,4 @@
-/*use std::{fmt::Debug, io, iter, str::FromStr};
+use std::{fmt::Debug, io, iter, str::FromStr};
 
 #[cfg(feature = "completion")]
 use crate::completion::Completion;
@@ -12,6 +12,7 @@ use crate::{
 use crossterm::{
     event::{read, Event, KeyCode, KeyEvent},
     terminal,
+    tty::IsTty,
 };
 
 /// Renders an input prompt.
@@ -273,10 +274,10 @@ where
                     None
                 },
             )?;
-            term.flush()?;
+            render.flush()?;
 
-            // Read input by keystroke so that we can suppress ascii control characters
-            if !term.features().is_attended() {
+            // Read input by keystroke so that we can suppress ascii control characters.
+            if !io::stdout().is_tty() {
                 return Ok("".to_owned().parse::<T>().unwrap());
             }
 
@@ -286,7 +287,7 @@ where
             let mut hist_pos = 0;
 
             if let Some(initial) = self.initial_text.as_ref() {
-                term.write_str(initial)?;
+                render.write_str(initial)?;
                 chars = initial.chars().collect();
                 position = chars.len();
             }
@@ -299,50 +300,50 @@ where
                         KeyCode::Backspace if position > 0 => {
                             position -= 1;
                             chars.remove(position);
-                            term.clear_chars(1)?;
+                            render.clear_last_chars(1)?;
 
                             let tail: String = chars[position..].iter().collect();
 
                             if !tail.is_empty() {
-                                term.write_str(&tail)?;
-                                term.move_cursor_left(tail.len())?;
+                                render.write_str(&tail)?;
+                                render.move_cursor_left(tail.len() as u16)?;
                             }
 
-                            term.flush()?;
+                            render.flush()?;
                         }
                         KeyCode::Char(chr) if !chr.is_ascii_control() => {
                             chars.insert(position, chr);
                             position += 1;
                             let tail: String =
                                 iter::once(&chr).chain(chars[position..].iter()).collect();
-                            term.write_str(&tail)?;
-                            term.move_cursor_left(tail.len() - 1)?;
-                            term.flush()?;
+                            render.write_str(&tail)?;
+                            render.move_cursor_left((tail.len() - 1) as u16)?;
+                            render.flush()?;
                         }
                         KeyCode::Left if position > 0 => {
-                            term.move_cursor_left(1)?;
+                            render.move_cursor_left(1)?;
                             position -= 1;
-                            term.flush()?;
+                            render.flush()?;
                         }
                         KeyCode::Right if position < chars.len() => {
-                            term.move_cursor_right(1)?;
+                            render.move_cursor_right(1)?;
                             position += 1;
-                            term.flush()?;
+                            render.flush()?;
                         }
                         #[cfg(feature = "completion")]
                         KeyCode::Right | KeyCode::Tab => {
                             if let Some(completion) = &self.completion {
                                 let input: String = chars.clone().into_iter().collect();
                                 if let Some(x) = completion.get(&input) {
-                                    term.clear_chars(chars.len())?;
+                                    render.clear_last_chars(chars.len() as u16)?;
                                     chars.clear();
                                     position = 0;
                                     for ch in x.chars() {
                                         chars.insert(position, ch);
                                         position += 1;
                                     }
-                                    term.write_str(&x)?;
-                                    term.flush()?;
+                                    render.write_str(&x)?;
+                                    render.flush()?;
                                 }
                             }
                         }
@@ -351,15 +352,15 @@ where
                             if let Some(history) = &self.history {
                                 if let Some(previous) = history.read(hist_pos) {
                                     hist_pos += 1;
-                                    term.clear_chars(chars.len())?;
+                                    render.clear_last_chars(chars.len() as u16)?;
                                     chars.clear();
                                     position = 0;
                                     for ch in previous.chars() {
                                         chars.insert(position, ch);
                                         position += 1;
                                     }
-                                    term.write_str(&previous)?;
-                                    term.flush()?;
+                                    render.write_str(&previous)?;
+                                    render.flush()?;
                                 }
                             }
                         }
@@ -373,23 +374,23 @@ where
                                     // Move it back again to get the previous history entry
                                     if let Some(pos) = pos.checked_sub(1) {
                                         if let Some(previous) = history.read(pos) {
-                                            term.clear_chars(chars.len())?;
+                                            render.clear_last_chars(chars.len() as u16)?;
                                             chars.clear();
                                             position = 0;
                                             for ch in previous.chars() {
                                                 chars.insert(position, ch);
                                                 position += 1;
                                             }
-                                            term.write_str(&previous)?;
-                                            term.flush()?;
+                                            render.write_str(&previous)?;
+                                            render.flush()?;
                                         }
                                     } else {
-                                        term.clear_chars(chars.len())?;
+                                        render.clear_last_chars(chars.len() as u16)?;
                                         chars.clear();
                                         position = 0;
                                     }
                                 } else {
-                                    term.clear_chars(chars.len())?;
+                                    render.clear_last_chars(chars.len() as u16)?;
                                     chars.clear();
                                     position = 0;
                                 }
@@ -491,13 +492,45 @@ where
                     None
                 },
             )?;
-            term.flush()?;
+            render.flush()?;
 
-            let input = if let Some(initial_text) = self.initial_text.as_ref() {
-                term.read_line_initial_text(initial_text)?
+            let mut chars = if let Some(initial_text) = self.initial_text.as_ref() {
+                render.write_str(initial_text)?;
+                initial_text.chars().collect()
             } else {
-                term.read_line()?
+                Vec::new()
             };
+            loop {
+                terminal::enable_raw_mode()?;
+                if let Event::Key(KeyEvent { code, modifiers: _ }) = read().unwrap() {
+                    terminal::disable_raw_mode()?;
+                    match code {
+                        KeyCode::Backspace => {
+                            if chars.pop().is_some() {
+                                render.clear_last_chars(1)?;
+                            }
+                            render.flush()?;
+                        }
+                        KeyCode::Char(chr) => {
+                            chars.push(chr);
+                            render.write_str(&chr.to_string())?;
+                            render.flush()?;
+                        }
+                        KeyCode::Enter => {
+                            render.write_str("\n")?;
+                            break;
+                        }
+                        KeyCode::Null => {
+                            return Err(io::Error::new(
+                                io::ErrorKind::NotConnected,
+                                "Not a terminal",
+                            ))
+                        }
+                        _ => (),
+                    }
+                }
+            }
+            let input = chars.iter().collect::<String>();
 
             render.add_line();
             render.clear()?;
@@ -545,4 +578,3 @@ where
         }
     }
 }
-*/
