@@ -1,4 +1,7 @@
-use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
+use crate::{
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    DEFAULT_TERMINAL_SIZE,
+};
 use crossterm::{
     event::{read, Event, KeyCode, KeyEvent},
     terminal,
@@ -148,7 +151,11 @@ impl FuzzySelect<'_> {
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(&self, term: &mut dyn io::Write, allow_quit: bool) -> io::Result<Option<usize>> {
+    fn _interact_on(
+        &self,
+        term: &mut dyn io::Write,
+        allow_quit: bool,
+    ) -> io::Result<Option<usize>> {
         let mut position = 0;
         let mut search_term = String::new();
 
@@ -165,11 +172,12 @@ impl FuzzySelect<'_> {
         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
 
         // Subtract -2 because we need space to render the prompt.
-        let visible_term_rows = (term.size().0 as usize).max(3) - 2;
+        let visible_term_rows =
+            (terminal::size().unwrap_or(DEFAULT_TERMINAL_SIZE).0 as usize).max(3) - 2;
         // Variable used to determine if we need to scroll through the list.
         let mut starting_row = 0;
 
-        term.hide_cursor()?;
+        render.hide_cursor()?;
 
         loop {
             render.clear()?;
@@ -199,7 +207,7 @@ impl FuzzySelect<'_> {
                     &matcher,
                     &search_term,
                 )?;
-                term.flush()?;
+                render.flush()?;
             }
 
             if let Event::Key(KeyEvent { code, modifiers: _ }) = read().unwrap() {
@@ -208,9 +216,9 @@ impl FuzzySelect<'_> {
                     KeyCode::Esc if allow_quit => {
                         if self.clear {
                             render.clear()?;
-                            term.flush()?;
+                            render.flush()?;
                         }
-                        term.show_cursor()?;
+                        render.show_cursor()?;
                         return Ok(None);
                     }
                     KeyCode::Up | KeyCode::BackTab if !filtered_list.is_empty() => {
@@ -227,7 +235,7 @@ impl FuzzySelect<'_> {
                                 % (filtered_list.len() as i64))
                                 as usize;
                         }
-                        term.flush()?;
+                        render.flush()?;
                     }
                     KeyCode::Down | KeyCode::Tab if !filtered_list.is_empty() => {
                         if sel == !0 {
@@ -240,15 +248,15 @@ impl FuzzySelect<'_> {
                         } else if sel == 0 {
                             starting_row = 0;
                         }
-                        term.flush()?;
+                        render.flush()?;
                     }
                     KeyCode::Left if position > 0 => {
                         position -= 1;
-                        term.flush()?;
+                        render.flush()?;
                     }
                     KeyCode::Right if position < search_term.len() => {
                         position += 1;
-                        term.flush()?;
+                        render.flush()?;
                     }
                     KeyCode::Enter if !filtered_list.is_empty() => {
                         if self.clear {
@@ -266,18 +274,18 @@ impl FuzzySelect<'_> {
                         let sel_string_pos_in_items =
                             self.items.iter().position(|item| item.eq(sel_string));
 
-                        term.show_cursor()?;
+                        render.show_cursor()?;
                         return Ok(sel_string_pos_in_items);
                     }
                     KeyCode::Backspace if position > 0 => {
                         position -= 1;
                         search_term.remove(position);
-                        term.flush()?;
+                        render.flush()?;
                     }
                     KeyCode::Char(chr) if !chr.is_ascii_control() => {
                         search_term.insert(position, chr);
                         position += 1;
-                        term.flush()?;
+                        render.flush()?;
                         sel = 0;
                         starting_row = 0;
                     }

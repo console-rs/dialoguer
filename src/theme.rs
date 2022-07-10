@@ -229,7 +229,7 @@ pub trait Theme {
         write!(f, "{} ", if active { ">" } else { " " })?;
 
         if highlight_matches {
-            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, search_term) {
                 for (idx, c) in text.chars().into_iter().enumerate() {
                     if indices.contains(&idx) {
                         write!(f, "{}", style(c).for_stderr().bold())?;
@@ -265,7 +265,7 @@ pub trait Theme {
             write!(f, "{}{}{}", st_head, st_cursor, st_tail)
         } else {
             let cursor = "|".to_string();
-            write!(f, "{}{}", search_term.to_string(), cursor)
+            write!(f, "{}{}", search_term, cursor)
         }
     }
 }
@@ -643,7 +643,7 @@ impl Theme for ColorfulTheme {
         )?;
 
         if highlight_matches {
-            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, search_term) {
                 for (idx, c) in text.chars().into_iter().enumerate() {
                     if indices.contains(&idx) {
                         if active {
@@ -703,13 +703,7 @@ impl Theme for ColorfulTheme {
             )
         } else {
             let cursor = self.fuzzy_cursor_style.apply_to(" ");
-            write!(
-                f,
-                "{} {}{}",
-                &self.prompt_suffix,
-                search_term.to_string(),
-                cursor
-            )
+            write!(f, "{} {}{}", &self.prompt_suffix, search_term, cursor)
         }
     }
 }
@@ -750,6 +744,10 @@ impl<'a> TermThemeRenderer<'a> {
     }
     pub fn hide_cursor(&mut self) -> io::Result<()> {
         self.term.execute(cursor::Hide)?;
+        Ok(())
+    }
+    pub fn show_cursor(&mut self) -> io::Result<()> {
+        self.term.execute(cursor::Show)?;
         Ok(())
     }
     /// Clear the current line of input.
@@ -996,7 +994,7 @@ impl<'a> TermThemeRenderer<'a> {
     /// Clear the last `n` lines of input, as well as the current line.
     ///
     /// Position the cursor at the beginning of the current line.
-    fn clear_last_lines(&mut self, n: u16) -> io::Result<()> {
+    pub(crate) fn clear_last_lines(&mut self, n: u16) -> io::Result<()> {
         clear_last_lines(self.term, n)
     }
 }
