@@ -1,14 +1,8 @@
 /*use std::{io, iter::repeat, ops::Rem};
 
-use crate::{
-    theme::{SimpleTheme, TermThemeRenderer, Theme},
-    Paging,
-};
+use crate::{Paging, theme::{self, SimpleTheme, TermThemeRenderer, Theme}};
 
-use crossterm::{
-    event::{read, Event, KeyCode, KeyEvent},
-    terminal,
-};
+use crossterm::{ExecutableCommand, cursor, event::{Event, KeyCode, KeyEvent, read}, terminal};
 
 /// Renders a multi select prompt.
 ///
@@ -225,7 +219,7 @@ impl MultiSelect<'_> {
 
         let mut checked: Vec<bool> = self.defaults.clone();
 
-        term.hide_cursor()?;
+        term.execute(cursor::Hide)?;
 
         loop {
             if let Some(ref prompt) = self.prompt {
@@ -261,8 +255,7 @@ impl MultiSelect<'_> {
                             sel = self.items.len() - 1;
                         } else {
                             sel = ((sel as i64 - 1 + self.items.len() as i64)
-                                % (self.items.len() as i64))
-                                as usize;
+                                % (self.items.len() as i64)) as usize;
                         }
                     }
                     KeyCode::Left | KeyCode::Char('h') => {
@@ -283,10 +276,10 @@ impl MultiSelect<'_> {
                             if self.clear {
                                 render.clear()?;
                             } else {
-                                term.clear_last_lines(paging.capacity)?;
+                                theme::clear_last_lines(term, paging.capacity as u16)?;
                             }
 
-                            term.show_cursor()?;
+                            term.execute(cursor::Show)?;
                             term.flush()?;
 
                             return Ok(None);
@@ -315,7 +308,7 @@ impl MultiSelect<'_> {
                             }
                         }
 
-                        term.show_cursor()?;
+                        term.execute(cursor::Show)?;
                         term.flush()?;
 
                         return Ok(Some(

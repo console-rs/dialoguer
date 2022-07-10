@@ -5,10 +5,7 @@ use crate::{
     Paging,
 };
 
-use crossterm::{
-    event::{read, Event, KeyCode, KeyEvent},
-    terminal,
-};
+use crossterm::{ExecutableCommand, cursor, event::{Event, KeyCode, KeyEvent, read}, terminal};
 
 /// Renders a sort prompt.
 ///
@@ -194,7 +191,7 @@ impl Sort<'_> {
         let mut order: Vec<_> = (0..self.items.len()).collect();
         let mut checked: bool = false;
 
-        term.hide_cursor()?;
+        term.execute(cursor::Hide)?;
 
         loop {
             if let Some(ref prompt) = self.prompt {
@@ -236,8 +233,7 @@ impl Sort<'_> {
                             sel = self.items.len() - 1;
                         } else {
                             sel = ((sel as i64 - 1 + self.items.len() as i64)
-                                % (self.items.len() as i64))
-                                as usize;
+                                % (self.items.len() as i64)) as usize;
                         }
 
                         if checked && old_sel != sel {
@@ -296,10 +292,10 @@ impl Sort<'_> {
                             if self.clear {
                                 render.clear()?;
                             } else {
-                                term.clear_last_lines(paging.capacity)?;
+                                render.clear_last_lines(paging.capacity as u16)?;
                             }
 
-                            term.show_cursor()?;
+                            term.execute(cursor::Show)?;
                             term.flush()?;
 
                             return Ok(None);
@@ -321,15 +317,14 @@ impl Sort<'_> {
                             }
                         }
 
-                        term.show_cursor()?;
+                        term.execute(cursor::Show)?;
                         term.flush()?;
 
                         return Ok(Some(order));
                     }
                     _ => {}
                 }
-            }
-
+            };
             paging.update(sel)?;
 
             if paging.active {

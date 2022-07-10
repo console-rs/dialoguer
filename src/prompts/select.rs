@@ -1,10 +1,10 @@
 /*use std::{io, ops::Rem};
 
-use crate::paging::Paging;
-use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
+use crate::Paging;
+use crate::theme::{self, SimpleTheme, TermThemeRenderer, Theme};
 
-use crossterm::event::{read, Event, KeyCode, KeyEvent};
-use crossterm::terminal;
+use crossterm::event::{Event, KeyCode, KeyEvent, read};
+use crossterm::{ExecutableCommand, cursor, terminal};
 
 /// Renders a select prompt.
 ///
@@ -260,7 +260,7 @@ impl Select<'_> {
             size_vec.push(*size);
         }
 
-        term.hide_cursor()?;
+        term.execute(cursor::Hide)?;
 
         loop {
             if let Some(ref prompt) = self.prompt {
@@ -295,10 +295,10 @@ impl Select<'_> {
                             if self.clear {
                                 render.clear()?;
                             } else {
-                                term.clear_last_lines(paging.capacity)?;
+                                theme::clear_last_lines(term, paging.capacity as u16)?;
                             }
 
-                            term.show_cursor()?;
+                            term.execute(cursor::Show)?;
                             term.flush()?;
 
                             return Ok(None);
@@ -309,8 +309,7 @@ impl Select<'_> {
                             sel = self.items.len() - 1;
                         } else {
                             sel = ((sel as i64 - 1 + self.items.len() as i64)
-                                % (self.items.len() as i64))
-                                as usize;
+                                % (self.items.len() as i64)) as usize;
                         }
                     }
                     KeyCode::Left | KeyCode::Char('h') => {
@@ -323,6 +322,7 @@ impl Select<'_> {
                             sel = paging.next_page();
                         }
                     }
+
                     KeyCode::Enter | KeyCode::Char(' ') if sel != !0 => {
                         if self.clear {
                             render.clear()?;
@@ -334,7 +334,7 @@ impl Select<'_> {
                             }
                         }
 
-                        term.show_cursor()?;
+                        term.execute(cursor::Show)?;
                         term.flush()?;
 
                         return Ok(Some(sel));
@@ -342,7 +342,6 @@ impl Select<'_> {
                     _ => {}
                 }
             }
-
             paging.update(sel)?;
 
             if paging.active {
