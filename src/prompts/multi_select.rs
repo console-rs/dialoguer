@@ -5,7 +5,8 @@ use crate::{
     Paging,
 };
 
-use console::{Key, Term};
+use console::Term;
+use crossterm::{event::{Event, KeyCode, KeyEvent, read}, terminal};
 
 /// Renders a multi select prompt.
 ///
@@ -242,86 +243,89 @@ impl MultiSelect<'_> {
 
             term.flush()?;
 
-            match term.read_key()? {
-                Key::ArrowDown | Key::Tab | Key::Char('j') => {
-                    if sel == !0 {
-                        sel = 0;
-                    } else {
-                        sel = (sel as u64 + 1).rem(self.items.len() as u64) as usize;
+            terminal::enable_raw_mode()?;
+            if let Event::Key(KeyEvent { code, modifiers: _ }) = read().unwrap() {
+                terminal::disable_raw_mode()?;
+                match code {
+                    KeyCode::Down | KeyCode::Tab | KeyCode::Char('j') => {
+                        if sel == !0 {
+                            sel = 0;
+                        } else {
+                            sel = (sel as u64 + 1).rem(self.items.len() as u64) as usize;
+                        }
                     }
-                }
-                Key::ArrowUp | Key::BackTab | Key::Char('k') => {
-                    if sel == !0 {
-                        sel = self.items.len() - 1;
-                    } else {
-                        sel = ((sel as i64 - 1 + self.items.len() as i64)
-                            % (self.items.len() as i64)) as usize;
+                    KeyCode::Up | KeyCode::BackTab | KeyCode::Char('k') => {
+                        if sel == !0 {
+                            sel = self.items.len() - 1;
+                        } else {
+                            sel = ((sel as i64 - 1 + self.items.len() as i64)
+                                % (self.items.len() as i64)) as usize;
+                        }
                     }
-                }
-                Key::ArrowLeft | Key::Char('h') => {
-                    if paging.active {
-                        sel = paging.previous_page();
+                    KeyCode::Left | KeyCode::Char('h') => {
+                        if paging.active {
+                            sel = paging.previous_page();
+                        }
                     }
-                }
-                Key::ArrowRight | Key::Char('l') => {
-                    if paging.active {
-                        sel = paging.next_page();
+                    KeyCode::Right | KeyCode::Char('l') => {
+                        if paging.active {
+                            sel = paging.next_page();
+                        }
                     }
-                }
-                Key::Char(' ') => {
-                    checked[sel] = !checked[sel];
-                }
-                Key::Escape | Key::Char('q') => {
-                    if allow_quit {
+                    KeyCode::Char(' ') => {
+                        checked[sel] = !checked[sel];
+                    }
+                    KeyCode::Esc | KeyCode::Char('q') => {
+                        if allow_quit {
+                            if self.clear {
+                                render.clear()?;
+                            } else {
+                                term.clear_last_lines(paging.capacity)?;
+                            }
+
+                            term.show_cursor()?;
+                            term.flush()?;
+
+                            return Ok(None);
+                        }
+                    }
+                    KeyCode::Enter => {
                         if self.clear {
                             render.clear()?;
-                        } else {
-                            term.clear_last_lines(paging.capacity)?;
+                        }
+
+                        if let Some(ref prompt) = self.prompt {
+                            if self.report {
+                                let selections: Vec<_> = checked
+                                    .iter()
+                                    .enumerate()
+                                    .filter_map(|(idx, &checked)| {
+                                        if checked {
+                                            Some(self.items[idx].as_str())
+                                        } else {
+                                            None
+                                        }
+                                    })
+                                    .collect();
+
+                                render.multi_select_prompt_selection(prompt, &selections[..])?;
+                            }
                         }
 
                         term.show_cursor()?;
                         term.flush()?;
 
-                        return Ok(None);
-                    }
-                }
-                Key::Enter => {
-                    if self.clear {
-                        render.clear()?;
-                    }
-
-                    if let Some(ref prompt) = self.prompt {
-                        if self.report {
-                            let selections: Vec<_> = checked
-                                .iter()
+                        return Ok(Some(
+                            checked
+                                .into_iter()
                                 .enumerate()
-                                .filter_map(|(idx, &checked)| {
-                                    if checked {
-                                        Some(self.items[idx].as_str())
-                                    } else {
-                                        None
-                                    }
-                                })
-                                .collect();
-
-                            render.multi_select_prompt_selection(prompt, &selections[..])?;
-                        }
+                                .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
+                                .collect(),
+                        ));
                     }
-
-                    term.show_cursor()?;
-                    term.flush()?;
-
-                    return Ok(Some(
-                        checked
-                            .into_iter()
-                            .enumerate()
-                            .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
-                            .collect(),
-                    ));
+                    _ => {}
                 }
-                _ => {}
             }
-
             paging.update(sel)?;
 
             if paging.active {

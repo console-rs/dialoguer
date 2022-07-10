@@ -3,7 +3,9 @@ use std::{io, ops::Rem};
 use crate::paging::Paging;
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
-use console::{Key, Term};
+use console::Term;
+use crossterm::event::{Event, KeyCode, KeyEvent, read};
+use crossterm::terminal;
 
 /// Renders a select prompt.
 ///
@@ -278,64 +280,67 @@ impl Select<'_> {
 
             term.flush()?;
 
-            match term.read_key()? {
-                Key::ArrowDown | Key::Tab | Key::Char('j') => {
-                    if sel == !0 {
-                        sel = 0;
-                    } else {
-                        sel = (sel as u64 + 1).rem(self.items.len() as u64) as usize;
+            terminal::enable_raw_mode()?;
+            if let Event::Key(KeyEvent { code, modifiers: _ }) = read().unwrap() {
+                terminal::disable_raw_mode()?;
+                match code {
+                    KeyCode::Down | KeyCode::Tab | KeyCode::Char('j') => {
+                        if sel == !0 {
+                            sel = 0;
+                        } else {
+                            sel = (sel as u64 + 1).rem(self.items.len() as u64) as usize;
+                        }
                     }
-                }
-                Key::Escape | Key::Char('q') => {
-                    if allow_quit {
+                    KeyCode::Esc | KeyCode::Char('q') => {
+                        if allow_quit {
+                            if self.clear {
+                                render.clear()?;
+                            } else {
+                                term.clear_last_lines(paging.capacity)?;
+                            }
+
+                            term.show_cursor()?;
+                            term.flush()?;
+
+                            return Ok(None);
+                        }
+                    }
+                    KeyCode::Up | KeyCode::BackTab | KeyCode::Char('k') => {
+                        if sel == !0 {
+                            sel = self.items.len() - 1;
+                        } else {
+                            sel = ((sel as i64 - 1 + self.items.len() as i64)
+                                % (self.items.len() as i64)) as usize;
+                        }
+                    }
+                    KeyCode::Left | KeyCode::Char('h') => {
+                        if paging.active {
+                            sel = paging.previous_page();
+                        }
+                    }
+                    KeyCode::Right | KeyCode::Char('l') => {
+                        if paging.active {
+                            sel = paging.next_page();
+                        }
+                    }
+                    KeyCode::Enter | KeyCode::Char(' ') if sel != !0 => {
                         if self.clear {
                             render.clear()?;
-                        } else {
-                            term.clear_last_lines(paging.capacity)?;
+                        }
+
+                        if let Some(ref prompt) = self.prompt {
+                            if self.report {
+                                render.select_prompt_selection(prompt, &self.items[sel])?;
+                            }
                         }
 
                         term.show_cursor()?;
                         term.flush()?;
 
-                        return Ok(None);
+                        return Ok(Some(sel));
                     }
+                    _ => {}
                 }
-                Key::ArrowUp | Key::BackTab | Key::Char('k') => {
-                    if sel == !0 {
-                        sel = self.items.len() - 1;
-                    } else {
-                        sel = ((sel as i64 - 1 + self.items.len() as i64)
-                            % (self.items.len() as i64)) as usize;
-                    }
-                }
-                Key::ArrowLeft | Key::Char('h') => {
-                    if paging.active {
-                        sel = paging.previous_page();
-                    }
-                }
-                Key::ArrowRight | Key::Char('l') => {
-                    if paging.active {
-                        sel = paging.next_page();
-                    }
-                }
-
-                Key::Enter | Key::Char(' ') if sel != !0 => {
-                    if self.clear {
-                        render.clear()?;
-                    }
-
-                    if let Some(ref prompt) = self.prompt {
-                        if self.report {
-                            render.select_prompt_selection(prompt, &self.items[sel])?;
-                        }
-                    }
-
-                    term.show_cursor()?;
-                    term.flush()?;
-
-                    return Ok(Some(sel));
-                }
-                _ => {}
             }
 
             paging.update(sel)?;
