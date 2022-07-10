@@ -732,13 +732,14 @@ impl<'a> TermThemeRenderer<'a> {
         self.prompts_reset_height = val;
     }
 
-    #[cfg(feature = "password")]
-    pub fn term(&self) -> &Term {
-        self.term
-    }
-
     pub fn add_line(&mut self) {
         self.height += 1;
+    }
+
+    // Helper methods, passing commands through to the underlying terminal.
+    pub fn flush(&mut self) -> io::Result<()> {
+        self.term.flush()?;
+        Ok(())
     }
 
     fn write_formatted_str<

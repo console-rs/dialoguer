@@ -116,7 +116,7 @@ impl Password<'_> {
     fn prompt_password(&self, render: &mut TermThemeRenderer, prompt: &str) -> io::Result<String> {
         loop {
             render.password_prompt(prompt)?;
-            render.term().flush()?;
+            render.flush()?;
 
             let input = render.term().read_secure_line()?;
 
