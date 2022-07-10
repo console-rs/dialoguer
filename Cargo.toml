@@ -28,6 +28,7 @@ console = "0.15.0"
 tempfile = { version = "3", optional = true }
 zeroize = { version = "1.1.1", optional = true }
 fuzzy-matcher = { version = "0.3.7", optional = true }
+crossterm = "0.24.0"
 
 [[example]]
 name = "password"

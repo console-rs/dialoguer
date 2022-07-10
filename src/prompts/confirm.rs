@@ -2,7 +2,8 @@ use std::io;
 
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
-use console::{Key, Term};
+use console::Term;
+use crossterm::{event::{Event, KeyCode, KeyEvent, read}, terminal};
 
 /// Renders a confirm prompt.
 ///
@@ -176,38 +177,39 @@ impl Confirm<'_> {
         term.flush()?;
 
         let rv;
-
+        terminal::enable_raw_mode()?;
         if self.wait_for_newline {
             // Waits for user input and for the user to hit the Enter key
             // before validation.
             let mut value = default_if_show;
 
             loop {
-                let input = term.read_key()?;
-
-                match input {
-                    Key::Char('y') | Key::Char('Y') => {
-                        value = Some(true);
-                    }
-                    Key::Char('n') | Key::Char('N') => {
-                        value = Some(false);
-                    }
-                    Key::Enter => {
-                        if !allow_quit {
-                            value = value.or(self.default);
+                if let Event::Key(KeyEvent { code, modifiers: _ }) = read().unwrap() {
+                    terminal::disable_raw_mode()?;
+                    match code {
+                        KeyCode::Char('y') | KeyCode::Char('Y') => {
+                            value = Some(true);
                         }
-
-                        if value.is_some() || allow_quit {
-                            rv = value;
-                            break;
+                        KeyCode::Char('n') | KeyCode::Char('N') => {
+                            value = Some(false);
                         }
-                        continue;
-                    }
-                    Key::Escape | Key::Char('q') if allow_quit => {
-                        value = None;
-                    }
-                    _ => {
-                        continue;
+                        KeyCode::Enter => {
+                            if !allow_quit {
+                                value = value.or(self.default);
+                            }
+
+                            if value.is_some() || allow_quit {
+                                rv = value;
+                                break;
+                            }
+                            continue;
+                        }
+                        KeyCode::Esc | KeyCode::Char('q') if allow_quit => {
+                            value = None;
+                        }
+                        _ => {
+                            continue;
+                        }
                     }
                 };
 
@@ -218,19 +220,20 @@ impl Confirm<'_> {
             // Default behavior: matches continuously on every keystroke,
             // and does not wait for user to hit the Enter key.
             loop {
-                let input = term.read_key()?;
-                let value = match input {
-                    Key::Char('y') | Key::Char('Y') => Some(true),
-                    Key::Char('n') | Key::Char('N') => Some(false),
-                    Key::Enter if self.default.is_some() => Some(self.default.unwrap()),
-                    Key::Escape | Key::Char('q') if allow_quit => None,
-                    _ => {
-                        continue;
-                    }
+                if let Event::Key(KeyEvent { code, modifiers: _ }) = read().unwrap() {
+                    let value = match code {
+                        KeyCode::Char('y') | KeyCode::Char('Y') => Some(true),
+                        KeyCode::Char('n') | KeyCode::Char('N') => Some(false),
+                        KeyCode::Enter if self.default.is_some() => Some(self.default.unwrap()),
+                        KeyCode::Esc | KeyCode::Char('q') if allow_quit => None,
+                        _ => {
+                            continue;
+                        }
+                    };
+                    terminal::disable_raw_mode()?;
+                    rv = value;
+                    break;
                 };
-
-                rv = value;
-                break;
             }
         }
 

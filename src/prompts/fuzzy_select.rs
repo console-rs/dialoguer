@@ -1,5 +1,6 @@
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
-use console::{Key, Term};
+use console::Term;
+use crossterm::{event::{Event, KeyCode, KeyEvent, read}, terminal};
 use fuzzy_matcher::FuzzyMatcher;
 use std::{io, ops::Rem};
 
@@ -199,82 +200,84 @@ impl FuzzySelect<'_> {
                 term.flush()?;
             }
 
-            match term.read_key()? {
-                Key::Escape if allow_quit => {
-                    if self.clear {
-                        render.clear()?;
+            if let Event::Key(KeyEvent { code, modifiers: _ }) = read().unwrap() {
+                terminal::disable_raw_mode()?;
+                match code {
+                    KeyCode::Esc if allow_quit => {
+                        if self.clear {
+                            render.clear()?;
+                            term.flush()?;
+                        }
+                        term.show_cursor()?;
+                        return Ok(None);
+                    }
+                    KeyCode::Up | KeyCode::BackTab if !filtered_list.is_empty() => {
+                        if sel == 0 {
+                            starting_row =
+                                filtered_list.len().max(visible_term_rows) - visible_term_rows;
+                        } else if sel == starting_row {
+                            starting_row -= 1;
+                        }
+                        if sel == !0 {
+                            sel = filtered_list.len() - 1;
+                        } else {
+                            sel = ((sel as i64 - 1 + filtered_list.len() as i64)
+                                % (filtered_list.len() as i64)) as usize;
+                        }
                         term.flush()?;
                     }
-                    term.show_cursor()?;
-                    return Ok(None);
-                }
-                Key::ArrowUp | Key::BackTab if !filtered_list.is_empty() => {
-                    if sel == 0 {
-                        starting_row =
-                            filtered_list.len().max(visible_term_rows) - visible_term_rows;
-                    } else if sel == starting_row {
-                        starting_row -= 1;
+                    KeyCode::Down | KeyCode::Tab if !filtered_list.is_empty() => {
+                        if sel == !0 {
+                            sel = 0;
+                        } else {
+                            sel = (sel as u64 + 1).rem(filtered_list.len() as u64) as usize;
+                        }
+                        if sel == visible_term_rows + starting_row {
+                            starting_row += 1;
+                        } else if sel == 0 {
+                            starting_row = 0;
+                        }
+                        term.flush()?;
                     }
-                    if sel == !0 {
-                        sel = filtered_list.len() - 1;
-                    } else {
-                        sel = ((sel as i64 - 1 + filtered_list.len() as i64)
-                            % (filtered_list.len() as i64)) as usize;
+                    KeyCode::Left if position > 0 => {
+                        position -= 1;
+                        term.flush()?;
                     }
-                    term.flush()?;
-                }
-                Key::ArrowDown | Key::Tab if !filtered_list.is_empty() => {
-                    if sel == !0 {
+                    KeyCode::Right if position < search_term.len() => {
+                        position += 1;
+                        term.flush()?;
+                    }
+                    KeyCode::Enter if !filtered_list.is_empty() => {
+                        if self.clear {
+                            render.clear()?;
+                        }
+
+                        if self.report {
+                            render
+                                .input_prompt_selection(self.prompt.as_str(), filtered_list[sel].0)?;
+                        }
+
+                        let sel_string = filtered_list[sel].0;
+                        let sel_string_pos_in_items =
+                            self.items.iter().position(|item| item.eq(sel_string));
+
+                        term.show_cursor()?;
+                        return Ok(sel_string_pos_in_items);
+                    }
+                    KeyCode::Backspace if position > 0 => {
+                        position -= 1;
+                        search_term.remove(position);
+                        term.flush()?;
+                    }
+                    KeyCode::Char(chr) if !chr.is_ascii_control() => {
+                        search_term.insert(position, chr);
+                        position += 1;
+                        term.flush()?;
                         sel = 0;
-                    } else {
-                        sel = (sel as u64 + 1).rem(filtered_list.len() as u64) as usize;
-                    }
-                    if sel == visible_term_rows + starting_row {
-                        starting_row += 1;
-                    } else if sel == 0 {
                         starting_row = 0;
                     }
-                    term.flush()?;
+                    _ => {}
                 }
-                Key::ArrowLeft if position > 0 => {
-                    position -= 1;
-                    term.flush()?;
-                }
-                Key::ArrowRight if position < search_term.len() => {
-                    position += 1;
-                    term.flush()?;
-                }
-                Key::Enter if !filtered_list.is_empty() => {
-                    if self.clear {
-                        render.clear()?;
-                    }
-
-                    if self.report {
-                        render
-                            .input_prompt_selection(self.prompt.as_str(), filtered_list[sel].0)?;
-                    }
-
-                    let sel_string = filtered_list[sel].0;
-                    let sel_string_pos_in_items =
-                        self.items.iter().position(|item| item.eq(sel_string));
-
-                    term.show_cursor()?;
-                    return Ok(sel_string_pos_in_items);
-                }
-                Key::Backspace if position > 0 => {
-                    position -= 1;
-                    search_term.remove(position);
-                    term.flush()?;
-                }
-                Key::Char(chr) if !chr.is_ascii_control() => {
-                    search_term.insert(position, chr);
-                    position += 1;
-                    term.flush()?;
-                    sel = 0;
-                    starting_row = 0;
-                }
-
-                _ => {}
             }
 
             render.clear_preserve_prompt(&size_vec)?;
