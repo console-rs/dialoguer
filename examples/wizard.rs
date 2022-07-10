@@ -1,4 +1,4 @@
-use std::error::Error;
+fn main() {} /* use std::error::Error;
 use std::net::IpAddr;
 
 use console::Style;
@@ -79,3 +79,4 @@ fn main() {
         Err(err) => println!("error: {}", err),
     }
 }
+*/

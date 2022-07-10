@@ -1,4 +1,4 @@
-use console::Term;
+fn main() {} /*use console::Term;
 use dialoguer::{theme::ColorfulTheme, Confirm, Input, MultiSelect, Select, Sort};
 
 fn main() {
@@ -40,3 +40,4 @@ fn main() {
         .interact_on(&term)
         .unwrap();
 }
+*/

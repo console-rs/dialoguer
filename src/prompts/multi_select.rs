@@ -1,4 +1,4 @@
-use std::{io, iter::repeat, ops::Rem};
+/*use std::{io, iter::repeat, ops::Rem};
 
 use crate::{
     theme::{SimpleTheme, TermThemeRenderer, Theme},
@@ -354,3 +354,4 @@ impl<'a> MultiSelect<'a> {
         }
     }
 }
+*/

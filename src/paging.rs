@@ -1,4 +1,4 @@
-use std::io;
+/*use std::io;
 
 /// Creates a paging module
 ///
@@ -117,3 +117,4 @@ impl<'a> Paging<'a> {
         self.current_page * self.capacity
     }
 }
+*/

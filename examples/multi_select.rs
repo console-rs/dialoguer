@@ -1,4 +1,4 @@
-use dialoguer::{theme::ColorfulTheme, MultiSelect};
+fn main() {} /*use dialoguer::{theme::ColorfulTheme, MultiSelect};
 
 fn main() {
     let multiselected = &[
@@ -40,3 +40,4 @@ fn main() {
         }
     }
 }
+*/

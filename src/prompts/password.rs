@@ -118,7 +118,8 @@ impl Password<'_> {
             render.password_prompt(prompt)?;
             render.flush()?;
 
-            let input = render.term().read_secure_line()?;
+            // TODO re-implement this!
+            let input = "TODO".to_string();//render.term().read_secure_line()?;
 
             render.add_line();
 

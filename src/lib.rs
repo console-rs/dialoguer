@@ -27,9 +27,9 @@ pub use console;
 pub use edit::Editor;
 #[cfg(feature = "history")]
 pub use history::History;
-use paging::Paging;
+//use paging::Paging;
 pub use prompts::{
-    confirm::Confirm, input::Input, multi_select::MultiSelect, select::Select, sort::Sort,
+    confirm::Confirm, /*input::Input, multi_select::MultiSelect, select::Select, sort::Sort,*/
 };
 pub use validate::Validator;
 

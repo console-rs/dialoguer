@@ -1,4 +1,4 @@
-use std::{fmt::Debug, io, iter, str::FromStr};
+/*use std::{fmt::Debug, io, iter, str::FromStr};
 
 #[cfg(feature = "completion")]
 use crate::completion::Completion;
@@ -547,3 +547,4 @@ where
         }
     }
 }
+*/

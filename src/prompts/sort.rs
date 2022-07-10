@@ -1,4 +1,4 @@
-use std::{io, ops::Rem};
+/* use std::{io, ops::Rem};
 
 use crate::{
     theme::{SimpleTheme, TermThemeRenderer, Theme},
@@ -354,3 +354,4 @@ impl<'a> Sort<'a> {
         }
     }
 }
+*/

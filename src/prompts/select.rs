@@ -1,4 +1,4 @@
-use std::{io, ops::Rem};
+/*use std::{io, ops::Rem};
 
 use crate::paging::Paging;
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
@@ -428,3 +428,4 @@ mod tests {
         );
     }
 }
+*/
