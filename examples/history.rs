@@ -9,6 +9,10 @@ fn main() {
 
     let mut history = MyHistory::default();
 
+    /// We can also use `Vec` or `VecDeque` directly for a simple infinite history.
+    // let mut history = Vec::new();
+    // let mut history = VecDeque::new();
+
     loop {
         if let Ok(cmd) = Input::<String>::with_theme(&ColorfulTheme::default())
             .with_prompt("dialoguer")
