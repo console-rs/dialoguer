@@ -1,4 +1,8 @@
-/*use std::io;
+use std::io;
+
+use crossterm::terminal;
+
+use crate::{theme, DEFAULT_TERMINAL_SIZE};
 
 /// Creates a paging module
 ///
@@ -17,8 +21,12 @@ pub struct Paging<'a> {
 }
 
 impl<'a> Paging<'a> {
-    pub fn new(term: &'a mut dyn io::Write, items_len: usize, max_capacity: Option<usize>) -> Paging<'a> {
-        let term_size = term.size();
+    pub fn new(
+        term: &'a mut dyn io::Write,
+        items_len: usize,
+        max_capacity: Option<usize>,
+    ) -> Paging<'a> {
+        let term_size = terminal::size().unwrap_or(DEFAULT_TERMINAL_SIZE);
         // Subtract -2 because we need space to render the prompt, if paging is active
         let capacity = max_capacity
             .unwrap_or(std::usize::MAX)
@@ -44,7 +52,7 @@ impl<'a> Paging<'a> {
 
     /// Updates all internal based on the current terminal size and cursor position
     pub fn update(&mut self, cursor_pos: usize) -> io::Result<()> {
-        let new_term_size = self.term.size();
+        let new_term_size = terminal::size().unwrap_or(DEFAULT_TERMINAL_SIZE);
 
         if self.current_term_size != new_term_size {
             self.current_term_size = new_term_size;
@@ -63,7 +71,7 @@ impl<'a> Paging<'a> {
             self.active = self.pages > 1;
             self.activity_transition = true;
             // Clear everything to prevent "ghost" lines in terminal when a resize happened
-            self.term.clear_last_lines(self.capacity)?;
+            theme::clear_last_lines(self.term, self.capacity as u16)?;
         }
 
         if cursor_pos != !0
@@ -117,4 +125,3 @@ impl<'a> Paging<'a> {
         self.current_page * self.capacity
     }
 }
-*/

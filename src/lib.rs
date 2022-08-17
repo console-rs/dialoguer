@@ -27,7 +27,7 @@ pub use console;
 pub use edit::Editor;
 #[cfg(feature = "history")]
 pub use history::History;
-//use paging::Paging;
+use paging::Paging;
 pub use prompts::{
     confirm::Confirm, /*input::Input, multi_select::MultiSelect, select::Select, sort::Sort,*/
 };
@@ -49,3 +49,5 @@ mod paging;
 mod prompts;
 pub mod theme;
 mod validate;
+
+const DEFAULT_TERMINAL_SIZE: (u16, u16) = (80, 24);
