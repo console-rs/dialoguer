@@ -2,6 +2,7 @@
 use std::{fmt, io};
 
 use console::{style, Style, StyledObject};
+use crossterm::{ExecutableCommand, cursor::{self, MoveDown, MoveToColumn, MoveUp}, terminal::{self, Clear, ClearType}};
 #[cfg(feature = "fuzzy-select")]
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 
@@ -717,7 +718,7 @@ pub(crate) struct TermThemeRenderer<'a> {
 }
 
 impl<'a> TermThemeRenderer<'a> {
-    pub fn new(term: &'a mut dyn std::io::Write, theme: &'a dyn Theme) -> TermThemeRenderer<'a> {
+    pub fn new(term: &'a mut dyn io::Write, theme: &'a dyn Theme) -> TermThemeRenderer<'a> {
         TermThemeRenderer {
             term,
             theme,
@@ -741,6 +742,18 @@ impl<'a> TermThemeRenderer<'a> {
         self.term.flush()?;
         Ok(())
     }
+    pub fn hide_cursor(&mut self) -> io::Result<()> {
+        self.term.execute(cursor::Hide)?;
+        Ok(())
+    }
+    /// Clear the current line of input.
+    ///
+    /// Position the cursor at the beginning of the current line.
+    pub fn clear_current_line(&mut self) -> io::Result<()> {
+        self.term.execute(Clear(ClearType::CurrentLine))?;
+        self.term.execute(MoveToColumn(1))?;
+        Ok(())
+    }
 
     fn write_formatted_str<
         F: FnOnce(&mut TermThemeRenderer, &mut dyn fmt::Write) -> fmt::Result,
@@ -751,7 +764,8 @@ impl<'a> TermThemeRenderer<'a> {
         let mut buf = String::new();
         f(self, &mut buf).map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
         self.height += buf.chars().filter(|&x| x == '\n').count();
-        self.term.write_str(&buf)
+        self.term.write_all(buf.as_bytes())?;
+        Ok(())
     }
 
     fn write_formatted_line<
@@ -762,8 +776,10 @@ impl<'a> TermThemeRenderer<'a> {
     ) -> io::Result<()> {
         let mut buf = String::new();
         f(self, &mut buf).map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
-        self.height += buf.chars().filter(|&x| x == '\n').count() + 1;
-        self.term.write_line(&buf)
+        buf.push('\n');
+        self.height += buf.chars().filter(|&x| x == '\n').count();
+        self.term.write_all(buf.as_bytes())?;
+        Ok(())
     }
 
     fn write_formatted_prompt<
@@ -950,9 +966,9 @@ impl<'a> TermThemeRenderer<'a> {
     }
 
     pub fn clear(&mut self) -> io::Result<()> {
-        self.term
-            .clear_last_lines(self.height + self.prompt_height)?;
+        self.clear_last_lines((self.height + self.prompt_height) as u16)?;
         self.height = 0;
+        self.prompt_height = 0;
         Ok(())
     }
 
@@ -960,13 +976,28 @@ impl<'a> TermThemeRenderer<'a> {
         let mut new_height = self.height;
         //Check each item size, increment on finding an overflow
         for size in size_vec {
-            if *size > self.term.size().1 as usize {
+            if *size > terminal::size().unwrap_or((80, 24)).1 as usize {
                 new_height += 1;
             }
         }
 
-        self.term.clear_last_lines(new_height)?;
+        self.clear_last_lines(new_height as u16)?;
         self.height = 0;
         Ok(())
     }
+
+    /// Clear the last `n` lines of input, as well as the current line.
+    ///
+    /// Position the cursor at the beginning of the current line.
+    fn clear_last_lines(&mut self, n: u16) -> io::Result<()> {
+        self.term.execute(MoveUp(n))?;
+        for _ in 0..n {
+            self.clear_current_line()?;
+            self.term.execute(MoveDown(1))?;
+        }
+        self.clear_current_line()?;
+        self.term.execute(MoveUp(n))?;
+        Ok(())
+    }
+
 }
