@@ -969,6 +969,9 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
+    /// Clear the current theme.
+    ///
+    /// Position the cursor at the beginning of the current line.
     pub fn clear(&mut self) -> io::Result<()> {
         self.clear_last_lines((self.height + self.prompt_height) as u16)?;
         self.height = 0;
