@@ -2,7 +2,11 @@
 use std::{fmt, io};
 
 use console::{style, Style, StyledObject};
-use crossterm::{ExecutableCommand, cursor::{self, MoveDown, MoveToColumn, MoveUp}, terminal::{self, Clear, ClearType}};
+use crossterm::{
+    cursor::{self, MoveDown, MoveToColumn, MoveUp},
+    terminal::{self, Clear, ClearType},
+    ExecutableCommand,
+};
 #[cfg(feature = "fuzzy-select")]
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 
@@ -999,5 +1003,4 @@ impl<'a> TermThemeRenderer<'a> {
         self.term.execute(MoveUp(n))?;
         Ok(())
     }
-
 }

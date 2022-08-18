@@ -2,7 +2,11 @@ use std::io;
 
 use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
-use crossterm::{ExecutableCommand, cursor, event::{read, Event, KeyCode, KeyEvent}, terminal};
+use crossterm::{
+    cursor,
+    event::{read, Event, KeyCode, KeyEvent},
+    terminal, ExecutableCommand,
+};
 
 /// Renders a confirm prompt.
 ///
