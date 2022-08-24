@@ -40,6 +40,7 @@ pub struct FuzzySelect<'a> {
     report: bool,
     clear: bool,
     highlight_matches: bool,
+    visible_term_rows: Option<usize>,
     theme: &'a dyn Theme,
 }
 
@@ -110,6 +111,14 @@ impl FuzzySelect<'_> {
         self
     }
 
+    /// Sets the number of visible options.
+    ///
+    /// The default is the height of the terminal minus 2.
+    pub fn with_visible_term_rows(&mut self, rows: usize) -> &mut Self {
+        self.visible_term_rows = Some(rows);
+        self
+    }
+
     /// Enables user interaction and returns the result.
     ///
     /// The user can select the items using 'Enter' and the index of selected item will be returned.
@@ -163,6 +172,7 @@ impl FuzzySelect<'_> {
 
         // Subtract -2 because we need space to render the prompt.
         let visible_term_rows = (term.size().0 as usize).max(3) - 2;
+        let visible_term_rows = self.visible_term_rows.unwrap_or(visible_term_rows);
         // Variable used to determine if we need to scroll through the list.
         let mut starting_row = 0;
 
@@ -292,6 +302,7 @@ impl<'a> FuzzySelect<'a> {
             report: true,
             clear: true,
             highlight_matches: true,
+            visible_term_rows: None,
             theme,
         }
     }
