@@ -172,7 +172,10 @@ impl FuzzySelect<'_> {
 
         // Subtract -2 because we need space to render the prompt.
         let visible_term_rows = (term.size().0 as usize).max(3) - 2;
-        let visible_term_rows = self.visible_term_rows.unwrap_or(visible_term_rows);
+        let visible_term_rows = self
+            .visible_term_rows
+            .unwrap_or(visible_term_rows)
+            .min(visible_term_rows);
         // Variable used to determine if we need to scroll through the list.
         let mut starting_row = 0;
 
