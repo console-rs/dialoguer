@@ -746,7 +746,7 @@ impl<'a> TermThemeRenderer<'a> {
     ///
     /// Position the cursor at the beginning of the current line.
     pub fn clear_current_line(&mut self) -> io::Result<()> {
-        clear_current_line(&self.term)
+        clear_current_line(self.term)
     }
     pub fn write_str(&mut self, text: &str) -> io::Result<()> {
         self.term.write_all(text.as_bytes())?;
@@ -1006,7 +1006,7 @@ impl<'a> TermThemeRenderer<'a> {
     ///
     /// Position the cursor at the beginning of the current line.
     pub(crate) fn clear_last_lines(&mut self, n: u16) -> io::Result<()> {
-        clear_last_lines(&self.term, n)
+        clear_last_lines(self.term, n)
     }
 }
 

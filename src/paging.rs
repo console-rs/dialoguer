@@ -67,7 +67,7 @@ impl<'a> Paging<'a> {
             self.active = self.pages > 1;
             self.activity_transition = true;
             // Clear everything to prevent "ghost" lines in terminal when a resize happened.
-            theme::clear_last_lines(&self.term, self.capacity as u16)?;
+            theme::clear_last_lines(self.term, self.capacity as u16)?;
         }
 
         if cursor_pos != !0

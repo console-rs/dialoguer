@@ -282,7 +282,7 @@ impl MultiSelect<'_> {
                             if self.clear {
                                 render.clear()?;
                             } else {
-                                theme::clear_last_lines(&term, paging.capacity as u16)?;
+                                theme::clear_last_lines(term, paging.capacity as u16)?;
                             }
 
                             term.show_cursor()?;
