@@ -2,7 +2,7 @@ use std::io;
 
 use crossterm::terminal;
 
-use crate::{DEFAULT_TERMINAL_SIZE, term::Term, theme};
+use crate::{term::Term, theme, DEFAULT_TERMINAL_SIZE};
 
 /// Creates a paging module
 ///
@@ -21,11 +21,7 @@ pub struct Paging {
 }
 
 impl Paging {
-    pub fn new(
-        term: Term,
-        items_len: usize,
-        max_capacity: Option<usize>,
-    ) -> Paging {
+    pub fn new(term: Term, items_len: usize, max_capacity: Option<usize>) -> Paging {
         let term_size = terminal::size().unwrap_or(DEFAULT_TERMINAL_SIZE);
         // Subtract -2 because we need space to render the prompt, if paging is active
         let capacity = max_capacity
@@ -70,7 +66,7 @@ impl Paging {
         } else {
             self.active = self.pages > 1;
             self.activity_transition = true;
-            // Clear everything to prevent "ghost" lines in terminal when a resize happened.            
+            // Clear everything to prevent "ghost" lines in terminal when a resize happened.
             theme::clear_last_lines(&self.term, self.capacity as u16)?;
         }
 

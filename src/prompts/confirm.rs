@@ -1,6 +1,12 @@
-use std::{io, sync::{Arc, Mutex}};
+use std::{
+    io,
+    sync::{Arc, Mutex},
+};
 
-use crate::{term::Term, theme::{SimpleTheme, TermThemeRenderer, Theme}};
+use crate::{
+    term::Term,
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+};
 
 use crossterm::{
     event::{read, Event, KeyCode, KeyEvent},

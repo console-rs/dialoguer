@@ -9,7 +9,7 @@ use crossterm::{
 #[cfg(feature = "fuzzy-select")]
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 
-use crate::{DEFAULT_TERMINAL_SIZE, term::Term};
+use crate::{term::Term, DEFAULT_TERMINAL_SIZE};
 
 /// Implements a theme for dialoguer.
 pub trait Theme {

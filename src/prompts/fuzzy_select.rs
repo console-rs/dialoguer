@@ -8,7 +8,11 @@ use crossterm::{
     terminal,
 };
 use fuzzy_matcher::FuzzyMatcher;
-use std::{io, ops::Rem, sync::{Arc, Mutex}};
+use std::{
+    io,
+    ops::Rem,
+    sync::{Arc, Mutex},
+};
 
 /// Renders a selection menu that user can fuzzy match to reduce set.
 ///
@@ -152,11 +156,7 @@ impl FuzzySelect<'_> {
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(
-        &self,
-        term: Term,
-        allow_quit: bool,
-    ) -> io::Result<Option<usize>> {
+    fn _interact_on(&self, term: Term, allow_quit: bool) -> io::Result<Option<usize>> {
         let mut position = 0;
         let mut search_term = String::new();
 

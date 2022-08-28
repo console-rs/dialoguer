@@ -1,11 +1,11 @@
 use std::sync::{Arc, Mutex};
 use std::{io, ops::Rem};
 
-use crate::Paging;
 use crate::term::Term;
 use crate::theme::{self, SimpleTheme, TermThemeRenderer, Theme};
+use crate::Paging;
 
-use crossterm::event::{Event, KeyCode, KeyEvent, read};
+use crossterm::event::{read, Event, KeyCode, KeyEvent};
 use crossterm::terminal;
 
 /// Renders a select prompt.
@@ -311,7 +311,8 @@ impl Select<'_> {
                             sel = self.items.len() - 1;
                         } else {
                             sel = ((sel as i64 - 1 + self.items.len() as i64)
-                                % (self.items.len() as i64)) as usize;
+                                % (self.items.len() as i64))
+                                as usize;
                         }
                     }
                     KeyCode::Left | KeyCode::Char('h') => {

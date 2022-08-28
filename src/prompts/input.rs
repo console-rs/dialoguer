@@ -1,10 +1,19 @@
-use std::{fmt::Debug, io, iter, str::FromStr, sync::{Arc, Mutex}};
+use std::{
+    fmt::Debug,
+    io, iter,
+    str::FromStr,
+    sync::{Arc, Mutex},
+};
 
 #[cfg(feature = "completion")]
 use crate::completion::Completion;
 #[cfg(feature = "history")]
 use crate::history::History;
-use crate::{term::Term, theme::{SimpleTheme, TermThemeRenderer, Theme}, validate::Validator};
+use crate::{
+    term::Term,
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    validate::Validator,
+};
 
 use crossterm::{
     event::{read, Event, KeyCode, KeyEvent},

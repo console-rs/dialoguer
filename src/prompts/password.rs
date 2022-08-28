@@ -1,6 +1,12 @@
-use std::{io, sync::{Arc, Mutex}};
+use std::{
+    io,
+    sync::{Arc, Mutex},
+};
 
-use crate::{term::Term, theme::{SimpleTheme, TermThemeRenderer, Theme}};
+use crate::{
+    term::Term,
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+};
 
 use zeroize::Zeroizing;
 
@@ -119,7 +125,7 @@ impl Password<'_> {
             render.flush()?;
 
             // TODO re-implement this!
-            let input = "TODO".to_string();//render.term().read_secure_line()?;
+            let input = "TODO".to_string(); //render.term().read_secure_line()?;
 
             render.add_line();
 

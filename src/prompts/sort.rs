@@ -1,8 +1,19 @@
-use std::{io, ops::Rem, sync::{Arc, Mutex}};
+use std::{
+    io,
+    ops::Rem,
+    sync::{Arc, Mutex},
+};
 
-use crate::{Paging, term::Term, theme::{SimpleTheme, TermThemeRenderer, Theme}};
+use crate::{
+    term::Term,
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    Paging,
+};
 
-use crossterm::{event::{Event, KeyCode, KeyEvent, read}, terminal};
+use crossterm::{
+    event::{read, Event, KeyCode, KeyEvent},
+    terminal,
+};
 
 /// Renders a sort prompt.
 ///
@@ -230,7 +241,8 @@ impl Sort<'_> {
                             sel = self.items.len() - 1;
                         } else {
                             sel = ((sel as i64 - 1 + self.items.len() as i64)
-                                % (self.items.len() as i64)) as usize;
+                                % (self.items.len() as i64))
+                                as usize;
                         }
 
                         if checked && old_sel != sel {

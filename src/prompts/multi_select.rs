@@ -1,8 +1,20 @@
-use std::{io, iter::repeat, ops::Rem, sync::{Arc, Mutex}};
+use std::{
+    io,
+    iter::repeat,
+    ops::Rem,
+    sync::{Arc, Mutex},
+};
 
-use crate::{Paging, term::Term, theme::{self, SimpleTheme, TermThemeRenderer, Theme}};
+use crate::{
+    term::Term,
+    theme::{self, SimpleTheme, TermThemeRenderer, Theme},
+    Paging,
+};
 
-use crossterm::{event::{Event, KeyCode, KeyEvent, read}, terminal};
+use crossterm::{
+    event::{read, Event, KeyCode, KeyEvent},
+    terminal,
+};
 
 /// Renders a multi select prompt.
 ///
@@ -255,7 +267,8 @@ impl MultiSelect<'_> {
                             sel = self.items.len() - 1;
                         } else {
                             sel = ((sel as i64 - 1 + self.items.len() as i64)
-                                % (self.items.len() as i64)) as usize;
+                                % (self.items.len() as i64))
+                                as usize;
                         }
                     }
                     KeyCode::Left | KeyCode::Char('h') => {
