@@ -8,11 +8,7 @@ use crossterm::{
     terminal,
 };
 use fuzzy_matcher::FuzzyMatcher;
-use std::{
-    io,
-    ops::Rem,
-    sync::{Arc, Mutex},
-};
+use std::{io, ops::Rem};
 
 /// Renders a selection menu that user can fuzzy match to reduce set.
 ///
@@ -129,7 +125,7 @@ impl FuzzySelect<'_> {
     /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<usize> {
-        self.interact_on(&Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on(&Term::from_stderr())
     }
 
     /// Enables user interaction and returns the result.
@@ -139,7 +135,7 @@ impl FuzzySelect<'_> {
     /// Result contains `Some(index)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<usize>> {
-        self.interact_on_opt(&Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on_opt(&Term::from_stderr())
     }
 
     /// Like `interact` but allows a specific terminal to be set.

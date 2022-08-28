@@ -1,7 +1,4 @@
-use std::{
-    io,
-    sync::{Arc, Mutex},
-};
+use std::io;
 
 use crate::{
     term::Term,
@@ -111,7 +108,7 @@ impl Confirm<'_> {
     /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<bool> {
-        self.interact_on(&Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on(&Term::from_stderr())
     }
 
     /// Enables user interaction and returns the result.
@@ -122,7 +119,7 @@ impl Confirm<'_> {
     /// or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<bool>> {
-        self.interact_on_opt(&Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on_opt(&Term::from_stderr())
     }
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.

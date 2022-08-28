@@ -13,8 +13,12 @@ pub struct Term {
 }
 
 impl Term {
-    pub(crate) fn new(data: Arc<Mutex<dyn io::Write>>) -> Self {
+    fn new(data: Arc<Mutex<dyn io::Write>>) -> Self {
         Term { inner: data }
+    }
+
+    pub(crate) fn from_stderr() -> Self {
+        Term::new(Arc::new(Mutex::new(io::stderr())))
     }
 
     /// Execute a command on the underlying terminal.

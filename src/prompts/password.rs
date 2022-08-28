@@ -1,7 +1,4 @@
-use std::{
-    io,
-    sync::{Arc, Mutex},
-};
+use std::io;
 
 use crate::{
     term::Term,
@@ -83,7 +80,7 @@ impl Password<'_> {
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
     pub fn interact(&self) -> io::Result<String> {
-        self.interact_on(&Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on(&Term::from_stderr())
     }
 
     /// Like `interact` but allows a specific terminal to be set.

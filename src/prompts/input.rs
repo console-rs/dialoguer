@@ -1,9 +1,4 @@
-use std::{
-    fmt::Debug,
-    io, iter,
-    str::FromStr,
-    sync::{Arc, Mutex},
-};
+use std::{fmt::Debug, io, iter, str::FromStr};
 
 #[cfg(feature = "completion")]
 use crate::completion::Completion;
@@ -262,7 +257,7 @@ where
     ///
     /// The dialog is rendered on stderr.
     pub fn interact_text(&mut self) -> io::Result<T> {
-        self.interact_text_on(&Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_text_on(&Term::from_stderr())
     }
 
     /// Like [`interact_text`](#method.interact_text) but allows a specific terminal to be set.
@@ -480,7 +475,7 @@ where
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
     pub fn interact(&mut self) -> io::Result<T> {
-        self.interact_on(&Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on(&Term::from_stderr())
     }
 
     /// Like [`interact`](#method.interact) but allows a specific terminal to be set.

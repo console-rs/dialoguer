@@ -1,8 +1,4 @@
-use std::{
-    io,
-    ops::Rem,
-    sync::{Arc, Mutex},
-};
+use std::{io, ops::Rem};
 
 use crate::{
     term::Term,
@@ -114,7 +110,7 @@ impl Sort<'_> {
     /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<Vec<usize>> {
-        self.interact_on(&Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on(&Term::from_stderr())
     }
 
     /// Enables user interaction and returns the result.
@@ -124,7 +120,7 @@ impl Sort<'_> {
     /// Result contains `Some(Vec<index>)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<Vec<usize>>> {
-        self.interact_on_opt(&Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on_opt(&Term::from_stderr())
     }
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
