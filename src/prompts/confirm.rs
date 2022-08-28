@@ -3,7 +3,6 @@ use std::{io, sync::{Arc, Mutex}};
 use crate::{term::Term, theme::{SimpleTheme, TermThemeRenderer, Theme}};
 
 use crossterm::{
-    cursor,
     event::{read, Event, KeyCode, KeyEvent},
     terminal,
 };
@@ -176,8 +175,8 @@ impl Confirm<'_> {
 
         render.confirm_prompt(&self.prompt, default_if_show)?;
 
-        render.hide_cursor()?;
-        render.flush()?;
+        term.hide_cursor()?;
+        term.flush()?;
 
         let rv;
         terminal::enable_raw_mode()?;
@@ -244,7 +243,7 @@ impl Confirm<'_> {
         if self.report {
             render.confirm_prompt_selection(&self.prompt, rv)?;
         }
-        term.execute(cursor::Show)?;
+        term.show_cursor()?;
         term.flush()?;
 
         Ok(rv)

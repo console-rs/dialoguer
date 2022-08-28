@@ -160,7 +160,7 @@ impl FuzzySelect<'_> {
         let mut position = 0;
         let mut search_term = String::new();
 
-        let mut render = TermThemeRenderer::new(term, self.theme);
+        let mut render = TermThemeRenderer::new(Term::clone(&term), self.theme);
         let mut sel = self.default;
 
         let mut size_vec = Vec::new();
@@ -178,7 +178,7 @@ impl FuzzySelect<'_> {
         // Variable used to determine if we need to scroll through the list.
         let mut starting_row = 0;
 
-        render.hide_cursor()?;
+        term.hide_cursor()?;
 
         loop {
             render.clear()?;
@@ -208,7 +208,7 @@ impl FuzzySelect<'_> {
                     &matcher,
                     &search_term,
                 )?;
-                render.flush()?;
+                term.flush()?;
             }
 
             if let Event::Key(KeyEvent { code, modifiers: _ }) = read().unwrap() {
@@ -217,9 +217,9 @@ impl FuzzySelect<'_> {
                     KeyCode::Esc if allow_quit => {
                         if self.clear {
                             render.clear()?;
-                            render.flush()?;
+                            term.flush()?;
                         }
-                        render.show_cursor()?;
+                        term.show_cursor()?;
                         return Ok(None);
                     }
                     KeyCode::Up | KeyCode::BackTab if !filtered_list.is_empty() => {
@@ -236,7 +236,7 @@ impl FuzzySelect<'_> {
                                 % (filtered_list.len() as i64))
                                 as usize;
                         }
-                        render.flush()?;
+                        term.flush()?;
                     }
                     KeyCode::Down | KeyCode::Tab if !filtered_list.is_empty() => {
                         if sel == !0 {
@@ -249,15 +249,15 @@ impl FuzzySelect<'_> {
                         } else if sel == 0 {
                             starting_row = 0;
                         }
-                        render.flush()?;
+                        term.flush()?;
                     }
                     KeyCode::Left if position > 0 => {
                         position -= 1;
-                        render.flush()?;
+                        term.flush()?;
                     }
                     KeyCode::Right if position < search_term.len() => {
                         position += 1;
-                        render.flush()?;
+                        term.flush()?;
                     }
                     KeyCode::Enter if !filtered_list.is_empty() => {
                         if self.clear {
@@ -275,18 +275,18 @@ impl FuzzySelect<'_> {
                         let sel_string_pos_in_items =
                             self.items.iter().position(|item| item.eq(sel_string));
 
-                        render.show_cursor()?;
+                        term.show_cursor()?;
                         return Ok(sel_string_pos_in_items);
                     }
                     KeyCode::Backspace if position > 0 => {
                         position -= 1;
                         search_term.remove(position);
-                        render.flush()?;
+                        term.flush()?;
                     }
                     KeyCode::Char(chr) if !chr.is_ascii_control() => {
                         search_term.insert(position, chr);
                         position += 1;
-                        render.flush()?;
+                        term.flush()?;
                         sel = 0;
                         starting_row = 0;
                     }

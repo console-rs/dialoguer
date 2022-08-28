@@ -736,19 +736,12 @@ impl<'a> TermThemeRenderer<'a> {
         self.height += 1;
     }
 
-    // Helper methods, passing commands through to the underlying terminal.
+    /// Flush the underlying terminal.
     pub fn flush(&mut self) -> io::Result<()> {
         self.term.flush()?;
         Ok(())
     }
-    pub fn hide_cursor(&mut self) -> io::Result<()> {
-        self.term.hide_cursor()?;
-        Ok(())
-    }
-    pub fn show_cursor(&mut self) -> io::Result<()> {
-        self.term.show_cursor()?;
-        Ok(())
-    }
+
     /// Clear the current line of input.
     ///
     /// Position the cursor at the beginning of the current line.

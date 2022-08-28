@@ -271,7 +271,7 @@ where
                     None
                 },
             )?;
-            render.flush()?;
+            term.flush()?;
 
             // Read input by keystroke so that we can suppress ascii control characters.
             if !io::stdout().is_tty() {
@@ -306,7 +306,7 @@ where
                                 render.move_cursor_left(tail.len() as u16)?;
                             }
 
-                            render.flush()?;
+                            term.flush()?;
                         }
                         KeyCode::Char(chr) if !chr.is_ascii_control() => {
                             chars.insert(position, chr);
@@ -315,17 +315,17 @@ where
                                 iter::once(&chr).chain(chars[position..].iter()).collect();
                             render.write_str(&tail)?;
                             render.move_cursor_left((tail.len() - 1) as u16)?;
-                            render.flush()?;
+                            term.flush()?;
                         }
                         KeyCode::Left if position > 0 => {
                             render.move_cursor_left(1)?;
                             position -= 1;
-                            render.flush()?;
+                            term.flush()?;
                         }
                         KeyCode::Right if position < chars.len() => {
                             render.move_cursor_right(1)?;
                             position += 1;
-                            render.flush()?;
+                            term.flush()?;
                         }
                         #[cfg(feature = "completion")]
                         KeyCode::Right | KeyCode::Tab => {
@@ -340,7 +340,7 @@ where
                                         position += 1;
                                     }
                                     render.write_str(&x)?;
-                                    render.flush()?;
+                                    term.flush()?;
                                 }
                             }
                         }
@@ -357,7 +357,7 @@ where
                                         position += 1;
                                     }
                                     render.write_str(&previous)?;
-                                    render.flush()?;
+                                    term.flush()?;
                                 }
                             }
                         }
@@ -379,7 +379,7 @@ where
                                                 position += 1;
                                             }
                                             render.write_str(&previous)?;
-                                            render.flush()?;
+                                            term.flush()?;
                                         }
                                     } else {
                                         render.clear_last_chars(chars.len() as u16)?;
@@ -489,7 +489,7 @@ where
                     None
                 },
             )?;
-            render.flush()?;
+            term.flush()?;
 
             let mut chars = if let Some(initial_text) = self.initial_text.as_ref() {
                 render.write_str(initial_text)?;
@@ -506,12 +506,12 @@ where
                             if chars.pop().is_some() {
                                 render.clear_last_chars(1)?;
                             }
-                            render.flush()?;
+                            term.flush()?;
                         }
                         KeyCode::Char(chr) => {
                             chars.push(chr);
                             render.write_str(&chr.to_string())?;
-                            render.flush()?;
+                            term.flush()?;
                         }
                         KeyCode::Enter => {
                             render.write_str("\n")?;
