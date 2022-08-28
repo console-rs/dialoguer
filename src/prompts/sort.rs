@@ -127,14 +127,13 @@ impl Sort<'_> {
     ///
     /// ## Examples
     ///```rust,no_run
-    /// use dialoguer::Sort;
-    /// use std::io;
+    /// use dialoguer::{Sort, Term};
     ///
     /// fn main() -> std::io::Result<()> {
     ///     let selections = Sort::new()
     ///         .item("Option A")
     ///         .item("Option B")
-    ///         .interact_on(&mut io::stderr())?;
+    ///         .interact_on(&Term::from_stderr())?;
     ///
     ///     println!("User sorted options as indices {:?}", selections);
     ///
@@ -151,14 +150,13 @@ impl Sort<'_> {
     ///
     /// ## Examples
     /// ```rust,no_run
-    /// use dialoguer::Sort;
-    /// use std::io;
+    /// use dialoguer::{Sort, Term};
     ///
     /// fn main() -> std::io::Result<()> {
     ///     let selections = Sort::new()
     ///         .item("Option A")
     ///         .item("Option B")
-    ///         .interact_on_opt(&mut io::stdout())?;
+    ///         .interact_on_opt(&Term::from_stdout())?;
     ///
     ///     match selections {
     ///         Some(positions) => println!("User sorted options as indices {:?}", positions),

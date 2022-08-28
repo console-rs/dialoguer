@@ -17,16 +17,16 @@ use crossterm::terminal;
 /// ```rust,no_run
 /// use dialoguer::{
 ///     Select,
+///     Term,
 ///     theme::ColorfulTheme
 /// };
-/// use std::io;
 ///
 /// fn main() -> std::io::Result<()> {
 ///     let items = vec!["Item 1", "item 2"];
 ///     let selection = Select::with_theme(&ColorfulTheme::default())
 ///         .items(&items)
 ///         .default(0)
-///         .interact_on_opt(&mut io::stderr())?;
+///         .interact_on_opt(&Term::from_stderr())?;
 ///
 ///     match selection {
 ///         Some(index) => println!("User selected item : {}", items[index]),
@@ -190,14 +190,14 @@ impl Select<'_> {
     ///
     /// ## Examples
     ///```rust,no_run
-    /// use dialoguer::Select;
+    /// use dialoguer::{Select, Term};
     /// use std::io;
     ///
     /// fn main() -> std::io::Result<()> {
     ///     let selection = Select::new()
     ///         .item("Option A")
     ///         .item("Option B")
-    ///         .interact_on(&mut io::stderr())?;
+    ///         .interact_on(&Term::from_stderr())?;
     ///
     ///     println!("User selected option at index {}", selection);
     ///
@@ -214,14 +214,13 @@ impl Select<'_> {
     ///
     /// ## Examples
     /// ```rust,no_run
-    /// use dialoguer::Select;
-    /// use std::io;
+    /// use dialoguer::{Select, Term};
     ///
     /// fn main() -> std::io::Result<()> {
     ///     let selection = Select::new()
     ///         .item("Option A")
     ///         .item("Option B")
-    ///         .interact_on_opt(&mut io::stdout())?;
+    ///         .interact_on_opt(&Term::from_stdout())?;
     ///
     ///     match selection {
     ///         Some(position) => println!("User selected option at index {}", position),

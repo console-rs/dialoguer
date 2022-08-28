@@ -20,16 +20,16 @@ use std::{io, ops::Rem};
 /// ```rust,no_run
 /// use dialoguer::{
 ///     FuzzySelect,
-///     theme::ColorfulTheme
+///     theme::ColorfulTheme,
+///     Term
 /// };
-/// use std::io;
 ///
 /// fn main() -> std::io::Result<()> {
 ///     let items = vec!["Item 1", "item 2"];
 ///     let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
 ///         .items(&items)
 ///         .default(0)
-///         .interact_on_opt(&mut io::stderr())?;
+///         .interact_on_opt(&Term::from_stderr())?;
 ///
 ///     match selection {
 ///         Some(index) => println!("User selected item : {}", items[index]),

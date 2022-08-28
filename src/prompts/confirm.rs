@@ -127,13 +127,12 @@ impl Confirm<'_> {
     /// ## Examples
     ///
     /// ```rust,no_run
-    /// use dialoguer::Confirm;
-    /// use std::io;
+    /// use dialoguer::{Confirm, Term};
     ///
     /// # fn main() -> std::io::Result<()> {
     /// let proceed = Confirm::new()
     ///     .with_prompt("Do you wish to continue?")
-    ///     .interact_on(&mut io::stderr())?;
+    ///     .interact_on(&Term::from_stderr())?;
     /// #   Ok(())
     /// # }
     /// ```
@@ -147,12 +146,11 @@ impl Confirm<'_> {
     ///
     /// ## Examples
     /// ```rust,no_run
-    /// use dialoguer::Confirm;
-    /// use std::io;
+    /// use dialoguer::{Confirm, Term};
     ///
     /// fn main() -> std::io::Result<()> {
     ///     let confirmation = Confirm::new()
-    ///         .interact_on_opt(&mut io::stdout())?;
+    ///         .interact_on_opt(&Term::from_stdout())?;
     ///
     ///     match confirmation {
     ///         Some(answer) => println!("User answered {}", if answer { "yes" } else { "no " }),

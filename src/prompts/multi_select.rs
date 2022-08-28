@@ -154,14 +154,13 @@ impl MultiSelect<'_> {
     ///
     /// ## Examples
     ///```rust,no_run
-    /// use dialoguer::MultiSelect;
-    /// use std::io;
+    /// use dialoguer::{MultiSelect, Term};
     ///
     /// fn main() -> std::io::Result<()> {
     ///     let selections = MultiSelect::new()
     ///         .item("Option A")
     ///         .item("Option B")
-    ///         .interact_on(&mut io::stderr())?;
+    ///         .interact_on(&Term::from_stderr())?;
     ///
     ///     println!("User selected options at indices {:?}", selections);
     ///
@@ -178,14 +177,13 @@ impl MultiSelect<'_> {
     ///
     /// ## Examples
     /// ```rust,no_run
-    /// use dialoguer::MultiSelect;
-    /// use std::io;
+    /// use dialoguer::{MultiSelect, Term};
     ///
     /// fn main() -> std::io::Result<()> {
     ///     let selections = MultiSelect::new()
     ///         .item("Option A")
     ///         .item("Option B")
-    ///         .interact_on_opt(&mut io::stdout())?;
+    ///         .interact_on_opt(&Term::from_stdout())?;
     ///
     ///     match selections {
     ///         Some(positions) => println!("User selected options at indices {:?}", positions),

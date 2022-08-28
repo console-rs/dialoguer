@@ -17,9 +17,12 @@ impl Term {
         Term { inner: data }
     }
 
-    pub(crate) fn from_stderr() -> Self {
+    pub fn from_stderr() -> Self {
         Term::new(Arc::new(Mutex::new(io::stderr())))
     }
+    pub fn from_stdout() -> Self {
+      Term::new(Arc::new(Mutex::new(io::stdout())))
+  }
 
     /// Execute a command on the underlying terminal.
     pub(crate) fn execute(&self, cmd: impl crossterm::Command) -> io::Result<&Self> {

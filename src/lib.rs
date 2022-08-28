@@ -47,6 +47,7 @@ mod edit;
 mod history;
 mod paging;
 mod prompts;
+pub use term::Term;
 mod term;
 pub mod theme;
 mod validate;
