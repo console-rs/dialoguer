@@ -29,7 +29,7 @@ pub use edit::Editor;
 pub use history::History;
 use paging::Paging;
 pub use prompts::{
-    confirm::Confirm, input::Input, /*multi_select::MultiSelect, select::Select, sort::Sort,*/
+    confirm::Confirm, input::Input, multi_select::MultiSelect, select::Select, sort::Sort,
 };
 pub use validate::Validator;
 
@@ -47,6 +47,7 @@ mod edit;
 mod history;
 mod paging;
 mod prompts;
+mod term;
 pub mod theme;
 mod validate;
 

@@ -1,4 +1,4 @@
-fn main() {} /* use dialoguer::{theme::ColorfulTheme, Sort};
+use dialoguer::{theme::ColorfulTheme, Sort};
 
 fn main() {
     let list = &[
@@ -30,4 +30,3 @@ fn main() {
     println!("Your least favorite item:");
     println!("  {}", list[sorted[sorted.len() - 1]]);
 }
-*/

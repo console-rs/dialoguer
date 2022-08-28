@@ -3,14 +3,13 @@ use std::{fmt, io};
 
 use console::{style, Style, StyledObject};
 use crossterm::{
-    cursor::{self, MoveDown, MoveLeft, MoveRight, MoveToColumn, MoveUp},
+    cursor::{MoveDown, MoveLeft, MoveRight, MoveToColumn, MoveUp},
     terminal::{self, Clear, ClearType},
-    ExecutableCommand,
 };
 #[cfg(feature = "fuzzy-select")]
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 
-use crate::DEFAULT_TERMINAL_SIZE;
+use crate::{DEFAULT_TERMINAL_SIZE, term::Term};
 
 /// Implements a theme for dialoguer.
 pub trait Theme {
@@ -710,7 +709,7 @@ impl Theme for ColorfulTheme {
 
 /// Helper struct to conveniently render a theme of a term.
 pub(crate) struct TermThemeRenderer<'a> {
-    term: &'a mut dyn io::Write,
+    term: Term,
     theme: &'a dyn Theme,
     height: usize,
     prompt_height: usize,
@@ -718,7 +717,7 @@ pub(crate) struct TermThemeRenderer<'a> {
 }
 
 impl<'a> TermThemeRenderer<'a> {
-    pub fn new(term: &'a mut dyn io::Write, theme: &'a dyn Theme) -> TermThemeRenderer<'a> {
+    pub fn new(term: Term, theme: &'a dyn Theme) -> TermThemeRenderer<'a> {
         TermThemeRenderer {
             term,
             theme,
@@ -743,18 +742,18 @@ impl<'a> TermThemeRenderer<'a> {
         Ok(())
     }
     pub fn hide_cursor(&mut self) -> io::Result<()> {
-        self.term.execute(cursor::Hide)?;
+        self.term.hide_cursor()?;
         Ok(())
     }
     pub fn show_cursor(&mut self) -> io::Result<()> {
-        self.term.execute(cursor::Show)?;
+        self.term.show_cursor()?;
         Ok(())
     }
     /// Clear the current line of input.
     ///
     /// Position the cursor at the beginning of the current line.
     pub fn clear_current_line(&mut self) -> io::Result<()> {
-        clear_current_line(self.term)
+        clear_current_line(&self.term)
     }
     pub fn write_str(&mut self, text: &str) -> io::Result<()> {
         self.term.write_all(text.as_bytes())?;
@@ -1014,14 +1013,14 @@ impl<'a> TermThemeRenderer<'a> {
     ///
     /// Position the cursor at the beginning of the current line.
     pub(crate) fn clear_last_lines(&mut self, n: u16) -> io::Result<()> {
-        clear_last_lines(self.term, n)
+        clear_last_lines(&self.term, n)
     }
 }
 
 /// Clear the current line of input.
 ///
 /// Position the cursor at the beginning of the current line.
-fn clear_current_line(term: &mut dyn io::Write) -> io::Result<()> {
+fn clear_current_line(term: &Term) -> io::Result<()> {
     term.execute(Clear(ClearType::CurrentLine))?;
     term.execute(MoveToColumn(1))?;
     Ok(())
@@ -1029,7 +1028,7 @@ fn clear_current_line(term: &mut dyn io::Write) -> io::Result<()> {
 /// Clear the last `n` lines of input, as well as the current line.
 ///
 /// Position the cursor at the beginning of the current line.
-pub(crate) fn clear_last_lines(term: &mut dyn io::Write, n: u16) -> io::Result<()> {
+pub(crate) fn clear_last_lines(term: &Term, n: u16) -> io::Result<()> {
     term.execute(MoveUp(n))?;
     for _ in 0..n {
         clear_current_line(term)?;

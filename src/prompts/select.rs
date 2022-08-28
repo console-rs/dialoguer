@@ -1,10 +1,12 @@
-/*use std::{io, ops::Rem};
+use std::sync::{Arc, Mutex};
+use std::{io, ops::Rem};
 
 use crate::Paging;
+use crate::term::Term;
 use crate::theme::{self, SimpleTheme, TermThemeRenderer, Theme};
 
 use crossterm::event::{Event, KeyCode, KeyEvent, read};
-use crossterm::{ExecutableCommand, cursor, terminal};
+use crossterm::terminal;
 
 /// Renders a select prompt.
 ///
@@ -172,7 +174,7 @@ impl Select<'_> {
     /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<usize> {
-        self.interact_on(&mut io::stderr())
+        self.interact_on(Term::new(Arc::new(Mutex::new(io::stderr()))))
     }
 
     /// Enables user interaction and returns the result.
@@ -182,7 +184,7 @@ impl Select<'_> {
     /// Result contains `Some(index)` if user selected one of items using 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<usize>> {
-        self.interact_on_opt(&mut io::stderr())
+        self.interact_on_opt(Term::new(Arc::new(Mutex::new(io::stderr()))))
     }
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
@@ -204,7 +206,7 @@ impl Select<'_> {
     /// }
     ///```
     #[inline]
-    pub fn interact_on(&self, term: &mut dyn io::Write) -> io::Result<usize> {
+    pub fn interact_on(&self, term: Term) -> io::Result<usize> {
         self._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
@@ -231,12 +233,12 @@ impl Select<'_> {
     /// }
     /// ```
     #[inline]
-    pub fn interact_on_opt(&self, term: &mut dyn io::Write) -> io::Result<Option<usize>> {
+    pub fn interact_on_opt(&self, term: Term) -> io::Result<Option<usize>> {
         self._interact_on(term, true)
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(&self, term: &mut dyn io::Write, allow_quit: bool) -> io::Result<Option<usize>> {
+    fn _interact_on(&self, term: Term, allow_quit: bool) -> io::Result<Option<usize>> {
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -244,8 +246,8 @@ impl Select<'_> {
             ));
         }
 
-        let mut paging = Paging::new(term, self.items.len(), self.max_length);
-        let mut render = TermThemeRenderer::new(term, self.theme);
+        let mut paging = Paging::new(Term::clone(&term), self.items.len(), self.max_length);
+        let mut render = TermThemeRenderer::new(Term::clone(&term), self.theme);
         let mut sel = self.default;
 
         let mut size_vec = Vec::new();
@@ -260,7 +262,7 @@ impl Select<'_> {
             size_vec.push(*size);
         }
 
-        term.execute(cursor::Hide)?;
+        term.hide_cursor()?;
 
         loop {
             if let Some(ref prompt) = self.prompt {
@@ -295,10 +297,10 @@ impl Select<'_> {
                             if self.clear {
                                 render.clear()?;
                             } else {
-                                theme::clear_last_lines(term, paging.capacity as u16)?;
+                                theme::clear_last_lines(&term, paging.capacity as u16)?;
                             }
 
-                            term.execute(cursor::Show)?;
+                            term.show_cursor()?;
                             term.flush()?;
 
                             return Ok(None);
@@ -334,7 +336,7 @@ impl Select<'_> {
                             }
                         }
 
-                        term.execute(cursor::Show)?;
+                        term.show_cursor()?;
                         term.flush()?;
 
                         return Ok(Some(sel));
@@ -427,4 +429,3 @@ mod tests {
         );
     }
 }
-*/

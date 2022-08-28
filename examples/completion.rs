@@ -1,4 +1,4 @@
-fn main() {} /* use dialoguer::{theme::ColorfulTheme, Completion, Input};
+use dialoguer::{theme::ColorfulTheme, Completion, Input};
 
 fn main() -> Result<(), std::io::Error> {
     println!("Use the Right arrow or Tab to complete your command");
@@ -42,4 +42,3 @@ impl Completion for MyCompletion {
         }
     }
 }
-*/

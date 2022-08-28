@@ -1,4 +1,4 @@
-fn main() {} /*use dialoguer::{theme::ColorfulTheme, Select};
+use dialoguer::{theme::ColorfulTheme, Select};
 
 fn main() {
     let selections = &[
@@ -41,4 +41,3 @@ fn main() {
 
     println!("Enjoy your {}!", selections[selection]);
 }
-*/

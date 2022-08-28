@@ -1,4 +1,5 @@
 use crate::{
+    term::Term,
     theme::{SimpleTheme, TermThemeRenderer, Theme},
     DEFAULT_TERMINAL_SIZE,
 };
@@ -7,7 +8,7 @@ use crossterm::{
     terminal,
 };
 use fuzzy_matcher::FuzzyMatcher;
-use std::{io, ops::Rem};
+use std::{io, ops::Rem, sync::{Arc, Mutex}};
 
 /// Renders a selection menu that user can fuzzy match to reduce set.
 ///
@@ -124,7 +125,7 @@ impl FuzzySelect<'_> {
     /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<usize> {
-        self.interact_on(&mut io::stderr())
+        self.interact_on(Term::new(Arc::new(Mutex::new(io::stderr()))))
     }
 
     /// Enables user interaction and returns the result.
@@ -134,26 +135,26 @@ impl FuzzySelect<'_> {
     /// Result contains `Some(index)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<usize>> {
-        self.interact_on_opt(&mut io::stderr())
+        self.interact_on_opt(Term::new(Arc::new(Mutex::new(io::stderr()))))
     }
 
     /// Like `interact` but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on(&self, term: &mut dyn io::Write) -> io::Result<usize> {
+    pub fn interact_on(&self, term: Term) -> io::Result<usize> {
         self._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
     /// Like `interact` but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on_opt(&self, term: &mut dyn io::Write) -> io::Result<Option<usize>> {
+    pub fn interact_on_opt(&self, term: Term) -> io::Result<Option<usize>> {
         self._interact_on(term, true)
     }
 
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(
         &self,
-        term: &mut dyn io::Write,
+        term: Term,
         allow_quit: bool,
     ) -> io::Result<Option<usize>> {
         let mut position = 0;

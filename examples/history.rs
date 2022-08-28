@@ -1,4 +1,4 @@
-fn main() {} /* use dialoguer::{theme::ColorfulTheme, History, Input};
+use dialoguer::{theme::ColorfulTheme, History, Input};
 use std::{collections::VecDeque, process};
 
 fn main() {
@@ -49,4 +49,3 @@ impl<T: ToString> History<T> for MyHistory {
         self.history.push_front(val.to_string());
     }
 }
-*/
