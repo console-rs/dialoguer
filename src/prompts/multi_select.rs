@@ -142,7 +142,7 @@ impl MultiSelect<'_> {
     /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<Vec<usize>> {
-        self.interact_on(Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on(&Term::new(Arc::new(Mutex::new(io::stderr()))))
     }
 
     /// Enables user interaction and returns the result.
@@ -152,7 +152,7 @@ impl MultiSelect<'_> {
     /// Result contains `Some(Vec<index>)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<Vec<usize>>> {
-        self.interact_on_opt(Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on_opt(&Term::new(Arc::new(Mutex::new(io::stderr()))))
     }
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
@@ -174,7 +174,7 @@ impl MultiSelect<'_> {
     /// }
     ///```
     #[inline]
-    pub fn interact_on(&self, term: Term) -> io::Result<Vec<usize>> {
+    pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
         self._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
@@ -201,11 +201,11 @@ impl MultiSelect<'_> {
     /// }
     /// ```
     #[inline]
-    pub fn interact_on_opt(&self, term: Term) -> io::Result<Option<Vec<usize>>> {
+    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<Vec<usize>>> {
         self._interact_on(term, true)
     }
 
-    fn _interact_on(&self, term: Term, allow_quit: bool) -> io::Result<Option<Vec<usize>>> {
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<Vec<usize>>> {
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -213,8 +213,8 @@ impl MultiSelect<'_> {
             ));
         }
 
-        let mut paging = Paging::new(Term::clone(&term), self.items.len(), self.max_length);
-        let mut render = TermThemeRenderer::new(Term::clone(&term), self.theme);
+        let mut paging = Paging::new(term, self.items.len(), self.max_length);
+        let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
 
         let mut size_vec = Vec::new();

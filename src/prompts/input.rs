@@ -262,12 +262,12 @@ where
     ///
     /// The dialog is rendered on stderr.
     pub fn interact_text(&mut self) -> io::Result<T> {
-        self.interact_text_on(Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_text_on(&Term::new(Arc::new(Mutex::new(io::stderr()))))
     }
 
     /// Like [`interact_text`](#method.interact_text) but allows a specific terminal to be set.
-    pub fn interact_text_on(&mut self, term: Term) -> io::Result<T> {
-        let mut render = TermThemeRenderer::new(Term::clone(&term), self.theme);
+    pub fn interact_text_on(&mut self, term: &Term) -> io::Result<T> {
+        let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
             let default_string = self.default.as_ref().map(ToString::to_string);
@@ -480,12 +480,12 @@ where
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
     pub fn interact(&mut self) -> io::Result<T> {
-        self.interact_on(Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on(&Term::new(Arc::new(Mutex::new(io::stderr()))))
     }
 
     /// Like [`interact`](#method.interact) but allows a specific terminal to be set.
-    pub fn interact_on(&mut self, term: Term) -> io::Result<T> {
-        let mut render = TermThemeRenderer::new(Term::clone(&term), self.theme);
+    pub fn interact_on(&mut self, term: &Term) -> io::Result<T> {
+        let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
             let default_string = self.default.as_ref().map(ToString::to_string);

@@ -8,7 +8,6 @@ use crossterm::{cursor, ExecutableCommand};
 /// Wrapper around a terminal: anything containing a Write instance.
 ///
 /// Cloning this type is rather cheap: it's just cloning an `Arc`.
-#[derive(Clone)]
 pub struct Term {
     inner: Arc<Mutex<dyn io::Write>>,
 }

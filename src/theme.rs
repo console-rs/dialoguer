@@ -709,7 +709,7 @@ impl Theme for ColorfulTheme {
 
 /// Helper struct to conveniently render a theme of a term.
 pub(crate) struct TermThemeRenderer<'a> {
-    term: Term,
+    term: &'a Term,
     theme: &'a dyn Theme,
     height: usize,
     prompt_height: usize,
@@ -717,7 +717,7 @@ pub(crate) struct TermThemeRenderer<'a> {
 }
 
 impl<'a> TermThemeRenderer<'a> {
-    pub fn new(term: Term, theme: &'a dyn Theme) -> TermThemeRenderer<'a> {
+    pub fn new(term: &'a Term, theme: &'a dyn Theme) -> TermThemeRenderer<'a> {
         TermThemeRenderer {
             term,
             theme,

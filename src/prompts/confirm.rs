@@ -111,7 +111,7 @@ impl Confirm<'_> {
     /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<bool> {
-        self.interact_on(Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on(&Term::new(Arc::new(Mutex::new(io::stderr()))))
     }
 
     /// Enables user interaction and returns the result.
@@ -122,7 +122,7 @@ impl Confirm<'_> {
     /// or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<bool>> {
-        self.interact_on_opt(Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on_opt(&Term::new(Arc::new(Mutex::new(io::stderr()))))
     }
 
     /// Like [interact](#method.interact) but allows a specific terminal to be set.
@@ -141,7 +141,7 @@ impl Confirm<'_> {
     /// # }
     /// ```
     #[inline]
-    pub fn interact_on(&self, term: Term) -> io::Result<bool> {
+    pub fn interact_on(&self, term: &Term) -> io::Result<bool> {
         self._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
@@ -166,12 +166,12 @@ impl Confirm<'_> {
     /// }
     /// ```
     #[inline]
-    pub fn interact_on_opt(&self, term: Term) -> io::Result<Option<bool>> {
+    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<bool>> {
         self._interact_on(term, true)
     }
 
-    fn _interact_on(&self, term: Term, allow_quit: bool) -> io::Result<Option<bool>> {
-        let mut render = TermThemeRenderer::new(Term::clone(&term), self.theme);
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<bool>> {
+        let mut render = TermThemeRenderer::new(term, self.theme);
 
         let default_if_show = if self.show_default {
             self.default

@@ -8,20 +8,20 @@ use crate::{term::Term, theme, DEFAULT_TERMINAL_SIZE};
 ///
 /// The paging module serves as tracking structure to allow paged views
 /// and automatically (de-)activates paging depending on the current terminal size.
-pub struct Paging {
+pub struct Paging<'a> {
     pub pages: usize,
     pub current_page: usize,
     pub capacity: usize,
     pub active: bool,
     pub max_capacity: Option<usize>,
-    term: Term,
+    term: &'a Term,
     current_term_size: (u16, u16),
     items_len: usize,
     activity_transition: bool,
 }
 
-impl Paging {
-    pub fn new(term: Term, items_len: usize, max_capacity: Option<usize>) -> Paging {
+impl<'a> Paging<'a> {
+    pub fn new(term: &Term, items_len: usize, max_capacity: Option<usize>) -> Paging {
         let term_size = terminal::size().unwrap_or(DEFAULT_TERMINAL_SIZE);
         // Subtract -2 because we need space to render the prompt, if paging is active
         let capacity = max_capacity

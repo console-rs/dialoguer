@@ -129,7 +129,7 @@ impl FuzzySelect<'_> {
     /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<usize> {
-        self.interact_on(Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on(&Term::new(Arc::new(Mutex::new(io::stderr()))))
     }
 
     /// Enables user interaction and returns the result.
@@ -139,28 +139,28 @@ impl FuzzySelect<'_> {
     /// Result contains `Some(index)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<usize>> {
-        self.interact_on_opt(Term::new(Arc::new(Mutex::new(io::stderr()))))
+        self.interact_on_opt(&Term::new(Arc::new(Mutex::new(io::stderr()))))
     }
 
     /// Like `interact` but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on(&self, term: Term) -> io::Result<usize> {
+    pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
         self._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
     /// Like `interact` but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on_opt(&self, term: Term) -> io::Result<Option<usize>> {
+    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<usize>> {
         self._interact_on(term, true)
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(&self, term: Term, allow_quit: bool) -> io::Result<Option<usize>> {
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
         let mut position = 0;
         let mut search_term = String::new();
 
-        let mut render = TermThemeRenderer::new(Term::clone(&term), self.theme);
+        let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
         let mut size_vec = Vec::new();
