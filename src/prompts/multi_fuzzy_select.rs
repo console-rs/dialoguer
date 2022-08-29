@@ -29,7 +29,12 @@ use std::{io, ops::Rem};
 ///         .interact_on_opt(&Term::stderr())?;
 ///
 ///     match selection {
-///         Some(index) => println!("User selected item : {}", items[index]),
+///         Some(indices) => println!(
+///         "User selected items : {}", items.iter()
+///                                         .enumerate()
+///                                         .filter(|(idx, _)| indices.contains(idx))
+///                                         .map(|(_, item)| item)
+///                                         .collect::<Vec<_>>()),
 ///         None => println!("User did not select anything")
 ///     }
 ///
@@ -84,6 +89,7 @@ impl MultiFuzzySelect<'_> {
     /// Add a single item to the fuzzy selector.
     pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
         self.items.push(item.to_string());
+        self.defaults.push(false);
         self
     }
 
@@ -91,6 +97,7 @@ impl MultiFuzzySelect<'_> {
     pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
         for item in items {
             self.items.push(item.to_string());
+            self.defaults.push(false);
         }
         self
     }
