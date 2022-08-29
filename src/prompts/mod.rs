@@ -8,6 +8,8 @@ pub mod sort;
 
 #[cfg(feature = "fuzzy-select")]
 pub mod fuzzy_select;
+#[cfg(feature = "fuzzy-select")]
+pub mod multi_fuzzy_select;
 
 #[cfg(feature = "password")]
 pub mod password;

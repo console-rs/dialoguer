@@ -1,0 +1,329 @@
+use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
+use console::{Key, Term};
+use fuzzy_matcher::FuzzyMatcher;
+use std::iter::repeat;
+use std::{io, ops::Rem};
+
+/// Renders a selection menu that user can fuzzy match to reduce set.
+/// Selection/Deselection is done by pressing `Spacebar`.
+/// (Note that this restricts the user to only search non-spacebar characters)
+/// Finishing the selection is done by pressing `Enter`
+///
+/// User can use fuzzy search to limit selectable items.
+/// Interaction returns `Vec` of indices of the selected items in the order they appear in `item` invocation or `items` slice.
+///
+/// ## Examples
+///
+/// ```rust,no_run
+/// use dialoguer::{
+///     MultiFuzzySelect,
+///     theme::ColorfulTheme
+/// };
+/// use console::Term;
+///
+/// fn main() -> std::io::Result<()> {
+///     let items = vec!["Item 1", "item 2"];
+///     let selection = MultiFuzzySelect::with_theme(&ColorfulTheme::default())
+///         .items(&items)
+///         .default(0)
+///         .interact_on_opt(&Term::stderr())?;
+///
+///     match selection {
+///         Some(index) => println!("User selected item : {}", items[index]),
+///         None => println!("User did not select anything")
+///     }
+///
+///     Ok(())
+/// }
+/// ```
+
+pub struct MultiFuzzySelect<'a> {
+    defaults: Vec<bool>,
+    items: Vec<String>,
+    prompt: String,
+    report: bool,
+    clear: bool,
+    highlight_matches: bool,
+    theme: &'a dyn Theme,
+}
+
+impl Default for MultiFuzzySelect<'static> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl MultiFuzzySelect<'static> {
+    /// Creates the prompt with a specific text.
+    pub fn new() -> Self {
+        Self::with_theme(&SimpleTheme)
+    }
+}
+
+impl MultiFuzzySelect<'_> {
+    /// Sets the clear behavior of the menu.
+    ///
+    /// The default is to clear the menu.
+    pub fn clear(&mut self, val: bool) -> &mut Self {
+        self.clear = val;
+        self
+    }
+
+    /// Sets a default selection for the menu
+    pub fn defaults(&mut self, val: &[bool]) -> &mut Self {
+        self.defaults = val
+            .to_vec()
+            .iter()
+            .copied()
+            .chain(repeat(false))
+            .take(self.items.len())
+            .collect();
+        self
+    }
+
+    /// Add a single item to the fuzzy selector.
+    pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
+        self.items.push(item.to_string());
+        self
+    }
+
+    /// Adds multiple items to the fuzzy selector.
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
+        for item in items {
+            self.items.push(item.to_string());
+        }
+        self
+    }
+
+    /// Prefaces the menu with a prompt.
+    ///
+    /// When a prompt is set the system also prints out a confirmation after
+    /// the fuzzy selection.
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
+        self.prompt = prompt.into();
+        self
+    }
+
+    /// Indicates whether to report the selected value after interaction.
+    ///
+    /// The default is to report the selection.
+    pub fn report(&mut self, val: bool) -> &mut Self {
+        self.report = val;
+        self
+    }
+
+    /// Indicates whether to highlight matched indices
+    ///
+    /// The default is to highlight the indices
+    pub fn highlight_matches(&mut self, val: bool) -> &mut Self {
+        self.highlight_matches = val;
+        self
+    }
+
+    /// Enables user interaction and returns the result.
+    ///
+    /// The user can select the items using 'Enter' and the index of selected item will be returned.
+    /// The dialog is rendered on stderr.
+    /// Result contains `index` of selected item if user hit 'Enter'.
+    /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
+    #[inline]
+    pub fn interact(&self) -> io::Result<Vec<usize>> {
+        self.interact_on(&Term::stderr())
+    }
+
+    /// Enables user interaction and returns the result.
+    ///
+    /// The user can select the items using 'Enter' and the index of selected item will be returned.
+    /// The dialog is rendered on stderr.
+    /// Result contains `Some(index)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
+    #[inline]
+    pub fn interact_opt(&self) -> io::Result<Vec<usize>> {
+        self.interact_on_opt(&Term::stderr())
+    }
+
+    /// Like `interact` but allows a specific terminal to be set.
+    #[inline]
+    pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
+        self._interact_on(term, false)
+    }
+
+    /// Like `interact` but allows a specific terminal to be set.
+    #[inline]
+    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Vec<usize>> {
+        self._interact_on(term, true)
+    }
+
+    /// Like `interact` but allows a specific terminal to be set.
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Vec<usize>> {
+        let mut position = 0;
+        let mut search_term = String::new();
+
+        let mut render = TermThemeRenderer::new(term, self.theme);
+        let mut sel = 0;
+
+        let mut size_vec = Vec::new();
+        for items in self.items.iter().as_slice() {
+            let size = &items.len();
+            size_vec.push(*size);
+        }
+
+        // Fuzzy matcher
+        let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+
+        // Subtract -2 because we need space to render the prompt.
+        let visible_term_rows = (term.size().0 as usize).max(3) - 2;
+        // Variable used to determine if we need to scroll through the list.
+        let mut starting_row = 0;
+
+        term.hide_cursor()?;
+
+        let mut checked: Vec<bool> = self.defaults.clone();
+
+        loop {
+            render.clear()?;
+            render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, position)?;
+
+            // Maps all items to a tuple of item and its match score.
+            let mut filtered_list = self
+                .items
+                .iter()
+                .enumerate()
+                .map(|(idx, item)| (idx, item, matcher.fuzzy_match(item, &search_term)))
+                .filter_map(|(idx, item, score)| score.map(|s| (idx, item, s)))
+                .collect::<Vec<_>>();
+
+            // Renders all matching items, from best match to worst.
+            filtered_list.sort_unstable_by(|(_, _, s1), (_, _, s2)| s2.cmp(s1));
+
+            for (idx, (item_idx, item, _)) in filtered_list
+                .iter()
+                .enumerate()
+                .skip(starting_row)
+                .take(visible_term_rows)
+            {
+                render.fuzzy_select_multi_prompt_item(
+                    item,
+                    idx == sel,
+                    checked[*item_idx],
+                    self.highlight_matches,
+                    &matcher,
+                    &search_term,
+                )?;
+                term.flush()?;
+            }
+
+            match term.read_key()? {
+                Key::Escape if allow_quit => {
+                    if self.clear {
+                        render.clear()?;
+                        term.flush()?;
+                    }
+                    term.show_cursor()?;
+                    return Ok(vec![]);
+                }
+                Key::ArrowUp | Key::BackTab if !filtered_list.is_empty() => {
+                    if sel == 0 {
+                        starting_row =
+                            filtered_list.len().max(visible_term_rows) - visible_term_rows;
+                    } else if sel == starting_row {
+                        starting_row -= 1;
+                    }
+                    if sel == !0 {
+                        sel = filtered_list.len() - 1;
+                    } else {
+                        sel = ((sel as i64 - 1 + filtered_list.len() as i64)
+                            % (filtered_list.len() as i64)) as usize;
+                    }
+                    term.flush()?;
+                }
+                Key::ArrowDown | Key::Tab if !filtered_list.is_empty() => {
+                    if sel == !0 {
+                        sel = 0;
+                    } else {
+                        sel = (sel as u64 + 1).rem(filtered_list.len() as u64) as usize;
+                    }
+                    if sel == visible_term_rows + starting_row {
+                        starting_row += 1;
+                    } else if sel == 0 {
+                        starting_row = 0;
+                    }
+                    term.flush()?;
+                }
+                Key::ArrowLeft if position > 0 => {
+                    position -= 1;
+                    term.flush()?;
+                }
+                Key::ArrowRight if position < search_term.len() => {
+                    position += 1;
+                    term.flush()?;
+                }
+                Key::Enter if !filtered_list.is_empty() => {
+                    if self.clear {
+                        render.clear()?;
+                    }
+
+                    if self.report {
+                        render
+                            .input_prompt_selection(self.prompt.as_str(), filtered_list[sel].1)?;
+                    }
+
+                    let selected_items = checked
+                        .into_iter()
+                        .enumerate()
+                        .filter_map(|(idx, checked)| checked.then_some(idx))
+                        .collect::<Vec<_>>();
+
+                    println!("{selected_items:?}");
+
+                    term.show_cursor()?;
+                    return Ok(selected_items);
+                }
+                Key::Backspace if position > 0 => {
+                    position -= 1;
+                    search_term.remove(position);
+                    term.flush()?;
+                }
+                Key::Char(' ') => {
+                    let sel_string = filtered_list[sel].1;
+                    if let Some(sel_string_pos_in_items) =
+                        self.items.iter().position(|item| item.eq(sel_string))
+                    {
+                        checked[sel_string_pos_in_items] = !checked[sel_string_pos_in_items];
+                    }
+
+                    search_term.clear();
+                    position = 0;
+                    sel = 0;
+                    starting_row = 0;
+                    term.flush()?;
+                }
+                Key::Char(chr) if !chr.is_ascii_control() => {
+                    search_term.insert(position, chr);
+                    position += 1;
+                    term.flush()?;
+                    sel = 0;
+                    starting_row = 0;
+                }
+
+                _ => {}
+            }
+
+            render.clear_preserve_prompt(&size_vec)?;
+        }
+    }
+}
+
+impl<'a> MultiFuzzySelect<'a> {
+    /// Same as `new` but with a specific theme.
+    pub fn with_theme(theme: &'a dyn Theme) -> Self {
+        Self {
+            defaults: vec![],
+            items: vec![],
+            prompt: "".into(),
+            report: true,
+            clear: true,
+            highlight_matches: true,
+            theme,
+        }
+    }
+}

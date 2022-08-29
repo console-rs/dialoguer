@@ -238,6 +238,43 @@ pub trait Theme {
         write!(f, "{}", text)
     }
 
+    /// Formats a fuzzy multi select prompt item.
+    #[cfg(feature = "fuzzy-select")]
+    fn format_fuzzy_multi_select_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        active: bool,
+        picked: bool,
+        highlight_matches: bool,
+        matcher: &SkimMatcherV2,
+        search_term: &str,
+    ) -> fmt::Result {
+        let prefix = match (active, picked) {
+            (true, true) => "> [x] ",
+            (true, false) => "> [ ] ",
+            (false, true) => "  [x] ",
+            (false, false) => "  [ ] ",
+        };
+        write!(f, "{prefix}")?;
+
+        if highlight_matches {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
+                for (idx, c) in text.chars().into_iter().enumerate() {
+                    if indices.contains(&idx) {
+                        write!(f, "{}", style(c).for_stderr().bold())?;
+                    } else {
+                        write!(f, "{}", c)?;
+                    }
+                }
+
+                return Ok(());
+            }
+        }
+
+        write!(f, "{}", text)
+    }
+
     /// Formats a fuzzy select prompt.
     #[cfg(feature = "fuzzy-select")]
     fn format_fuzzy_select_prompt(
@@ -877,6 +914,29 @@ impl<'a> TermThemeRenderer<'a> {
                 buf,
                 text,
                 active,
+                highlight,
+                matcher,
+                search_term,
+            )
+        })
+    }
+
+    #[cfg(feature = "fuzzy-select")]
+    pub fn fuzzy_select_multi_prompt_item(
+        &mut self,
+        text: &str,
+        active: bool,
+        picked: bool,
+        highlight: bool,
+        matcher: &SkimMatcherV2,
+        search_term: &str,
+    ) -> io::Result<()> {
+        self.write_formatted_line(|this, buf| {
+            this.theme.format_fuzzy_multi_select_prompt_item(
+                buf,
+                text,
+                active,
+                picked,
                 highlight,
                 matcher,
                 search_term,

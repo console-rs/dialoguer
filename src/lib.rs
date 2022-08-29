@@ -34,7 +34,7 @@ pub use prompts::{
 pub use validate::Validator;
 
 #[cfg(feature = "fuzzy-select")]
-pub use prompts::fuzzy_select::FuzzySelect;
+pub use prompts::{fuzzy_select::FuzzySelect, multi_fuzzy_select::MultiFuzzySelect};
 
 #[cfg(feature = "password")]
 pub use prompts::password::Password;
