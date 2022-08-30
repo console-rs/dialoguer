@@ -277,7 +277,7 @@ impl MultiFuzzySelect<'_> {
                     let selected_items = checked
                         .into_iter()
                         .enumerate()
-                        .filter_map(|(idx, checked)| checked.then_some(idx))
+                        .filter_map(|(idx, checked)| checked.then(|| idx))
                         .collect::<Vec<_>>();
 
                     term.show_cursor()?;
