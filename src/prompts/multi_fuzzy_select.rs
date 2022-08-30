@@ -280,8 +280,6 @@ impl MultiFuzzySelect<'_> {
                         .filter_map(|(idx, checked)| checked.then_some(idx))
                         .collect::<Vec<_>>();
 
-                    println!("{selected_items:?}");
-
                     term.show_cursor()?;
                     return Ok(selected_items);
                 }
