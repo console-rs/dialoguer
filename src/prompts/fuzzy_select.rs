@@ -114,7 +114,7 @@ impl FuzzySelect<'_> {
     /// Sets the maximum number of visible options.
     ///
     /// The default is the height of the terminal minus 2.
-    pub fn with_max_length(&mut self, rows: usize) -> &mut Self {
+    pub fn max_length(&mut self, rows: usize) -> &mut Self {
         self.max_length = Some(rows);
         self
     }
