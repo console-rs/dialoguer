@@ -138,13 +138,12 @@ impl FuzzySelect<'_> {
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
+    /// Like `interact_opt` but allows a specific terminal to be set.
     #[inline]
     pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<usize>> {
         self._interact_on(term, true)
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
         let mut position = 0;
         let mut search_term = String::new();

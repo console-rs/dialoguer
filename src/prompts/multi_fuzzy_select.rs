@@ -4,10 +4,9 @@ use fuzzy_matcher::FuzzyMatcher;
 use std::iter::repeat;
 use std::{io, ops::Rem};
 
-/// Renders a selection menu that user can fuzzy match to reduce set.
+/// Renders a multi selection menu that user can fuzzy match to reduce set.
 /// Selection/Deselection is done by pressing `Spacebar`.
 /// (Note that this restricts the user to only search non-spacebar characters)
-/// Finishing the selection is done by pressing `Enter`
 ///
 /// User can use fuzzy search to limit selectable items.
 /// Interaction returns `Vec` of indices of the selected items in the order they appear in `item` invocation or `items` slice.
@@ -29,12 +28,7 @@ use std::{io, ops::Rem};
 ///         .interact_on_opt(&Term::stderr())?;
 ///
 ///     match selection {
-///         Some(indices) => println!(
-///         "User selected items : {}", items.iter()
-///                                         .enumerate()
-///                                         .filter(|(idx, _)| indices.contains(idx))
-///                                         .map(|(_, item)| item)
-///                                         .collect::<Vec<_>>()),
+///         Some(indices) => println!("User selected items : {:?}", indices),
 ///         None => println!("User did not select anything")
 ///     }
 ///
@@ -129,9 +123,11 @@ impl MultiFuzzySelect<'_> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// The user can select the items using 'Enter' and the index of selected item will be returned.
+    /// The user can toggle the selection of the hovered item using 'Spacebar'.
+    /// After the desired items are all toggled, the user can submit the selection by pressing
+    /// 'Enter' and the indices of the selected items will be returned.
     /// The dialog is rendered on stderr.
-    /// Result contains `index` of selected item if user hit 'Enter'.
+    /// Result contains `Vec<index>` of selected items if user hit 'Enter'.
     /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<Vec<usize>> {
@@ -140,9 +136,11 @@ impl MultiFuzzySelect<'_> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// The user can select the items using 'Enter' and the index of selected item will be returned.
+    /// The user can toggle the selection of the hovered item using 'Spacebar'.
+    /// After the desired items are all toggled, the user can submit the selection by pressing
+    /// 'Enter' and the indices of the selected items will be returned.
     /// The dialog is rendered on stderr.
-    /// Result contains `Some(index)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
+    /// Result contains `Some(Vec<index>)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
     pub fn interact_opt(&self) -> io::Result<Vec<usize>> {
         self.interact_on_opt(&Term::stderr())
@@ -154,13 +152,12 @@ impl MultiFuzzySelect<'_> {
         self._interact_on(term, false)
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
+    /// Like `interact_opt` but allows a specific terminal to be set.
     #[inline]
     pub fn interact_on_opt(&self, term: &Term) -> io::Result<Vec<usize>> {
         self._interact_on(term, true)
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Vec<usize>> {
         let mut position = 0;
         let mut search_term = String::new();
@@ -208,7 +205,7 @@ impl MultiFuzzySelect<'_> {
                 .skip(starting_row)
                 .take(visible_term_rows)
             {
-                render.fuzzy_select_multi_prompt_item(
+                render.multi_fuzzy_select_prompt_item(
                     item,
                     idx == sel,
                     checked[*item_idx],

@@ -922,7 +922,7 @@ impl<'a> TermThemeRenderer<'a> {
     }
 
     #[cfg(feature = "fuzzy-select")]
-    pub fn fuzzy_select_multi_prompt_item(
+    pub fn multi_fuzzy_select_prompt_item(
         &mut self,
         text: &str,
         active: bool,
