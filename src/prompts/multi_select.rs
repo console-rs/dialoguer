@@ -271,6 +271,13 @@ impl MultiSelect<'_> {
                 Key::Char(' ') => {
                     checked[sel] = !checked[sel];
                 }
+                Key::Char('a') => {
+                    if checked.iter().all(|&item_checked| item_checked) {
+                        checked.fill(false);
+                    } else {
+                        checked.fill(true);
+                    }
+                }
                 Key::Escape | Key::Char('q') => {
                     if allow_quit {
                         if self.clear {
