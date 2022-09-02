@@ -238,9 +238,33 @@ pub trait Theme {
         write!(f, "{}", text)
     }
 
-    /// Formats a fuzzy multi select prompt item.
+    /// Formats a fuzzy select prompt.
     #[cfg(feature = "fuzzy-select")]
-    fn format_fuzzy_multi_select_prompt_item(
+    fn format_fuzzy_select_prompt(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        search_term: &str,
+        cursor_pos: usize,
+    ) -> fmt::Result {
+        if !prompt.is_empty() {
+            write!(f, "{} ", prompt,)?;
+        }
+
+        if cursor_pos < search_term.len() {
+            let st_head = search_term[0..cursor_pos].to_string();
+            let st_tail = search_term[cursor_pos..search_term.len()].to_string();
+            let st_cursor = "|".to_string();
+            write!(f, "{}{}{}", st_head, st_cursor, st_tail)
+        } else {
+            let cursor = "|".to_string();
+            write!(f, "{}{}", search_term.to_string(), cursor)
+        }
+    }
+
+    /// Formats a multi fuzzy select prompt item.
+    #[cfg(feature = "fuzzy-select")]
+    fn format_multi_fuzzy_select_prompt_item(
         &self,
         f: &mut dyn fmt::Write,
         text: &str,
@@ -275,9 +299,9 @@ pub trait Theme {
         write!(f, "{}", text)
     }
 
-    /// Formats a fuzzy select prompt.
+    /// Formats a multi fuzzy select prompt.
     #[cfg(feature = "fuzzy-select")]
-    fn format_fuzzy_select_prompt(
+    fn format_multi_fuzzy_select_prompt(
         &self,
         f: &mut dyn fmt::Write,
         prompt: &str,
@@ -742,6 +766,97 @@ impl Theme for ColorfulTheme {
             )
         }
     }
+
+    /// Formats a multi fuzzy select prompt item.
+    #[cfg(feature = "fuzzy-select")]
+    fn format_multi_fuzzy_select_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        active: bool,
+        picked: bool,
+        highlight_matches: bool,
+        matcher: &SkimMatcherV2,
+        search_term: &str,
+    ) -> fmt::Result {
+        let (is_active_prefix, is_picked_prefix) = match (active, picked) {
+            (true, true) => (&self.active_item_prefix, &self.picked_item_prefix),
+            (true, false) => (&self.active_item_prefix, &self.unpicked_item_prefix),
+            (false, true) => (&self.inactive_item_prefix, &self.picked_item_prefix),
+            (false, false) => (&self.inactive_item_prefix, &self.unpicked_item_prefix),
+        };
+        write!(f, "{is_active_prefix} {is_picked_prefix}")?;
+
+        if highlight_matches {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
+                for (idx, c) in text.chars().into_iter().enumerate() {
+                    if indices.contains(&idx) {
+                        if active {
+                            write!(
+                                f,
+                                "{}",
+                                self.active_item_style
+                                    .apply_to(self.fuzzy_match_highlight_style.apply_to(c))
+                            )?;
+                        } else {
+                            write!(f, "{}", self.fuzzy_match_highlight_style.apply_to(c))?;
+                        }
+                    } else {
+                        if active {
+                            write!(f, "{}", self.active_item_style.apply_to(c))?;
+                        } else {
+                            write!(f, "{}", c)?;
+                        }
+                    }
+                }
+
+                return Ok(());
+            }
+        }
+
+        write!(f, "{}", text)
+    }
+
+    /// Formats a mutli fuzzy-select prompt after selection.
+    #[cfg(feature = "fuzzy-select")]
+    fn format_multi_fuzzy_select_prompt(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        search_term: &str,
+        cursor_pos: usize,
+    ) -> fmt::Result {
+        if !prompt.is_empty() {
+            write!(
+                f,
+                "{} {} ",
+                &self.prompt_prefix,
+                self.prompt_style.apply_to(prompt)
+            )?;
+        }
+
+        if cursor_pos < search_term.len() {
+            let st_head = search_term[0..cursor_pos].to_string();
+            let st_tail = search_term[cursor_pos + 1..search_term.len()].to_string();
+            let st_cursor = self
+                .fuzzy_cursor_style
+                .apply_to(search_term.to_string().chars().nth(cursor_pos).unwrap());
+            write!(
+                f,
+                "{} {}{}{}",
+                &self.prompt_suffix, st_head, st_cursor, st_tail
+            )
+        } else {
+            let cursor = self.fuzzy_cursor_style.apply_to(" ");
+            write!(
+                f,
+                "{} {}{}",
+                &self.prompt_suffix,
+                search_term.to_string(),
+                cursor
+            )
+        }
+    }
 }
 
 /// Helper struct to conveniently render a theme of a term.
@@ -847,6 +962,19 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
+    #[cfg(feature = "fuzzy-select")]
+    pub fn multi_fuzzy_select_prompt(
+        &mut self,
+        prompt: &str,
+        search_term: &str,
+        cursor_pos: usize,
+    ) -> io::Result<()> {
+        self.write_formatted_prompt(|this, buf| {
+            this.theme
+                .format_multi_fuzzy_select_prompt(buf, prompt, search_term, cursor_pos)
+        })
+    }
+
     pub fn input_prompt(&mut self, prompt: &str, default: Option<&str>) -> io::Result<()> {
         self.write_formatted_str(|this, buf| this.theme.format_input_prompt(buf, prompt, default))
     }
@@ -932,7 +1060,7 @@ impl<'a> TermThemeRenderer<'a> {
         search_term: &str,
     ) -> io::Result<()> {
         self.write_formatted_line(|this, buf| {
-            this.theme.format_fuzzy_multi_select_prompt_item(
+            this.theme.format_multi_fuzzy_select_prompt_item(
                 buf,
                 text,
                 active,
