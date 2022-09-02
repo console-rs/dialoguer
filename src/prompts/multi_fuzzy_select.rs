@@ -299,9 +299,12 @@ impl MultiFuzzySelect<'_> {
                     term.flush()?;
                 }
                 Key::Char(' ') => {
-                    let sel_string = filtered_list[sel].1;
-                    if let Some(sel_string_pos_in_items) =
-                        self.items.iter().position(|item| item.eq(sel_string))
+                    if let Some(sel_string_pos_in_items) = filtered_list
+                        .get(sel)
+                        .map(|selection| selection.1)
+                        .and_then(|sel_string| {
+                            self.items.iter().position(|item| item.eq(sel_string))
+                        })
                     {
                         checked[sel_string_pos_in_items] = !checked[sel_string_pos_in_items];
                     }
