@@ -37,6 +37,7 @@ fn main() {
         .with_prompt("Pick your food")
         .items(&multiselected[..])
         .defaults(&defaults[..])
+        .max_length(10)
         .interact()
         .unwrap();
     if selections.is_empty() {
