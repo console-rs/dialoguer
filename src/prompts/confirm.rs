@@ -21,59 +21,44 @@ use console::{Key, Term};
 /// ```
 pub struct Confirm<'a> {
     prompt: String,
+    report: bool,
     default: Option<bool>,
     show_default: bool,
     wait_for_newline: bool,
     theme: &'a dyn Theme,
 }
 
-impl<'a> Default for Confirm<'a> {
-    fn default() -> Confirm<'a> {
-        Confirm::new()
+impl Default for Confirm<'static> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-impl<'a> Confirm<'a> {
+impl Confirm<'static> {
     /// Creates a confirm prompt.
-    pub fn new() -> Confirm<'static> {
-        Confirm::with_theme(&SimpleTheme)
+    pub fn new() -> Self {
+        Self::with_theme(&SimpleTheme)
     }
+}
 
-    /// Creates a confirm prompt with a specific theme.
-    ///
-    /// ## Examples
-    /// ```rust,no_run
-    /// use dialoguer::{
-    ///     Confirm,
-    ///     theme::ColorfulTheme
-    /// };
-    ///
-    /// # fn main() -> std::io::Result<()> {
-    /// let proceed = Confirm::with_theme(&ColorfulTheme::default())
-    ///     .with_prompt("Do you wish to continue?")
-    ///     .interact()?;
-    /// #    Ok(())
-    /// # }
-    /// ```
-    pub fn with_theme(theme: &'a dyn Theme) -> Confirm<'a> {
-        Confirm {
-            prompt: "".into(),
-            default: None,
-            show_default: true,
-            wait_for_newline: false,
-            theme,
-        }
-    }
-
+impl Confirm<'_> {
     /// Sets the confirm prompt.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Confirm<'a> {
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
+        self
+    }
+
+    /// Indicates whether or not to report the chosen selection after interaction.
+    ///
+    /// The default is to report the chosen selection.
+    pub fn report(&mut self, val: bool) -> &mut Self {
+        self.report = val;
         self
     }
 
     #[deprecated(note = "Use with_prompt() instead", since = "0.6.0")]
     #[inline]
-    pub fn with_text(&mut self, text: &str) -> &mut Confirm<'a> {
+    pub fn with_text(&mut self, text: &str) -> &mut Self {
         self.with_prompt(text)
     }
 
@@ -86,7 +71,7 @@ impl<'a> Confirm<'a> {
     /// When `true`, the user must type their choice and hit the Enter key before
     /// proceeding. Valid inputs can be "yes", "no", "y", "n", or an empty string
     /// to accept the default.
-    pub fn wait_for_newline(&mut self, wait: bool) -> &mut Confirm<'a> {
+    pub fn wait_for_newline(&mut self, wait: bool) -> &mut Self {
         self.wait_for_newline = wait;
         self
     }
@@ -96,7 +81,7 @@ impl<'a> Confirm<'a> {
     /// Out of the box the prompt does not have a default and will continue
     /// to display until the user inputs something and hits enter. If a default is set the user
     /// can instead accept the default with enter.
-    pub fn default(&mut self, val: bool) -> &mut Confirm<'a> {
+    pub fn default(&mut self, val: bool) -> &mut Self {
         self.default = Some(val);
         self
     }
@@ -104,7 +89,7 @@ impl<'a> Confirm<'a> {
     /// Disables or enables the default value display.
     ///
     /// The default is to append the default value to the prompt to tell the user.
-    pub fn show_default(&mut self, val: bool) -> &mut Confirm<'a> {
+    pub fn show_default(&mut self, val: bool) -> &mut Self {
         self.show_default = val;
         self
     }
@@ -113,8 +98,8 @@ impl<'a> Confirm<'a> {
     ///
     /// The dialog is rendered on stderr.
     ///
-    /// Result contains `bool` if user answered "yes" or "no" or `default` (configured in [default](#method.default)) if pushes enter.
-    /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
+    /// Result contains `bool` if user answered "yes" or "no" or `default` (configured in [`default`](Self::default) if pushes enter.
+    /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<bool> {
         self.interact_on(&Term::stderr())
@@ -124,7 +109,7 @@ impl<'a> Confirm<'a> {
     ///
     /// The dialog is rendered on stderr.
     ///
-    /// Result contains `Some(bool)` if user answered "yes" or "no" or `Some(default)` (configured in [default](#method.default)) if pushes enter,
+    /// Result contains `Some(bool)` if user answered "yes" or "no" or `Some(default)` (configured in [`default`](Self::default)) if pushes enter,
     /// or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
     pub fn interact_opt(&self) -> io::Result<Option<bool>> {
@@ -152,7 +137,7 @@ impl<'a> Confirm<'a> {
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
-    /// Like [interact_opt](#method.interact_opt) but allows a specific terminal to be set.
+    /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
     ///
     /// ## Examples
     /// ```rust,no_run
@@ -250,10 +235,41 @@ impl<'a> Confirm<'a> {
         }
 
         term.clear_line()?;
-        render.confirm_prompt_selection(&self.prompt, rv)?;
+        if self.report {
+            render.confirm_prompt_selection(&self.prompt, rv)?;
+        }
         term.show_cursor()?;
         term.flush()?;
 
         Ok(rv)
+    }
+}
+
+impl<'a> Confirm<'a> {
+    /// Creates a confirm prompt with a specific theme.
+    ///
+    /// ## Examples
+    /// ```rust,no_run
+    /// use dialoguer::{
+    ///     Confirm,
+    ///     theme::ColorfulTheme
+    /// };
+    ///
+    /// # fn main() -> std::io::Result<()> {
+    /// let proceed = Confirm::with_theme(&ColorfulTheme::default())
+    ///     .with_prompt("Do you wish to continue?")
+    ///     .interact()?;
+    /// #    Ok(())
+    /// # }
+    /// ```
+    pub fn with_theme(theme: &'a dyn Theme) -> Self {
+        Self {
+            prompt: "".into(),
+            report: true,
+            default: None,
+            show_default: true,
+            wait_for_newline: false,
+            theme,
+        }
     }
 }

@@ -2,6 +2,8 @@
 use std::{fmt, io};
 
 use console::{style, Style, StyledObject, Term};
+#[cfg(feature = "fuzzy-select")]
+use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 
 /// Implements a theme for dialoguer.
 pub trait Theme {
@@ -85,12 +87,14 @@ pub trait Theme {
 
     /// Formats a password prompt.
     #[inline]
+    #[cfg(feature = "password")]
     fn format_password_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         self.format_input_prompt(f, prompt, None)
     }
 
     /// Formats a password prompt after selection.
     #[inline]
+    #[cfg(feature = "password")]
     fn format_password_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
@@ -204,6 +208,36 @@ pub trait Theme {
         )
     }
 
+    /// Formats a fuzzy select prompt item.
+    #[cfg(feature = "fuzzy-select")]
+    fn format_fuzzy_select_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        active: bool,
+        highlight_matches: bool,
+        matcher: &SkimMatcherV2,
+        search_term: &str,
+    ) -> fmt::Result {
+        write!(f, "{} ", if active { ">" } else { " " })?;
+
+        if highlight_matches {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
+                for (idx, c) in text.chars().into_iter().enumerate() {
+                    if indices.contains(&idx) {
+                        write!(f, "{}", style(c).for_stderr().bold())?;
+                    } else {
+                        write!(f, "{}", c)?;
+                    }
+                }
+
+                return Ok(());
+            }
+        }
+
+        write!(f, "{}", text)
+    }
+
     /// Formats a fuzzy select prompt.
     #[cfg(feature = "fuzzy-select")]
     fn format_fuzzy_select_prompt(
@@ -275,6 +309,9 @@ pub struct ColorfulTheme {
     /// Formats the cursor for a fuzzy select prompt
     #[cfg(feature = "fuzzy-select")]
     pub fuzzy_cursor_style: Style,
+    // Formats the highlighting if matched characters
+    #[cfg(feature = "fuzzy-select")]
+    pub fuzzy_match_highlight_style: Style,
     /// Show the selections from certain prompts inline
     pub inline_selections: bool,
 }
@@ -302,6 +339,8 @@ impl Default for ColorfulTheme {
             unpicked_item_prefix: style(" ".to_string()).for_stderr(),
             #[cfg(feature = "fuzzy-select")]
             fuzzy_cursor_style: Style::new().for_stderr().black().on_white(),
+            #[cfg(feature = "fuzzy-select")]
+            fuzzy_match_highlight_style: Style::new().for_stderr().bold(),
             inline_selections: true,
         }
     }
@@ -456,6 +495,7 @@ impl Theme for ColorfulTheme {
     }
 
     /// Formats a password prompt after selection.
+    #[cfg(feature = "password")]
     fn format_password_prompt_selection(
         &self,
         f: &mut dyn fmt::Write,
@@ -503,15 +543,16 @@ impl Theme for ColorfulTheme {
         text: &str,
         active: bool,
     ) -> fmt::Result {
-        let details = match active {
-            true => (
+        let details = if active {
+            (
                 &self.active_item_prefix,
                 self.active_item_style.apply_to(text),
-            ),
-            false => (
+            )
+        } else {
+            (
                 &self.inactive_item_prefix,
                 self.inactive_item_style.apply_to(text),
-            ),
+            )
         };
 
         write!(f, "{} {}", details.0, details.1)
@@ -573,6 +614,57 @@ impl Theme for ColorfulTheme {
         write!(f, "{} {}", details.0, details.1)
     }
 
+    /// Formats a fuzzy select prompt item.
+    #[cfg(feature = "fuzzy-select")]
+    fn format_fuzzy_select_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        active: bool,
+        highlight_matches: bool,
+        matcher: &SkimMatcherV2,
+        search_term: &str,
+    ) -> fmt::Result {
+        write!(
+            f,
+            "{} ",
+            if active {
+                &self.active_item_prefix
+            } else {
+                &self.inactive_item_prefix
+            }
+        )?;
+
+        if highlight_matches {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
+                for (idx, c) in text.chars().into_iter().enumerate() {
+                    if indices.contains(&idx) {
+                        if active {
+                            write!(
+                                f,
+                                "{}",
+                                self.active_item_style
+                                    .apply_to(self.fuzzy_match_highlight_style.apply_to(c))
+                            )?;
+                        } else {
+                            write!(f, "{}", self.fuzzy_match_highlight_style.apply_to(c))?;
+                        }
+                    } else {
+                        if active {
+                            write!(f, "{}", self.active_item_style.apply_to(c))?;
+                        } else {
+                            write!(f, "{}", c)?;
+                        }
+                    }
+                }
+
+                return Ok(());
+            }
+        }
+
+        write!(f, "{}", text)
+    }
+
     /// Formats a fuzzy-selectprompt after selection.
     #[cfg(feature = "fuzzy-select")]
     fn format_fuzzy_select_prompt(
@@ -615,7 +707,7 @@ impl Theme for ColorfulTheme {
     }
 }
 
-/// Helper struct to conveniently render a theme ot a term.
+/// Helper struct to conveniently render a theme of a term.
 pub(crate) struct TermThemeRenderer<'a> {
     term: &'a Term,
     theme: &'a dyn Theme,
@@ -635,10 +727,12 @@ impl<'a> TermThemeRenderer<'a> {
         }
     }
 
+    #[cfg(feature = "password")]
     pub fn set_prompts_reset_height(&mut self, val: bool) {
         self.prompts_reset_height = val;
     }
 
+    #[cfg(feature = "password")]
     pub fn term(&self) -> &Term {
         self.term
     }
@@ -726,6 +820,7 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
+    #[cfg(feature = "password")]
     pub fn password_prompt(&mut self, prompt: &str) -> io::Result<()> {
         self.write_formatted_str(|this, buf| {
             write!(buf, "\r")?;
@@ -733,6 +828,7 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
+    #[cfg(feature = "password")]
     pub fn password_prompt_selection(&mut self, prompt: &str) -> io::Result<()> {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_password_prompt_selection(buf, prompt)
@@ -764,6 +860,27 @@ impl<'a> TermThemeRenderer<'a> {
     pub fn select_prompt_item(&mut self, text: &str, active: bool) -> io::Result<()> {
         self.write_formatted_line(|this, buf| {
             this.theme.format_select_prompt_item(buf, text, active)
+        })
+    }
+
+    #[cfg(feature = "fuzzy-select")]
+    pub fn fuzzy_select_prompt_item(
+        &mut self,
+        text: &str,
+        active: bool,
+        highlight: bool,
+        matcher: &SkimMatcherV2,
+        search_term: &str,
+    ) -> io::Result<()> {
+        self.write_formatted_line(|this, buf| {
+            this.theme.format_fuzzy_select_prompt_item(
+                buf,
+                text,
+                active,
+                highlight,
+                matcher,
+                search_term,
+            )
         })
     }
 

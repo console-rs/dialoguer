@@ -37,49 +37,49 @@ pub struct FuzzySelect<'a> {
     default: usize,
     items: Vec<String>,
     prompt: String,
+    report: bool,
     clear: bool,
+    highlight_matches: bool,
+    max_length: Option<usize>,
     theme: &'a dyn Theme,
 }
 
-impl<'a> FuzzySelect<'a> {
+impl Default for FuzzySelect<'static> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl FuzzySelect<'static> {
     /// Creates the prompt with a specific text.
-    pub fn new() -> FuzzySelect<'static> {
-        FuzzySelect::with_theme(&SimpleTheme)
+    pub fn new() -> Self {
+        Self::with_theme(&SimpleTheme)
     }
+}
 
-    /// Same as `new` but with a specific theme.
-    pub fn with_theme(theme: &'a dyn Theme) -> FuzzySelect<'a> {
-        FuzzySelect {
-            default: !0,
-            items: vec![],
-            prompt: "".into(),
-            clear: true,
-            theme,
-        }
-    }
-
+impl FuzzySelect<'_> {
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu.
-    pub fn clear(&mut self, val: bool) -> &mut FuzzySelect<'a> {
+    pub fn clear(&mut self, val: bool) -> &mut Self {
         self.clear = val;
         self
     }
 
     /// Sets a default for the menu
-    pub fn default(&mut self, val: usize) -> &mut FuzzySelect<'a> {
+    pub fn default(&mut self, val: usize) -> &mut Self {
         self.default = val;
         self
     }
 
     /// Add a single item to the fuzzy selector.
-    pub fn item<T: ToString>(&mut self, item: T) -> &mut FuzzySelect<'a> {
+    pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
         self.items.push(item.to_string());
         self
     }
 
     /// Adds multiple items to the fuzzy selector.
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut FuzzySelect<'a> {
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
         for item in items {
             self.items.push(item.to_string());
         }
@@ -90,8 +90,32 @@ impl<'a> FuzzySelect<'a> {
     ///
     /// When a prompt is set the system also prints out a confirmation after
     /// the fuzzy selection.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut FuzzySelect<'a> {
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
+        self
+    }
+
+    /// Indicates whether to report the selected value after interaction.
+    ///
+    /// The default is to report the selection.
+    pub fn report(&mut self, val: bool) -> &mut Self {
+        self.report = val;
+        self
+    }
+
+    /// Indicates whether to highlight matched indices
+    ///
+    /// The default is to highlight the indices
+    pub fn highlight_matches(&mut self, val: bool) -> &mut Self {
+        self.highlight_matches = val;
+        self
+    }
+
+    /// Sets the maximum number of visible options.
+    ///
+    /// The default is the height of the terminal minus 2.
+    pub fn max_length(&mut self, rows: usize) -> &mut Self {
+        self.max_length = Some(rows);
         self
     }
 
@@ -140,11 +164,20 @@ impl<'a> FuzzySelect<'a> {
         let mut size_vec = Vec::new();
         for items in self.items.iter().as_slice() {
             let size = &items.len();
-            size_vec.push(size.clone());
+            size_vec.push(*size);
         }
 
         // Fuzzy matcher
         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+
+        // Subtract -2 because we need space to render the prompt.
+        let visible_term_rows = (term.size().0 as usize).max(3) - 2;
+        let visible_term_rows = self
+            .max_length
+            .unwrap_or(visible_term_rows)
+            .min(visible_term_rows);
+        // Variable used to determine if we need to scroll through the list.
+        let mut starting_row = 0;
 
         term.hide_cursor()?;
 
@@ -161,23 +194,40 @@ impl<'a> FuzzySelect<'a> {
                 .collect::<Vec<_>>();
 
             // Renders all matching items, from best match to worst.
-            filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(&s1));
+            filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(s1));
 
-            for (idx, (item, _)) in filtered_list.iter().enumerate() {
-                render.select_prompt_item(item, idx == sel)?;
+            for (idx, (item, _)) in filtered_list
+                .iter()
+                .enumerate()
+                .skip(starting_row)
+                .take(visible_term_rows)
+            {
+                render.fuzzy_select_prompt_item(
+                    item,
+                    idx == sel,
+                    self.highlight_matches,
+                    &matcher,
+                    &search_term,
+                )?;
                 term.flush()?;
             }
 
             match term.read_key()? {
                 Key::Escape if allow_quit => {
                     if self.clear {
-                        term.clear_last_lines(filtered_list.len())?;
+                        render.clear()?;
                         term.flush()?;
                     }
                     term.show_cursor()?;
                     return Ok(None);
                 }
-                Key::ArrowUp if filtered_list.len() > 0 => {
+                Key::ArrowUp | Key::BackTab if !filtered_list.is_empty() => {
+                    if sel == 0 {
+                        starting_row =
+                            filtered_list.len().max(visible_term_rows) - visible_term_rows;
+                    } else if sel == starting_row {
+                        starting_row -= 1;
+                    }
                     if sel == !0 {
                         sel = filtered_list.len() - 1;
                     } else {
@@ -186,11 +236,16 @@ impl<'a> FuzzySelect<'a> {
                     }
                     term.flush()?;
                 }
-                Key::ArrowDown if filtered_list.len() > 0 => {
+                Key::ArrowDown | Key::Tab if !filtered_list.is_empty() => {
                     if sel == !0 {
                         sel = 0;
                     } else {
                         sel = (sel as u64 + 1).rem(filtered_list.len() as u64) as usize;
+                    }
+                    if sel == visible_term_rows + starting_row {
+                        starting_row += 1;
+                    } else if sel == 0 {
+                        starting_row = 0;
                     }
                     term.flush()?;
                 }
@@ -202,12 +257,15 @@ impl<'a> FuzzySelect<'a> {
                     position += 1;
                     term.flush()?;
                 }
-                Key::Enter if filtered_list.len() > 0 => {
+                Key::Enter if !filtered_list.is_empty() => {
                     if self.clear {
                         render.clear()?;
                     }
 
-                    render.input_prompt_selection(self.prompt.as_str(), &filtered_list[sel].0)?;
+                    if self.report {
+                        render
+                            .input_prompt_selection(self.prompt.as_str(), filtered_list[sel].0)?;
+                    }
 
                     let sel_string = filtered_list[sel].0;
                     let sel_string_pos_in_items =
@@ -226,12 +284,29 @@ impl<'a> FuzzySelect<'a> {
                     position += 1;
                     term.flush()?;
                     sel = 0;
+                    starting_row = 0;
                 }
 
                 _ => {}
             }
 
             render.clear_preserve_prompt(&size_vec)?;
+        }
+    }
+}
+
+impl<'a> FuzzySelect<'a> {
+    /// Same as `new` but with a specific theme.
+    pub fn with_theme(theme: &'a dyn Theme) -> Self {
+        Self {
+            default: !0,
+            items: vec![],
+            prompt: "".into(),
+            report: true,
+            clear: true,
+            highlight_matches: true,
+            max_length: None,
+            theme,
         }
     }
 }

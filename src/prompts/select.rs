@@ -38,54 +38,30 @@ pub struct Select<'a> {
     default: usize,
     items: Vec<String>,
     prompt: Option<String>,
+    report: bool,
     clear: bool,
     theme: &'a dyn Theme,
+    max_length: Option<usize>,
 }
 
-impl<'a> Default for Select<'a> {
-    fn default() -> Select<'a> {
-        Select::new()
+impl Default for Select<'static> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-impl<'a> Select<'a> {
+impl Select<'static> {
     /// Creates a select prompt builder with default theme.
-    pub fn new() -> Select<'static> {
-        Select::with_theme(&SimpleTheme)
+    pub fn new() -> Self {
+        Self::with_theme(&SimpleTheme)
     }
+}
 
-    /// Creates a select prompt builder with a specific theme.
-    ///
-    /// ## Examples
-    /// ```rust,no_run
-    /// use dialoguer::{
-    ///     Select,
-    ///     theme::ColorfulTheme
-    /// };
-    ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let selection = Select::with_theme(&ColorfulTheme::default())
-    ///         .item("Option A")
-    ///         .item("Option B")
-    ///         .interact()?;
-    ///
-    ///     Ok(())
-    /// }
-    /// ```
-    pub fn with_theme(theme: &'a dyn Theme) -> Select<'a> {
-        Select {
-            default: !0,
-            items: vec![],
-            prompt: None,
-            clear: true,
-            theme,
-        }
-    }
-
+impl Select<'_> {
     /// Indicates whether select menu should be erased from the screen after interaction.
     ///
     /// The default is to clear the menu.
-    pub fn clear(&mut self, val: bool) -> &mut Select<'a> {
+    pub fn clear(&mut self, val: bool) -> &mut Self {
         self.clear = val;
         self
     }
@@ -93,8 +69,20 @@ impl<'a> Select<'a> {
     /// Sets initial selected element when select menu is rendered
     ///
     /// Element is indicated by the index at which it appears in `item` method invocation or `items` slice.
-    pub fn default(&mut self, val: usize) -> &mut Select<'a> {
+    pub fn default(&mut self, val: usize) -> &mut Self {
         self.default = val;
+        self
+    }
+
+    /// Sets an optional max length for a page.
+    ///
+    /// Max length is disabled by None
+    pub fn max_length(&mut self, val: usize) -> &mut Self {
+        // Paging subtracts two from the capacity, paging does this to
+        // make an offset for the page indicator. So to make sure that
+        // we can show the intended amount of items we need to add two
+        // to our value.
+        self.max_length = Some(val + 2);
         self
     }
 
@@ -113,7 +101,7 @@ impl<'a> Select<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn item<T: ToString>(&mut self, item: T) -> &mut Select<'a> {
+    pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
         self.items.push(item.to_string());
         self
     }
@@ -135,7 +123,7 @@ impl<'a> Select<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Select<'a> {
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
         for item in items {
             self.items.push(item.to_string());
         }
@@ -144,8 +132,8 @@ impl<'a> Select<'a> {
 
     /// Sets the select prompt.
     ///
-    /// When a prompt is set the system also prints out a confirmation after
-    /// the selection.
+    /// By default, when a prompt is set the system also prints out a confirmation after
+    /// the selection. You can opt-out of this with [`report`](#method.report).
     ///
     /// ## Examples
     /// ```rust,no_run
@@ -161,8 +149,17 @@ impl<'a> Select<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Select<'a> {
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = Some(prompt.into());
+        self.report = true;
+        self
+    }
+
+    /// Indicates whether to report the selected value after interaction.
+    ///
+    /// The default is to report the selection.
+    pub fn report(&mut self, val: bool) -> &mut Self {
+        self.report = val;
         self
     }
 
@@ -171,7 +168,7 @@ impl<'a> Select<'a> {
     /// The user can select the items with the 'Space' bar or 'Enter' and the index of selected item will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `index` if user selected one of items using 'Enter'.
-    /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
+    /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<usize> {
         self.interact_on(&Term::stderr())
@@ -211,7 +208,7 @@ impl<'a> Select<'a> {
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
-    /// Like [interact_opt](#method.interact_opt) but allows a specific terminal to be set.
+    /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
     ///
     /// ## Examples
     /// ```rust,no_run
@@ -246,7 +243,7 @@ impl<'a> Select<'a> {
             ));
         }
 
-        let mut paging = Paging::new(term, self.items.len());
+        let mut paging = Paging::new(term, self.items.len(), self.max_length);
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
@@ -282,7 +279,7 @@ impl<'a> Select<'a> {
             term.flush()?;
 
             match term.read_key()? {
-                Key::ArrowDown | Key::Char('j') => {
+                Key::ArrowDown | Key::Tab | Key::Char('j') => {
                     if sel == !0 {
                         sel = 0;
                     } else {
@@ -292,7 +289,9 @@ impl<'a> Select<'a> {
                 Key::Escape | Key::Char('q') => {
                     if allow_quit {
                         if self.clear {
-                            term.clear_last_lines(self.items.len())?;
+                            render.clear()?;
+                        } else {
+                            term.clear_last_lines(paging.capacity)?;
                         }
 
                         term.show_cursor()?;
@@ -301,7 +300,7 @@ impl<'a> Select<'a> {
                         return Ok(None);
                     }
                 }
-                Key::ArrowUp | Key::Char('k') => {
+                Key::ArrowUp | Key::BackTab | Key::Char('k') => {
                     if sel == !0 {
                         sel = self.items.len() - 1;
                     } else {
@@ -326,7 +325,9 @@ impl<'a> Select<'a> {
                     }
 
                     if let Some(ref prompt) = self.prompt {
-                        render.select_prompt_selection(prompt, &self.items[sel])?;
+                        if self.report {
+                            render.select_prompt_selection(prompt, &self.items[sel])?;
+                        }
                     }
 
                     term.show_cursor()?;
@@ -344,6 +345,38 @@ impl<'a> Select<'a> {
             } else {
                 render.clear_preserve_prompt(&size_vec)?;
             }
+        }
+    }
+}
+
+impl<'a> Select<'a> {
+    /// Creates a select prompt builder with a specific theme.
+    ///
+    /// ## Examples
+    /// ```rust,no_run
+    /// use dialoguer::{
+    ///     Select,
+    ///     theme::ColorfulTheme
+    /// };
+    ///
+    /// fn main() -> std::io::Result<()> {
+    ///     let selection = Select::with_theme(&ColorfulTheme::default())
+    ///         .item("Option A")
+    ///         .item("Option B")
+    ///         .interact()?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn with_theme(theme: &'a dyn Theme) -> Self {
+        Self {
+            default: !0,
+            items: vec![],
+            prompt: None,
+            report: false,
+            clear: true,
+            max_length: None,
+            theme,
         }
     }
 }

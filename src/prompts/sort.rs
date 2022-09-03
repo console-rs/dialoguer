@@ -27,48 +27,54 @@ use console::{Key, Term};
 pub struct Sort<'a> {
     items: Vec<String>,
     prompt: Option<String>,
+    report: bool,
     clear: bool,
+    max_length: Option<usize>,
     theme: &'a dyn Theme,
 }
 
-impl<'a> Default for Sort<'a> {
-    fn default() -> Sort<'a> {
-        Sort::new()
+impl Default for Sort<'static> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-impl<'a> Sort<'a> {
+impl Sort<'static> {
     /// Creates a sort prompt.
-    pub fn new() -> Sort<'static> {
-        Sort::with_theme(&SimpleTheme)
+    pub fn new() -> Self {
+        Self::with_theme(&SimpleTheme)
     }
+}
 
-    /// Creates a sort prompt with a specific theme.
-    pub fn with_theme(theme: &'a dyn Theme) -> Sort<'a> {
-        Sort {
-            items: vec![],
-            clear: true,
-            prompt: None,
-            theme,
-        }
-    }
-
+impl Sort<'_> {
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu after user interaction.
-    pub fn clear(&mut self, val: bool) -> &mut Sort<'a> {
+    pub fn clear(&mut self, val: bool) -> &mut Self {
         self.clear = val;
         self
     }
 
+    /// Sets an optional max length for a page
+    ///
+    /// Max length is disabled by None
+    pub fn max_length(&mut self, val: usize) -> &mut Self {
+        // Paging subtracts two from the capacity, paging does this to
+        // make an offset for the page indicator. So to make sure that
+        // we can show the intended amount of items we need to add two
+        // to our value.
+        self.max_length = Some(val + 2);
+        self
+    }
+
     /// Add a single item to the selector.
-    pub fn item<T: ToString>(&mut self, item: T) -> &mut Sort<'a> {
+    pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
         self.items.push(item.to_string());
         self
     }
 
     /// Adds multiple items to the selector.
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Sort<'a> {
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
         for item in items {
             self.items.push(item.to_string());
         }
@@ -77,10 +83,18 @@ impl<'a> Sort<'a> {
 
     /// Prefaces the menu with a prompt.
     ///
-    /// When a prompt is set the system also prints out a confirmation after
-    /// the selection.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Sort<'a> {
+    /// By default, when a prompt is set the system also prints out a confirmation after
+    /// the selection. You can opt-out of this with [`report`](#method.report).
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = Some(prompt.into());
+        self
+    }
+
+    /// Indicates whether to report the selected order after interaction.
+    ///
+    /// The default is to report the selected order.
+    pub fn report(&mut self, val: bool) -> &mut Self {
+        self.report = val;
         self
     }
 
@@ -89,7 +103,7 @@ impl<'a> Sort<'a> {
     /// The user can order the items with the 'Space' bar and the arrows. On 'Enter' ordered list of the incides of items will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `Vec<index>` if user hit 'Enter'.
-    /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
+    /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<Vec<usize>> {
         self.interact_on(&Term::stderr())
@@ -109,7 +123,7 @@ impl<'a> Sort<'a> {
     ///
     /// ## Examples
     ///```rust,no_run
-    /// use dialoguer::Select;
+    /// use dialoguer::Sort;
     /// use console::Term;
     ///
     /// fn main() -> std::io::Result<()> {
@@ -129,15 +143,15 @@ impl<'a> Sort<'a> {
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
-    /// Like [interact_opt](#method.interact_opt) but allows a specific terminal to be set.
+    /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
     ///
     /// ## Examples
     /// ```rust,no_run
-    /// use dialoguer::Select;
+    /// use dialoguer::Sort;
     /// use console::Term;
     ///
     /// fn main() -> std::io::Result<()> {
-    ///     let selections = MultiSelect::new()
+    ///     let selections = Sort::new()
     ///         .item("Option A")
     ///         .item("Option B")
     ///         .interact_on_opt(&Term::stdout())?;
@@ -163,7 +177,7 @@ impl<'a> Sort<'a> {
             ));
         }
 
-        let mut paging = Paging::new(term, self.items.len());
+        let mut paging = Paging::new(term, self.items.len(), self.max_length);
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
 
@@ -196,7 +210,7 @@ impl<'a> Sort<'a> {
             term.flush()?;
 
             match term.read_key()? {
-                Key::ArrowDown | Key::Char('j') => {
+                Key::ArrowDown | Key::Tab | Key::Char('j') => {
                     let old_sel = sel;
 
                     if sel == !0 {
@@ -209,7 +223,7 @@ impl<'a> Sort<'a> {
                         order.swap(old_sel, sel);
                     }
                 }
-                Key::ArrowUp | Key::Char('k') => {
+                Key::ArrowUp | Key::BackTab | Key::Char('k') => {
                     let old_sel = sel;
 
                     if sel == !0 {
@@ -273,7 +287,9 @@ impl<'a> Sort<'a> {
                 Key::Escape | Key::Char('q') => {
                     if allow_quit {
                         if self.clear {
-                            term.clear_last_lines(self.items.len())?;
+                            render.clear()?;
+                        } else {
+                            term.clear_last_lines(paging.capacity)?;
                         }
 
                         term.show_cursor()?;
@@ -288,12 +304,14 @@ impl<'a> Sort<'a> {
                     }
 
                     if let Some(ref prompt) = self.prompt {
-                        let list: Vec<_> = order
-                            .iter()
-                            .enumerate()
-                            .map(|(_, item)| self.items[*item].as_str())
-                            .collect();
-                        render.sort_prompt_selection(prompt, &list[..])?;
+                        if self.report {
+                            let list: Vec<_> = order
+                                .iter()
+                                .enumerate()
+                                .map(|(_, item)| self.items[*item].as_str())
+                                .collect();
+                            render.sort_prompt_selection(prompt, &list[..])?;
+                        }
                     }
 
                     term.show_cursor()?;
@@ -311,6 +329,20 @@ impl<'a> Sort<'a> {
             } else {
                 render.clear_preserve_prompt(&size_vec)?;
             }
+        }
+    }
+}
+
+impl<'a> Sort<'a> {
+    /// Creates a sort prompt with a specific theme.
+    pub fn with_theme(theme: &'a dyn Theme) -> Self {
+        Self {
+            items: vec![],
+            clear: true,
+            prompt: None,
+            report: true,
+            max_length: None,
+            theme,
         }
     }
 }

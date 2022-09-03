@@ -25,68 +25,73 @@ pub struct MultiSelect<'a> {
     defaults: Vec<bool>,
     items: Vec<String>,
     prompt: Option<String>,
+    report: bool,
     clear: bool,
+    max_length: Option<usize>,
     theme: &'a dyn Theme,
 }
 
-impl<'a> Default for MultiSelect<'a> {
-    fn default() -> MultiSelect<'a> {
-        MultiSelect::new()
+impl Default for MultiSelect<'static> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-impl<'a> MultiSelect<'a> {
+impl MultiSelect<'static> {
     /// Creates a multi select prompt.
-    pub fn new() -> MultiSelect<'static> {
-        MultiSelect::with_theme(&SimpleTheme)
+    pub fn new() -> Self {
+        Self::with_theme(&SimpleTheme)
     }
+}
 
-    /// Creates a multi select prompt with a specific theme.
-    pub fn with_theme(theme: &'a dyn Theme) -> MultiSelect<'a> {
-        MultiSelect {
-            items: vec![],
-            defaults: vec![],
-            clear: true,
-            prompt: None,
-            theme,
-        }
-    }
-
+impl MultiSelect<'_> {
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu.
-    pub fn clear(&mut self, val: bool) -> &mut MultiSelect<'a> {
+    pub fn clear(&mut self, val: bool) -> &mut Self {
         self.clear = val;
         self
     }
 
     /// Sets a defaults for the menu.
-    pub fn defaults(&mut self, val: &[bool]) -> &mut MultiSelect<'a> {
+    pub fn defaults(&mut self, val: &[bool]) -> &mut Self {
         self.defaults = val
             .to_vec()
             .iter()
-            .cloned()
+            .copied()
             .chain(repeat(false))
             .take(self.items.len())
             .collect();
         self
     }
 
+    /// Sets an optional max length for a page
+    ///
+    /// Max length is disabled by None
+    pub fn max_length(&mut self, val: usize) -> &mut Self {
+        // Paging subtracts two from the capacity, paging does this to
+        // make an offset for the page indicator. So to make sure that
+        // we can show the intended amount of items we need to add two
+        // to our value.
+        self.max_length = Some(val + 2);
+        self
+    }
+
     /// Add a single item to the selector.
     #[inline]
-    pub fn item<T: ToString>(&mut self, item: T) -> &mut MultiSelect<'a> {
+    pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
         self.item_checked(item, false)
     }
 
     /// Add a single item to the selector with a default checked state.
-    pub fn item_checked<T: ToString>(&mut self, item: T, checked: bool) -> &mut MultiSelect<'a> {
+    pub fn item_checked<T: ToString>(&mut self, item: T, checked: bool) -> &mut Self {
         self.items.push(item.to_string());
         self.defaults.push(checked);
         self
     }
 
     /// Adds multiple items to the selector.
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut MultiSelect<'a> {
+    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
         for item in items {
             self.items.push(item.to_string());
             self.defaults.push(false);
@@ -95,7 +100,7 @@ impl<'a> MultiSelect<'a> {
     }
 
     /// Adds multiple items to the selector with checked state
-    pub fn items_checked<T: ToString>(&mut self, items: &[(T, bool)]) -> &mut MultiSelect<'a> {
+    pub fn items_checked<T: ToString>(&mut self, items: &[(T, bool)]) -> &mut Self {
         for &(ref item, checked) in items {
             self.items.push(item.to_string());
             self.defaults.push(checked);
@@ -105,10 +110,18 @@ impl<'a> MultiSelect<'a> {
 
     /// Prefaces the menu with a prompt.
     ///
-    /// When a prompt is set the system also prints out a confirmation after
-    /// the selection.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut MultiSelect<'a> {
+    /// By default, when a prompt is set the system also prints out a confirmation after
+    /// the selection. You can opt-out of this with [`report`](#method.report).
+    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = Some(prompt.into());
+        self
+    }
+
+    /// Indicates whether to report the selected values after interaction.
+    ///
+    /// The default is to report the selections.
+    pub fn report(&mut self, val: bool) -> &mut Self {
+        self.report = val;
         self
     }
 
@@ -117,7 +130,7 @@ impl<'a> MultiSelect<'a> {
     /// The user can select the items with the 'Space' bar and on 'Enter' the indices of selected items will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `Vec<index>` if user hit 'Enter'.
-    /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
+    /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> io::Result<Vec<usize>> {
         self.interact_on(&Term::stderr())
@@ -137,7 +150,7 @@ impl<'a> MultiSelect<'a> {
     ///
     /// ## Examples
     ///```rust,no_run
-    /// use dialoguer::Select;
+    /// use dialoguer::MultiSelect;
     /// use console::Term;
     ///
     /// fn main() -> std::io::Result<()> {
@@ -157,11 +170,11 @@ impl<'a> MultiSelect<'a> {
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
     }
 
-    /// Like [interact_opt](#method.interact_opt) but allows a specific terminal to be set.
+    /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
     ///
     /// ## Examples
     /// ```rust,no_run
-    /// use dialoguer::Select;
+    /// use dialoguer::MultiSelect;
     /// use console::Term;
     ///
     /// fn main() -> std::io::Result<()> {
@@ -191,7 +204,7 @@ impl<'a> MultiSelect<'a> {
             ));
         }
 
-        let mut paging = Paging::new(term, self.items.len());
+        let mut paging = Paging::new(term, self.items.len(), self.max_length);
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
 
@@ -230,14 +243,14 @@ impl<'a> MultiSelect<'a> {
             term.flush()?;
 
             match term.read_key()? {
-                Key::ArrowDown | Key::Char('j') => {
+                Key::ArrowDown | Key::Tab | Key::Char('j') => {
                     if sel == !0 {
                         sel = 0;
                     } else {
                         sel = (sel as u64 + 1).rem(self.items.len() as u64) as usize;
                     }
                 }
-                Key::ArrowUp | Key::Char('k') => {
+                Key::ArrowUp | Key::BackTab | Key::Char('k') => {
                     if sel == !0 {
                         sel = self.items.len() - 1;
                     } else {
@@ -258,10 +271,19 @@ impl<'a> MultiSelect<'a> {
                 Key::Char(' ') => {
                     checked[sel] = !checked[sel];
                 }
+                Key::Char('a') => {
+                    if checked.iter().all(|&item_checked| item_checked) {
+                        checked.fill(false);
+                    } else {
+                        checked.fill(true);
+                    }
+                }
                 Key::Escape | Key::Char('q') => {
                     if allow_quit {
                         if self.clear {
                             render.clear()?;
+                        } else {
+                            term.clear_last_lines(paging.capacity)?;
                         }
 
                         term.show_cursor()?;
@@ -276,19 +298,21 @@ impl<'a> MultiSelect<'a> {
                     }
 
                     if let Some(ref prompt) = self.prompt {
-                        let selections: Vec<_> = checked
-                            .iter()
-                            .enumerate()
-                            .filter_map(|(idx, &checked)| {
-                                if checked {
-                                    Some(self.items[idx].as_str())
-                                } else {
-                                    None
-                                }
-                            })
-                            .collect();
+                        if self.report {
+                            let selections: Vec<_> = checked
+                                .iter()
+                                .enumerate()
+                                .filter_map(|(idx, &checked)| {
+                                    if checked {
+                                        Some(self.items[idx].as_str())
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .collect();
 
-                        render.multi_select_prompt_selection(prompt, &selections[..])?;
+                            render.multi_select_prompt_selection(prompt, &selections[..])?;
+                        }
                     }
 
                     term.show_cursor()?;
@@ -312,6 +336,21 @@ impl<'a> MultiSelect<'a> {
             } else {
                 render.clear_preserve_prompt(&size_vec)?;
             }
+        }
+    }
+}
+
+impl<'a> MultiSelect<'a> {
+    /// Creates a multi select prompt with a specific theme.
+    pub fn with_theme(theme: &'a dyn Theme) -> Self {
+        Self {
+            items: vec![],
+            defaults: vec![],
+            clear: true,
+            prompt: None,
+            report: true,
+            max_length: None,
+            theme,
         }
     }
 }

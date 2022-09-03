@@ -11,7 +11,7 @@ pub struct Paging<'a> {
     pub current_page: usize,
     pub capacity: usize,
     pub active: bool,
-
+    pub max_capacity: Option<usize>,
     term: &'a Term,
     current_term_size: (u16, u16),
     items_len: usize,
@@ -19,10 +19,15 @@ pub struct Paging<'a> {
 }
 
 impl<'a> Paging<'a> {
-    pub fn new(term: &'a Term, items_len: usize) -> Paging<'a> {
+    pub fn new(term: &'a Term, items_len: usize, max_capacity: Option<usize>) -> Paging<'a> {
         let term_size = term.size();
         // Subtract -2 because we need space to render the prompt, if paging is active
-        let capacity = term_size.0 as usize - 2;
+        let capacity = max_capacity
+            .unwrap_or(std::usize::MAX)
+            .min(term_size.0 as usize)
+            // Safeguard in case term_size or max_length is 2 or less. Guarantees no unwanted wrapping behavior.
+            .max(3)
+            - 2;
         let pages = (items_len as f64 / capacity as f64).ceil() as usize;
 
         Paging {
@@ -33,6 +38,7 @@ impl<'a> Paging<'a> {
             term,
             current_term_size: term_size,
             items_len,
+            max_capacity,
             // Set transition initially to true to trigger prompt rendering for inactive paging on start
             activity_transition: true,
         }
@@ -44,17 +50,22 @@ impl<'a> Paging<'a> {
 
         if self.current_term_size != new_term_size {
             self.current_term_size = new_term_size;
-            self.capacity = self.current_term_size.0 as usize - 2;
+            self.capacity = self
+                .max_capacity
+                .unwrap_or(std::usize::MAX)
+                .min(self.current_term_size.0 as usize)
+                .max(3)
+                - 2;
             self.pages = (self.items_len as f64 / self.capacity as f64).ceil() as usize;
         }
 
-        if self.active != (self.pages > 1) {
+        if self.active == (self.pages > 1) {
+            self.activity_transition = false;
+        } else {
             self.active = self.pages > 1;
             self.activity_transition = true;
             // Clear everything to prevent "ghost" lines in terminal when a resize happened
             self.term.clear_last_lines(self.capacity)?;
-        } else {
-            self.activity_transition = false;
         }
 
         if cursor_pos != !0

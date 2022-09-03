@@ -14,9 +14,14 @@
 //! * Input prompts (regular and password)
 //! * Input validation
 //! * Selections prompts (single and multi)
+//! * Fuzzy select prompt
 //! * Other kind of prompts
 //! * Editor launching
 
+#![deny(clippy::all)]
+
+#[cfg(feature = "completion")]
+pub use completion::Completion;
 pub use console;
 #[cfg(feature = "editor")]
 pub use edit::Editor;
@@ -34,6 +39,8 @@ pub use prompts::fuzzy_select::FuzzySelect;
 #[cfg(feature = "password")]
 pub use prompts::password::Password;
 
+#[cfg(feature = "completion")]
+mod completion;
 #[cfg(feature = "editor")]
 mod edit;
 #[cfg(feature = "history")]

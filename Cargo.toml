@@ -1,7 +1,7 @@
 [package]
 name = "dialoguer"
 description = "A command line prompting library."
-version = "0.8.0"
+version = "0.10.2"
 edition = "2018"
 authors = [
 	"Armin Ronacher <armin.ronacher@active-4.com>",
@@ -16,18 +16,44 @@ documentation = "https://docs.rs/dialoguer"
 readme = "README.md"
 
 [features]
-default = ["editor", "history", "password"]
+default = ["editor", "password"]
 editor = ["tempfile"]
 fuzzy-select = ["fuzzy-matcher"]
 history = []
 password = ["zeroize"]
+completion = []
 
 [dependencies]
-console = "0.14.1"
-lazy_static = "1"
+console = "0.15.0"
 tempfile = { version = "3", optional = true }
 zeroize = { version = "1.1.1", optional = true }
 fuzzy-matcher = { version = "0.3.7", optional = true }
 
 [dev-dependencies]
 regex = "1.5.4"
+
+[[example]]
+name = "password"
+required-features = ["password"]
+
+[[example]]
+name = "editor"
+required-features = ["editor"]
+
+[[example]]
+name = "fuzzyselect"
+required-features = ["fuzzy-select"]
+
+[[example]]
+name = "history"
+required-features = ["history"]
+
+[[example]]
+name = "completion"
+required-features = ["completion"]
+
+[workspace.metadata.workspaces]
+no_individual_tags = true
+
+[package.metadata.docs.rs]
+all-features = true

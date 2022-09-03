@@ -42,15 +42,15 @@ fn get_default_editor() -> OsString {
 }
 
 impl Default for Editor {
-    fn default() -> Editor {
-        Editor::new()
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 impl Editor {
     /// Creates a new editor.
-    pub fn new() -> Editor {
-        Editor {
+    pub fn new() -> Self {
+        Self {
             editor: get_default_editor(),
             extension: ".txt".into(),
             require_save: true,
@@ -59,19 +59,19 @@ impl Editor {
     }
 
     /// Sets a specific editor executable.
-    pub fn executable<S: AsRef<OsStr>>(&mut self, val: S) -> &mut Editor {
+    pub fn executable<S: AsRef<OsStr>>(&mut self, val: S) -> &mut Self {
         self.editor = val.as_ref().into();
         self
     }
 
     /// Sets a specific extension
-    pub fn extension(&mut self, val: &str) -> &mut Editor {
+    pub fn extension(&mut self, val: &str) -> &mut Self {
         self.extension = val.into();
         self
     }
 
     /// Enables or disables the save requirement.
-    pub fn require_save(&mut self, val: bool) -> &mut Editor {
+    pub fn require_save(&mut self, val: bool) -> &mut Self {
         self.require_save = val;
         self
     }
@@ -79,7 +79,7 @@ impl Editor {
     /// Enables or disables trailing newline stripping.
     ///
     /// This is on by default.
-    pub fn trim_newlines(&mut self, val: bool) -> &mut Editor {
+    pub fn trim_newlines(&mut self, val: bool) -> &mut Self {
         self.trim_newlines = val;
         self
     }

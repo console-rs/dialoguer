@@ -1,52 +1,26 @@
 use dialoguer::{theme::ColorfulTheme, Input};
-use regex::Regex;
 
 fn main() {
-    let input: String = Input::with_theme(&ColorfulTheme::default())
+    let name: String = Input::with_theme(&ColorfulTheme::default())
         .with_prompt("Your name")
         .interact_text()
         .unwrap();
 
-    println!("Hello {}!", input);
+    println!("Hello {name}!");
 
-    let mail: String = Input::with_theme(&ColorfulTheme::default())
-        .with_prompt("Your email")
-        .map(|mut input: String| {
-            if !input.contains('@') {
-                input += "@example.com";
-            }
-            input
-        })
-        .validate_with({
-            let mut force = None;
-            move |input: &String| -> Result<(), &str> {
-                let address_regex = Regex::new(r"^\S+@\S+\.\S+$").unwrap();
-                if address_regex.is_match(input) || force.as_ref().map_or(false, |old| old == input) {
-                    Ok(())
-                } else {
-                    force = Some(input.clone());
-                    Err("This is not a mail address; type the same value again to force use")
-                }
-            }
-        })
-        .interact_text()
-        .unwrap();
-
-    println!("Email: {}", mail);
-
-    let mail: String = Input::with_theme(&ColorfulTheme::default())
+    let planet: String = Input::with_theme(&ColorfulTheme::default())
         .with_prompt("Your planet")
         .default("Earth".to_string())
         .interact_text()
         .unwrap();
 
-    println!("Planet: {}", mail);
+    println!("Planet: {planet}");
 
-    let mail: String = Input::with_theme(&ColorfulTheme::default())
+    let galaxy: String = Input::with_theme(&ColorfulTheme::default())
         .with_prompt("Your galaxy")
         .with_initial_text("Milky Way".to_string())
         .interact_text()
         .unwrap();
 
-    println!("Galaxy: {}", mail);
+    println!("Galaxy: {galaxy}");
 }

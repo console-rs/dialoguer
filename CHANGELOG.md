@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.10.1
+
+### Enhancements
+
+* Allow matches highlighting for `FuzzySelect`
+
+## 0.10.0
+
+### Enhancements
+
+* Loosen some trait bounds
+* Improve keyboard interactions (#141, #162)
+* Added `max_length` to `MultiSelect`, `Select` and `Sort`
+* Allow completion support for `Input::interact_text*` behind `completion` feature
+
+### Breaking
+
+* All prompts `*::new` will now don't report selected values unless `report(true)` is called on them.
+
+## 0.9.0
+
+### Enhancements
+
+* Apply input validation to the default value too in `Input`
+* Added `FuzzySelect` behind `fuzzy-select` feature
+* Allow history processing for `Input::interact_text*` behind `history` feature
+* Added `interact_*_opt` methods for `MultiSelect` and `Sort`.
+
+### Breaking
+
+* Updated MSRV to `1.51.0`
+* `Editor` is gated behind `editor` feature
+* `Password`, `Theme::format_password_prompt` and `Theme::format_password_prompt_selection` are gated behind `password` feature
+* Remove `Select::paged()`, `Sort::paged()` and `MultiSelect::paged()` in favor of automatic paging based on terminal size
+
 ## 0.8.0
 
 ### Enhancements
@@ -17,7 +52,7 @@
 * Added `wait_for_newline` to `Confirm`
 * More secure password prompt
 * More documentation
-* Added `interact_text` method for input prompt
+* Added `interact_text` method for `Input` prompt
 * Added `inline_selections` to `ColorfulTheme`
 
 ### Breaking
