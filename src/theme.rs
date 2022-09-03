@@ -8,6 +8,163 @@ use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 /// Implements a theme for dialoguer.
 pub trait Theme {
     /// Formats a prompt.
+    fn format_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result;
+
+    /// Formats out an error.
+    fn format_error(&self, f: &mut dyn fmt::Write, err: &str) -> fmt::Result;
+
+    /// Formats a confirm prompt.
+    fn format_confirm_prompt(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        default: Option<bool>,
+    ) -> fmt::Result;
+
+    /// Formats a confirm prompt after selection.
+    fn format_confirm_prompt_selection(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        selection: Option<bool>,
+    ) -> fmt::Result;
+
+    /// Formats an input prompt.
+    fn format_input_prompt(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        default: Option<&str>,
+    ) -> fmt::Result;
+
+    /// Formats an input prompt after selection.
+    fn format_input_prompt_selection(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        sel: &str,
+    ) -> fmt::Result;
+
+    /// Formats a password prompt.
+    #[inline]
+    #[cfg(feature = "password")]
+    fn format_password_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        self.format_input_prompt(f, prompt, None)
+    }
+
+    /// Formats a password prompt after selection.
+    #[inline]
+    #[cfg(feature = "password")]
+    fn format_password_prompt_selection(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+    ) -> fmt::Result {
+        self.format_input_prompt_selection(f, prompt, "[hidden]")
+    }
+
+    /// Formats a select prompt.
+    #[inline]
+    fn format_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        self.format_prompt(f, prompt)
+    }
+
+    /// Formats a select prompt after selection.
+    #[inline]
+    fn format_select_prompt_selection(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        sel: &str,
+    ) -> fmt::Result {
+        self.format_input_prompt_selection(f, prompt, sel)
+    }
+
+    /// Formats a multi select prompt.
+    #[inline]
+    fn format_multi_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        self.format_prompt(f, prompt)
+    }
+
+    /// Formats a sort prompt.
+    #[inline]
+    fn format_sort_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        self.format_prompt(f, prompt)
+    }
+
+    /// Formats a multi_select prompt after selection.
+    fn format_multi_select_prompt_selection(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        selections: &[&str],
+    ) -> fmt::Result;
+
+    /// Formats a sort prompt after selection.
+    #[inline]
+    fn format_sort_prompt_selection(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        selections: &[&str],
+    ) -> fmt::Result {
+        self.format_multi_select_prompt_selection(f, prompt, selections)
+    }
+
+    /// Formats a select prompt item.
+    fn format_select_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        active: bool,
+    ) -> fmt::Result;
+
+    /// Formats a multi select prompt item.
+    fn format_multi_select_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        checked: bool,
+        active: bool,
+    ) -> fmt::Result;
+
+    /// Formats a sort prompt item.
+    fn format_sort_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        picked: bool,
+        active: bool,
+    ) -> fmt::Result;
+
+    /// Formats a fuzzy select prompt item.
+    #[cfg(feature = "fuzzy-select")]
+    fn format_fuzzy_select_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        text: &str,
+        active: bool,
+        highlight_matches: bool,
+        matcher: &SkimMatcherV2,
+        search_term: &str,
+    ) -> fmt::Result;
+
+    /// Formats a fuzzy select prompt.
+    #[cfg(feature = "fuzzy-select")]
+    fn format_fuzzy_select_prompt(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        search_term: &str,
+        cursor_pos: usize,
+    ) -> fmt::Result;
+}
+
+/// The default theme.
+pub struct SimpleTheme;
+
+impl Theme for SimpleTheme {
+    /// Formats a prompt.
     #[inline]
     fn format_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
         write!(f, "{}:", prompt)
@@ -262,11 +419,6 @@ pub trait Theme {
         }
     }
 }
-
-/// The default theme.
-pub struct SimpleTheme;
-
-impl Theme for SimpleTheme {}
 
 /// A colorful theme
 pub struct ColorfulTheme {
