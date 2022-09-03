@@ -7,6 +7,8 @@ use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 
 /// Implements a theme for dialoguer.
 pub trait Theme {
+    // Mandatory methods
+
     /// Formats a prompt.
     fn format_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result;
 
@@ -45,53 +47,6 @@ pub trait Theme {
         sel: &str,
     ) -> fmt::Result;
 
-    /// Formats a password prompt.
-    #[inline]
-    #[cfg(feature = "password")]
-    fn format_password_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
-        self.format_input_prompt(f, prompt, None)
-    }
-
-    /// Formats a password prompt after selection.
-    #[inline]
-    #[cfg(feature = "password")]
-    fn format_password_prompt_selection(
-        &self,
-        f: &mut dyn fmt::Write,
-        prompt: &str,
-    ) -> fmt::Result {
-        self.format_input_prompt_selection(f, prompt, "[hidden]")
-    }
-
-    /// Formats a select prompt.
-    #[inline]
-    fn format_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
-        self.format_prompt(f, prompt)
-    }
-
-    /// Formats a select prompt after selection.
-    #[inline]
-    fn format_select_prompt_selection(
-        &self,
-        f: &mut dyn fmt::Write,
-        prompt: &str,
-        sel: &str,
-    ) -> fmt::Result {
-        self.format_input_prompt_selection(f, prompt, sel)
-    }
-
-    /// Formats a multi select prompt.
-    #[inline]
-    fn format_multi_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
-        self.format_prompt(f, prompt)
-    }
-
-    /// Formats a sort prompt.
-    #[inline]
-    fn format_sort_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
-        self.format_prompt(f, prompt)
-    }
-
     /// Formats a multi_select prompt after selection.
     fn format_multi_select_prompt_selection(
         &self,
@@ -99,17 +54,6 @@ pub trait Theme {
         prompt: &str,
         selections: &[&str],
     ) -> fmt::Result;
-
-    /// Formats a sort prompt after selection.
-    #[inline]
-    fn format_sort_prompt_selection(
-        &self,
-        f: &mut dyn fmt::Write,
-        prompt: &str,
-        selections: &[&str],
-    ) -> fmt::Result {
-        self.format_multi_select_prompt_selection(f, prompt, selections)
-    }
 
     /// Formats a select prompt item.
     fn format_select_prompt_item(
@@ -158,6 +102,66 @@ pub trait Theme {
         search_term: &str,
         cursor_pos: usize,
     ) -> fmt::Result;
+
+    // Default implemented methods
+
+    /// Formats a password prompt.
+    #[inline]
+    #[cfg(feature = "password")]
+    fn format_password_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        self.format_input_prompt(f, prompt, None)
+    }
+
+    /// Formats a password prompt after selection.
+    #[inline]
+    #[cfg(feature = "password")]
+    fn format_password_prompt_selection(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+    ) -> fmt::Result {
+        self.format_input_prompt_selection(f, prompt, "[hidden]")
+    }
+
+    /// Formats a select prompt.
+    #[inline]
+    fn format_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        self.format_prompt(f, prompt)
+    }
+
+    /// Formats a select prompt after selection.
+    #[inline]
+    fn format_select_prompt_selection(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        sel: &str,
+    ) -> fmt::Result {
+        self.format_input_prompt_selection(f, prompt, sel)
+    }
+
+    /// Formats a multi select prompt.
+    #[inline]
+    fn format_multi_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        self.format_prompt(f, prompt)
+    }
+
+    /// Formats a sort prompt.
+    #[inline]
+    fn format_sort_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        self.format_prompt(f, prompt)
+    }
+
+    /// Formats a sort prompt after selection.
+    #[inline]
+    fn format_sort_prompt_selection(
+        &self,
+        f: &mut dyn fmt::Write,
+        prompt: &str,
+        selections: &[&str],
+    ) -> fmt::Result {
+        self.format_multi_select_prompt_selection(f, prompt, selections)
+    }
 }
 
 /// The default theme.
@@ -242,53 +246,6 @@ impl Theme for SimpleTheme {
         write!(f, "{}: {}", prompt, sel)
     }
 
-    /// Formats a password prompt.
-    #[inline]
-    #[cfg(feature = "password")]
-    fn format_password_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
-        self.format_input_prompt(f, prompt, None)
-    }
-
-    /// Formats a password prompt after selection.
-    #[inline]
-    #[cfg(feature = "password")]
-    fn format_password_prompt_selection(
-        &self,
-        f: &mut dyn fmt::Write,
-        prompt: &str,
-    ) -> fmt::Result {
-        self.format_input_prompt_selection(f, prompt, "[hidden]")
-    }
-
-    /// Formats a select prompt.
-    #[inline]
-    fn format_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
-        self.format_prompt(f, prompt)
-    }
-
-    /// Formats a select prompt after selection.
-    #[inline]
-    fn format_select_prompt_selection(
-        &self,
-        f: &mut dyn fmt::Write,
-        prompt: &str,
-        sel: &str,
-    ) -> fmt::Result {
-        self.format_input_prompt_selection(f, prompt, sel)
-    }
-
-    /// Formats a multi select prompt.
-    #[inline]
-    fn format_multi_select_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
-        self.format_prompt(f, prompt)
-    }
-
-    /// Formats a sort prompt.
-    #[inline]
-    fn format_sort_prompt(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
-        self.format_prompt(f, prompt)
-    }
-
     /// Formats a multi_select prompt after selection.
     fn format_multi_select_prompt_selection(
         &self,
@@ -301,17 +258,6 @@ impl Theme for SimpleTheme {
             write!(f, "{}{}", if idx == 0 { "" } else { ", " }, sel)?;
         }
         Ok(())
-    }
-
-    /// Formats a sort prompt after selection.
-    #[inline]
-    fn format_sort_prompt_selection(
-        &self,
-        f: &mut dyn fmt::Write,
-        prompt: &str,
-        selections: &[&str],
-    ) -> fmt::Result {
-        self.format_multi_select_prompt_selection(f, prompt, selections)
     }
 
     /// Formats a select prompt item.
