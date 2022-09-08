@@ -1,6 +1,9 @@
 use std::io;
 
-use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
+use crate::{
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    Validator,
+};
 
 use console::Term;
 use zeroize::Zeroizing;
@@ -25,6 +28,7 @@ pub struct Password<'a> {
     theme: &'a dyn Theme,
     allow_empty_password: bool,
     confirmation_prompt: Option<(String, String)>,
+    validator: Option<Box<dyn FnMut(&String) -> Option<String> + 'a>>,
 }
 
 impl Default for Password<'static> {
@@ -40,7 +44,7 @@ impl Password<'static> {
     }
 }
 
-impl Password<'_> {
+impl<'a> Password<'a> {
     /// Sets the password input prompt.
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
@@ -73,44 +77,87 @@ impl Password<'_> {
         self
     }
 
+    /// Registers a validator.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use dialoguer::Input;
+    /// let password: String = Password::new()
+    ///     .with_prompt("Enter password")
+    ///     .validate_with(|input: &String| -> Result<(), &str> {
+    ///         if input.len() > 8 {
+    ///             Ok(())
+    ///         } else {
+    ///             Err("Password must be longer than 8")
+    ///         }
+    ///     })
+    ///     .interact()
+    ///     .unwrap();
+    /// ```
+    pub fn validate_with<V>(&mut self, mut validator: V) -> &mut Self
+    where
+        V: Validator<String> + 'a,
+        V::Err: ToString,
+    {
+        let mut old_validator_func = self.validator.take();
+
+        self.validator = Some(Box::new(move |value: &String| -> Option<String> {
+            if let Some(old) = old_validator_func.as_mut() {
+                if let Some(err) = old(value) {
+                    return Some(err);
+                }
+            }
+
+            match validator.validate(value) {
+                Ok(()) => None,
+                Err(err) => Some(err.to_string()),
+            }
+        }));
+
+        self
+    }
+
     /// Enables user interaction and returns the result.
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
-    pub fn interact(&self) -> io::Result<String> {
+    pub fn interact(&mut self) -> io::Result<String> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    pub fn interact_on(&self, term: &Term) -> io::Result<String> {
+    pub fn interact_on(&mut self, term: &Term) -> io::Result<String> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         render.set_prompts_reset_height(false);
 
         loop {
             let password = Zeroizing::new(self.prompt_password(&mut render, &self.prompt)?);
 
+            if let Some(ref mut validator) = self.validator {
+                if let Some(err) = validator(&password) {
+                    render.error(&err)?;
+                    continue;
+                }
+            }
+
             if let Some((ref prompt, ref err)) = self.confirmation_prompt {
                 let pw2 = Zeroizing::new(self.prompt_password(&mut render, prompt)?);
 
-                if *password == *pw2 {
-                    render.clear()?;
-                    if self.report {
-                        render.password_prompt_selection(&self.prompt)?;
-                    }
-                    term.flush()?;
-                    return Ok((*password).clone());
+                if *password != *pw2 {
+                    render.error(err)?;
+                    continue;
                 }
-
-                render.error(err)?;
-            } else {
-                render.clear()?;
-                if self.report {
-                    render.password_prompt_selection(&self.prompt)?;
-                }
-                term.flush()?;
-
-                return Ok((*password).clone());
             }
+
+            render.clear()?;
+
+            if self.report {
+                render.password_prompt_selection(&self.prompt)?;
+            }
+            term.flush()?;
+
+            return Ok((*password).clone());
         }
     }
 
@@ -139,6 +186,7 @@ impl<'a> Password<'a> {
             theme,
             allow_empty_password: false,
             confirmation_prompt: None,
+            validator: None,
         }
     }
 }
