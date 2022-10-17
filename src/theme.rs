@@ -318,24 +318,39 @@ pub struct ColorfulTheme {
 
 impl Default for ColorfulTheme {
     fn default() -> ColorfulTheme {
+        #[cfg(not(target_os = "windows"))]
+        mod constants
+        {
+            pub(super) const heavy_check_mark: &str = "✔";
+            pub(super) const heavy_ballot_x: &str = "✘";
+            pub(super) const heavy_right_pointing_angle_quotation_mark_ornament: &str = "❯";
+        }
+        #[cfg(target_os = "windows")]
+        mod constants
+        {
+            pub(super) const heavy_check_mark: &str = "√"; // (subsitute char)
+            pub(super) const heavy_ballot_x: &str = "×"; // (subsitute char)
+            pub(super) const heavy_right_pointing_angle_quotation_mark_ornament: &str = ">"; // (subsitute char)
+        }
+
         ColorfulTheme {
             defaults_style: Style::new().for_stderr().cyan(),
             prompt_style: Style::new().for_stderr().bold(),
             prompt_prefix: style("?".to_string()).for_stderr().yellow(),
             prompt_suffix: style("›".to_string()).for_stderr().black().bright(),
-            success_prefix: style("✔".to_string()).for_stderr().green(),
+            success_prefix: style(constants::heavy_check_mark.to_string()).for_stderr().green(),
             success_suffix: style("·".to_string()).for_stderr().black().bright(),
-            error_prefix: style("✘".to_string()).for_stderr().red(),
+            error_prefix: style(constants::heavy_ballot_x.to_string()).for_stderr().red(),
             error_style: Style::new().for_stderr().red(),
             hint_style: Style::new().for_stderr().black().bright(),
             values_style: Style::new().for_stderr().green(),
             active_item_style: Style::new().for_stderr().cyan(),
             inactive_item_style: Style::new().for_stderr(),
-            active_item_prefix: style("❯".to_string()).for_stderr().green(),
+            active_item_prefix: style(constants::heavy_right_pointing_angle_quotation_mark_ornament.to_string()).for_stderr().green(),
             inactive_item_prefix: style(" ".to_string()).for_stderr(),
-            checked_item_prefix: style("✔".to_string()).for_stderr().green(),
-            unchecked_item_prefix: style("✔".to_string()).for_stderr().black(),
-            picked_item_prefix: style("❯".to_string()).for_stderr().green(),
+            checked_item_prefix: style(constants::heavy_check_mark.to_string()).for_stderr().green(),
+            unchecked_item_prefix: style(constants::heavy_check_mark.to_string()).for_stderr().black(),
+            picked_item_prefix: style(constants::heavy_right_pointing_angle_quotation_mark_ornament.to_string()).for_stderr().green(),
             unpicked_item_prefix: style(" ".to_string()).for_stderr(),
             #[cfg(feature = "fuzzy-select")]
             fuzzy_cursor_style: Style::new().for_stderr().black().on_white(),
