@@ -286,10 +286,46 @@ where
                 term.write_str(initial)?;
                 chars = initial.chars().collect();
                 position = chars.len();
+                term.flush()?;
             }
 
             loop {
                 match term.read_key()? {
+                    // press Home key to go the beginning of the written text
+                    Key::Home if position != 0 => {
+                        // move visually to beginning
+                        term.move_cursor_left(position)?;
+                        position = 0;
+                        // refresh
+                        term.flush()?;
+                    }
+                    // press End key to go the end of the user written text
+                    Key::End if position != chars.len() => {
+                        // move visually to end based on current position
+                        term.move_cursor_right(chars.len() - position)?;
+                        position = chars.len();
+                        // refresh
+                        term.flush()?;
+                    }
+                    // press Del key to delete the char in front of the cursor
+                    // cursor stays in the same position
+                    Key::Del if position < chars.len() => {
+                        // first get the tail before deletion
+                        let tail = chars[position + 1..].iter().collect::<String>();
+                        // move visually 1 unit to right
+                        term.move_cursor_right(1)?;
+                        // delete all the chars from right to the pos of cursor (which is to left side)
+                        term.clear_chars(1)?;
+                        chars.remove(position);
+
+                        // append visually the tail to the user written text
+                        term.write_str(&tail)?;
+                        // move visually to the left length of tail; why ?
+                        // because after write_str() the terminal cursor is at the end of user written text, then the cursor needs to go back from where it was on Del key press
+                        term.move_cursor_left(tail.len())?;
+                        // refresh
+                        term.flush()?;
+                    }
                     Key::Backspace if position > 0 => {
                         position -= 1;
                         chars.remove(position);
@@ -399,6 +435,10 @@ where
                     _ => (),
                 }
             }
+            if self.initial_text.is_some() && chars.is_empty() {
+                self.initial_text = Some(String::from(""));
+            }
+
             let input = chars.iter().collect::<String>();
 
             term.clear_line()?;
