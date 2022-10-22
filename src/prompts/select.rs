@@ -125,8 +125,8 @@ impl Select<'_> {
     /// ```
     pub fn items<T>(&mut self, items: T) -> &mut Self
     where
-        T::Item: ToString,
         T: IntoIterator,
+        T::Item: ToString,
     {
         for item in items {
             self.items.push(item.to_string());
