@@ -91,7 +91,11 @@ impl MultiSelect<'_> {
     }
 
     /// Adds multiple items to the selector.
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
+    pub fn items<T>(&mut self, items: T) -> &mut Self
+    where
+        T: IntoIterator,
+        T::Item: std::string::ToString,
+    {
         for item in items {
             self.items.push(item.to_string());
             self.defaults.push(false);
@@ -100,8 +104,12 @@ impl MultiSelect<'_> {
     }
 
     /// Adds multiple items to the selector with checked state
-    pub fn items_checked<T: ToString>(&mut self, items: &[(T, bool)]) -> &mut Self {
-        for &(ref item, checked) in items {
+    pub fn items_checked<T, I>(&mut self, items: T) -> &mut Self
+    where
+        I: std::string::ToString,
+        T: IntoIterator<Item = (I, bool)>,
+    {
+        for (item, checked) in items {
             self.items.push(item.to_string());
             self.defaults.push(checked);
         }

@@ -79,7 +79,11 @@ impl FuzzySelect<'_> {
     }
 
     /// Adds multiple items to the fuzzy selector.
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
+    pub fn items<T>(&mut self, items: T) -> &mut Self
+    where
+        T: IntoIterator,
+        T::Item: std::string::ToString,
+    {
         for item in items {
             self.items.push(item.to_string());
         }
