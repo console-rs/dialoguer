@@ -76,8 +76,8 @@ impl Sort<'_> {
     /// Adds multiple items to the selector.
     pub fn items<T>(&mut self, items: T) -> &mut Self
     where
+        T::Item: ToString,
         T: IntoIterator,
-        T::Item: std::string::ToString,
     {
         for item in items {
             self.items.push(item.to_string());
