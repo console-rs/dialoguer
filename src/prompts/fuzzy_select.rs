@@ -44,7 +44,7 @@ pub struct FuzzySelect<'a> {
     theme: &'a dyn Theme,
     /// Search string that a fuzzy search with start with.
     /// Defaults to an empty string.
-    search_term: String,
+    initial_text: String,
 }
 
 impl Default for FuzzySelect<'static> {
@@ -90,8 +90,8 @@ impl FuzzySelect<'_> {
     }
 
     /// Sets the search text that a fuzzy search starts with. 
-    pub fn search_term<S: Into<String>>(&mut self, search_term: S) -> &mut Self {
-        self.search_term = search_term.into();
+    pub fn with_initial_text<S: Into<String>>(&mut self, initial_text: S) -> &mut Self {
+        self.initial_text = initial_text.into();
         self
     }
 
@@ -165,8 +165,8 @@ impl FuzzySelect<'_> {
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
         // Place cursor at the end of the search term 
-        let mut position = self.search_term.len();
-        let mut search_term = self.search_term.to_owned();
+        let mut position = self.initial_text.len();
+        let mut search_term = self.initial_text.to_owned();
 
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
@@ -317,7 +317,7 @@ impl<'a> FuzzySelect<'a> {
             highlight_matches: true,
             max_length: None,
             theme,
-            search_term: "".into(),
+            initial_text: "".into(),
         }
     }
 }
