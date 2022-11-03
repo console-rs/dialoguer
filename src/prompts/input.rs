@@ -46,6 +46,7 @@ pub struct Input<'a, T> {
     initial_text: Option<String>,
     theme: &'a dyn Theme,
     permit_empty: bool,
+    #[allow(clippy::type_complexity)]
     validator: Option<Box<dyn FnMut(&T) -> Option<String> + 'a>>,
     #[cfg(feature = "history")]
     history: Option<&'a mut dyn History<T>>,
@@ -72,7 +73,10 @@ impl<T> Input<'_, T> {
     }
 
     /// Changes the prompt text to the post completion text after input is complete
-    pub fn with_post_completion_text<S: Into<String>>(&mut self, post_completion_text: S) -> &mut Self {
+    pub fn with_post_completion_text<S: Into<String>>(
+        &mut self,
+        post_completion_text: S,
+    ) -> &mut Self {
         self.post_completion_text = Some(post_completion_text.into());
         self
     }
