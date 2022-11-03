@@ -39,6 +39,7 @@ use console::{Key, Term};
 /// ```
 pub struct Input<'a, T> {
     prompt: String,
+    post_completion_text: Option<String>,
     report: bool,
     default: Option<T>,
     show_default: bool,
@@ -67,6 +68,12 @@ impl<T> Input<'_, T> {
     /// Sets the input prompt.
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
+        self
+    }
+
+    /// Changes the prompt text to the post completion text after input is complete
+    pub fn with_post_completion_text<S: Into<String>>(&mut self, post_completion_text: S) -> &mut Self {
+        self.post_completion_text = Some(post_completion_text.into());
         self
     }
 
@@ -119,6 +126,7 @@ impl<'a, T> Input<'a, T> {
     pub fn with_theme(theme: &'a dyn Theme) -> Self {
         Self {
             prompt: "".into(),
+            post_completion_text: None,
             report: true,
             default: None,
             show_default: true,
@@ -438,7 +446,11 @@ where
                     }
 
                     if self.report {
-                        render.input_prompt_selection(&self.prompt, &input)?;
+                        if let Some(post_completion_text) = &self.post_completion_text {
+                            render.input_prompt_selection(post_completion_text, &input)?;
+                        } else {
+                            render.input_prompt_selection(&self.prompt, &input)?;
+                        }
                     }
                     term.flush()?;
 
