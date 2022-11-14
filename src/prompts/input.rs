@@ -301,13 +301,29 @@ where
                     Key::Backspace if position > 0 => {
                         position -= 1;
                         chars.remove(position);
-                        term.clear_chars(1)?;
+                        let line_size = term.size().1 as usize;
+                        // Case we want to delete last char of a line so the cursor is at the beginning of the next line
+                        if (position + prompt_len) % (line_size - 1) == 0 {
+                            term.clear_line()?;
+                            term.move_cursor_up(1)?;
+                            term.move_cursor_right(line_size + 1)?;
+                        } else {
+                            term.clear_chars(1)?;
+                        }
+
 
                         let tail: String = chars[position..].iter().collect();
+                        
 
                         if !tail.is_empty() {
                             term.write_str(&tail)?;
-                            term.move_cursor_left(tail.len())?;
+                            
+                            let total = position + prompt_len + tail.len();
+                            let total_line = total / line_size;
+                            let line_cursor = (position + prompt_len) / line_size;
+
+                            let cursor_pos = (position + prompt_len) % line_size;
+                            term.move_cursor_to(cursor_pos, term.size().0 as usize - (total_line - line_cursor) - 1)?;                            
                         }
 
                         term.flush()?;
@@ -332,7 +348,12 @@ where
                         term.flush()?;
                     }
                     Key::ArrowRight if position < chars.len() => {
-                        term.move_cursor_right(1)?;
+                        if (position + prompt_len) % (term.size().1 as usize - 1) == 0 {
+                            term.move_cursor_down(1)?;
+                            term.move_cursor_left(term.size().1 as usize)?;
+                        } else {
+                            term.move_cursor_right(1)?;
+                        }
                         position += 1;
                         term.flush()?;
                     }
