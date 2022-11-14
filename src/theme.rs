@@ -1,7 +1,7 @@
 //! Customizes the rendering of the elements.
 use std::{fmt, io};
 
-use console::{style, Style, StyledObject, Term};
+use console::{style, Style, StyledObject, Term, measure_text_width};
 #[cfg(feature = "fuzzy-select")]
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 
@@ -746,11 +746,12 @@ impl<'a> TermThemeRenderer<'a> {
     >(
         &mut self,
         f: F,
-    ) -> io::Result<()> {
+    ) -> io::Result<usize> {
         let mut buf = String::new();
         f(self, &mut buf).map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
         self.height += buf.chars().filter(|&x| x == '\n').count();
-        self.term.write_str(&buf)
+        self.term.write_str(&buf)?;
+        Ok(measure_text_width(&buf))
     }
 
     fn write_formatted_line<
@@ -787,7 +788,7 @@ impl<'a> TermThemeRenderer<'a> {
         self.write_formatted_line(|this, buf| this.theme.format_error(buf, err))
     }
 
-    pub fn confirm_prompt(&mut self, prompt: &str, default: Option<bool>) -> io::Result<()> {
+    pub fn confirm_prompt(&mut self, prompt: &str, default: Option<bool>) -> io::Result<usize> {
         self.write_formatted_str(|this, buf| this.theme.format_confirm_prompt(buf, prompt, default))
     }
 
@@ -810,7 +811,7 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
-    pub fn input_prompt(&mut self, prompt: &str, default: Option<&str>) -> io::Result<()> {
+    pub fn input_prompt(&mut self, prompt: &str, default: Option<&str>) -> io::Result<usize> {
         self.write_formatted_str(|this, buf| this.theme.format_input_prompt(buf, prompt, default))
     }
 
@@ -821,7 +822,7 @@ impl<'a> TermThemeRenderer<'a> {
     }
 
     #[cfg(feature = "password")]
-    pub fn password_prompt(&mut self, prompt: &str) -> io::Result<()> {
+    pub fn password_prompt(&mut self, prompt: &str) -> io::Result<usize> {
         self.write_formatted_str(|this, buf| {
             write!(buf, "\r")?;
             this.theme.format_password_prompt(buf, prompt)

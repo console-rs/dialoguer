@@ -262,7 +262,7 @@ where
         loop {
             let default_string = self.default.as_ref().map(ToString::to_string);
 
-            render.input_prompt(
+            let prompt_len = render.input_prompt(
                 &self.prompt,
                 if self.show_default {
                     default_string.as_deref()
@@ -314,7 +314,12 @@ where
                         term.flush()?;
                     }
                     Key::ArrowLeft if position > 0 => {
-                        term.move_cursor_left(1)?;
+                        if (position + prompt_len) % term.size().1 as usize == 0 {
+                            term.move_cursor_up(1)?;
+                            term.move_cursor_right(term.size().1 as usize)?;
+                        } else {
+                            term.move_cursor_left(1)?;
+                        }
                         position -= 1;
                         term.flush()?;
                     }
