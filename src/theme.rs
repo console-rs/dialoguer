@@ -1,7 +1,7 @@
 //! Customizes the rendering of the elements.
 use std::{fmt, io};
 
-use console::{style, Style, StyledObject, Term, measure_text_width};
+use console::{measure_text_width, style, Style, StyledObject, Term};
 #[cfg(feature = "fuzzy-select")]
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 

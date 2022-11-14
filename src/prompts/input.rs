@@ -72,7 +72,10 @@ impl<T> Input<'_, T> {
     }
 
     /// Changes the prompt text to the post completion text after input is complete
-    pub fn with_post_completion_text<S: Into<String>>(&mut self, post_completion_text: S) -> &mut Self {
+    pub fn with_post_completion_text<S: Into<String>>(
+        &mut self,
+        post_completion_text: S,
+    ) -> &mut Self {
         self.post_completion_text = Some(post_completion_text.into());
         self
     }
@@ -311,19 +314,20 @@ where
                             term.clear_chars(1)?;
                         }
 
-
                         let tail: String = chars[position..].iter().collect();
-                        
 
                         if !tail.is_empty() {
                             term.write_str(&tail)?;
-                            
+
                             let total = position + prompt_len + tail.len();
                             let total_line = total / line_size;
                             let line_cursor = (position + prompt_len) / line_size;
 
                             let cursor_pos = (position + prompt_len) % line_size;
-                            term.move_cursor_to(cursor_pos, term.size().0 as usize - (total_line - line_cursor) - 1)?;                            
+                            term.move_cursor_to(
+                                cursor_pos,
+                                term.size().0 as usize - (total_line - line_cursor) - 1,
+                            )?;
                         }
 
                         term.flush()?;
@@ -357,6 +361,30 @@ where
                         position += 1;
                         term.flush()?;
                     }
+                    Key::UnknownEscSeq(seq) if seq == vec!['b'] => {
+                        let line_size = term.size().1 as usize;
+                        let find_last_space =
+                            chars[..position].iter().rposition(|c| c.is_whitespace());
+                        
+                        // If we find a space we set the cursor to the next char else we set it to the beginning of the input
+                        if let Some(last_space) = find_last_space {
+                            if last_space < position {
+                                let new_line = (prompt_len + last_space) / line_size;
+                                let old_line = (prompt_len + position) / line_size;
+                                term.move_cursor_to(
+                                    ((prompt_len + last_space) % line_size) + 1,
+                                    term.size().0 as usize - (old_line - new_line) - 1,
+                                )?;
+                                position = last_space + 1;
+                            }
+                        } else {
+                            term.move_cursor_left(position)?;
+                            position = 0;
+                        }
+
+                        term.flush()?;
+                    }
+                    Key::UnknownEscSeq(seq) if seq == vec!['f'] => {}
                     #[cfg(feature = "completion")]
                     Key::ArrowRight | Key::Tab => {
                         if let Some(completion) = &self.completion {
