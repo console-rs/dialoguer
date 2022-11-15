@@ -322,12 +322,10 @@ where
                             let total = position + prompt_len + tail.len();
                             let total_line = total / line_size;
                             let line_cursor = (position + prompt_len) / line_size;
+                            term.move_cursor_up(total_line - line_cursor)?;
 
-                            let cursor_pos = (position + prompt_len) % line_size;
-                            term.move_cursor_to(
-                                cursor_pos,
-                                term.size().0 as usize - (total_line - line_cursor) - 1,
-                            )?;
+                            term.move_cursor_left(line_size)?;
+                            term.move_cursor_right((position + prompt_len) % line_size)?;
                         }
 
                         term.flush()?;
@@ -363,18 +361,24 @@ where
                     }
                     Key::UnknownEscSeq(seq) if seq == vec!['b'] => {
                         let line_size = term.size().1 as usize;
-                        let find_last_space =
-                            chars[..position].iter().rposition(|c| c.is_whitespace());
-                        
+                        let nb_space = chars[..position]
+                            .iter()
+                            .rev()
+                            .take_while(|c| c.is_whitespace())
+                            .count();
+                        let find_last_space = chars[..position - nb_space]
+                            .iter()
+                            .rposition(|c| c.is_whitespace());
+
                         // If we find a space we set the cursor to the next char else we set it to the beginning of the input
                         if let Some(last_space) = find_last_space {
                             if last_space < position {
                                 let new_line = (prompt_len + last_space) / line_size;
                                 let old_line = (prompt_len + position) / line_size;
-                                term.move_cursor_to(
-                                    ((prompt_len + last_space) % line_size) + 1,
-                                    term.size().0 as usize - (old_line - new_line) - 1,
-                                )?;
+                                term.move_cursor_up(old_line - new_line)?;
+
+                                term.move_cursor_left(line_size)?;
+                                term.move_cursor_right((prompt_len + last_space + 1) % line_size)?;
                                 position = last_space + 1;
                             }
                         } else {
@@ -384,7 +388,35 @@ where
 
                         term.flush()?;
                     }
-                    Key::UnknownEscSeq(seq) if seq == vec!['f'] => {}
+                    Key::UnknownEscSeq(seq) if seq == vec!['f'] => {
+                        let line_size = term.size().1 as usize;
+                        let find_next_space =
+                            chars[position..].iter().position(|c| c.is_whitespace());
+
+                        // If we find a space we set the cursor to the next char else we set it to the beginning of the input
+                        if let Some(mut next_space) = find_next_space {
+                            let nb_space = chars[position + next_space..]
+                                .iter()
+                                .take_while(|c| c.is_whitespace())
+                                .count();
+                            next_space += nb_space - 1;
+                            let new_line = (prompt_len + position + next_space) / line_size;
+                            let old_line = (prompt_len + position) / line_size;
+                            term.move_cursor_down(new_line - old_line)?;
+
+                            term.move_cursor_left(line_size)?;
+                            term.move_cursor_right(
+                                (prompt_len + position + next_space + 1) % line_size,
+                            )?;
+                            position += next_space + 1;
+                        } else {
+                            term.move_cursor_left(line_size)?;
+                            term.move_cursor_right((prompt_len + chars.len()) % line_size)?;
+                            position = chars.len();
+                        }
+
+                        term.flush()?;
+                    }
                     #[cfg(feature = "completion")]
                     Key::ArrowRight | Key::Tab => {
                         if let Some(completion) = &self.completion {
