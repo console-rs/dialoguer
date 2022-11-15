@@ -89,7 +89,7 @@ impl FuzzySelect<'_> {
         self
     }
 
-    /// Sets the search text that a fuzzy search starts with. 
+    /// Sets the search text that a fuzzy search starts with.
     pub fn with_initial_text<S: Into<String>>(&mut self, initial_text: S) -> &mut Self {
         self.initial_text = initial_text.into();
         self
@@ -164,7 +164,7 @@ impl FuzzySelect<'_> {
 
     /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
-        // Place cursor at the end of the search term 
+        // Place cursor at the end of the search term
         let mut position = self.initial_text.len();
         let mut search_term = self.initial_text.to_owned();
 
