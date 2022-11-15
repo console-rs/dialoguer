@@ -375,10 +375,19 @@ where
                             if last_space < position {
                                 let new_line = (prompt_len + last_space) / line_size;
                                 let old_line = (prompt_len + position) / line_size;
-                                term.move_cursor_up(old_line - new_line)?;
+                                let diff_line = old_line - new_line;
+                                if diff_line != 0 {
+                                    term.move_cursor_up(old_line - new_line)?;
+                                }
 
-                                term.move_cursor_left(line_size)?;
-                                term.move_cursor_right((prompt_len + last_space + 1) % line_size)?;
+                                let new_pos_x = (prompt_len + last_space) % line_size;
+                                let old_pos_x = (prompt_len + position) % line_size;
+                                let diff_pos_x = new_pos_x as i64 - old_pos_x as i64;
+                                if diff_pos_x < 0 {
+                                    term.move_cursor_left((diff_pos_x * -1 - 1) as usize)?;
+                                } else {
+                                    term.move_cursor_right((diff_pos_x + 1) as usize)?;
+                                }
                                 position = last_space + 1;
                             }
                         } else {
@@ -404,14 +413,28 @@ where
                             let old_line = (prompt_len + position) / line_size;
                             term.move_cursor_down(new_line - old_line)?;
 
-                            term.move_cursor_left(line_size)?;
-                            term.move_cursor_right(
-                                (prompt_len + position + next_space + 1) % line_size,
-                            )?;
+                            let new_pos_x = (prompt_len + position + next_space) % line_size;
+                            let old_pos_x = (prompt_len + position) % line_size;
+                            let diff_pos_x = new_pos_x as i64 - old_pos_x as i64;
+                            if diff_pos_x < 0 {
+                                term.move_cursor_left((diff_pos_x * -1 - 1) as usize)?;
+                            } else {
+                                term.move_cursor_right((diff_pos_x + 1) as usize)?;
+                            }
                             position += next_space + 1;
                         } else {
-                            term.move_cursor_left(line_size)?;
-                            term.move_cursor_right((prompt_len + chars.len()) % line_size)?;
+                            let new_line = (prompt_len + chars.len()) / line_size;
+                            let old_line = (prompt_len + position) / line_size;
+                            term.move_cursor_down(new_line - old_line)?;
+
+                            let new_pos_x = (prompt_len + chars.len()) % line_size;
+                            let old_pos_x = (prompt_len + position) % line_size;
+                            let diff_pos_x = new_pos_x as i64 - old_pos_x as i64;
+                            if diff_pos_x < 0 {
+                                term.move_cursor_left((diff_pos_x * -1 - 1) as usize)?;
+                            } else if diff_pos_x > 0 {
+                                term.move_cursor_right((diff_pos_x) as usize)?;
+                            }
                             position = chars.len();
                         }
 
@@ -436,10 +459,27 @@ where
                     }
                     #[cfg(feature = "history")]
                     Key::ArrowUp => {
+                        let line_size = term.size().1 as usize;
                         if let Some(history) = &self.history {
                             if let Some(previous) = history.read(hist_pos) {
                                 hist_pos += 1;
-                                term.clear_chars(chars.len())?;
+                                let mut chars_len = chars.len();
+                                while ((prompt_len + chars_len) / line_size) > 0 {
+                                    term.clear_chars(chars_len)?;
+                                    if (prompt_len + chars_len) % line_size == 0 {
+                                        chars_len -= std::cmp::min(chars_len, line_size);
+                                    } else {
+                                        chars_len -= std::cmp::min(
+                                            chars_len,
+                                            (prompt_len + chars_len + 1) % line_size,
+                                        );
+                                    }
+                                    if chars_len > 0 {
+                                        term.move_cursor_up(1)?;
+                                        term.move_cursor_right(line_size)?;
+                                    }
+                                }
+                                term.clear_chars(chars_len)?;
                                 chars.clear();
                                 position = 0;
                                 for ch in previous.chars() {
@@ -453,7 +493,27 @@ where
                     }
                     #[cfg(feature = "history")]
                     Key::ArrowDown => {
+                        let line_size = term.size().1 as usize;
                         if let Some(history) = &self.history {
+                            let mut chars_len = chars.len();
+                            while ((prompt_len + chars_len) / line_size) > 0 {
+                                term.clear_chars(chars_len)?;
+                                if (prompt_len + chars_len) % line_size == 0 {
+                                    chars_len -= std::cmp::min(chars_len, line_size);
+                                } else {
+                                    chars_len -= std::cmp::min(
+                                        chars_len,
+                                        (prompt_len + chars_len + 1) % line_size,
+                                    );
+                                }
+                                if chars_len > 0 {
+                                    term.move_cursor_up(1)?;
+                                    term.move_cursor_right(line_size)?;
+                                }
+                            }
+                            term.clear_chars(chars_len)?;
+                            chars.clear();
+                            position = 0;
                             // Move the history position back one in case we have up arrowed into it
                             // and the position is sitting on the next to read
                             if let Some(pos) = hist_pos.checked_sub(1) {
@@ -461,26 +521,15 @@ where
                                 // Move it back again to get the previous history entry
                                 if let Some(pos) = pos.checked_sub(1) {
                                     if let Some(previous) = history.read(pos) {
-                                        term.clear_chars(chars.len())?;
-                                        chars.clear();
-                                        position = 0;
                                         for ch in previous.chars() {
                                             chars.insert(position, ch);
                                             position += 1;
                                         }
                                         term.write_str(&previous)?;
-                                        term.flush()?;
                                     }
-                                } else {
-                                    term.clear_chars(chars.len())?;
-                                    chars.clear();
-                                    position = 0;
                                 }
-                            } else {
-                                term.clear_chars(chars.len())?;
-                                chars.clear();
-                                position = 0;
                             }
+                            term.flush()?;
                         }
                     }
                     Key::Enter => break,
