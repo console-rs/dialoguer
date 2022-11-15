@@ -371,8 +371,9 @@ where
                             .rposition(|c| c.is_whitespace());
 
                         // If we find a space we set the cursor to the next char else we set it to the beginning of the input
-                        if let Some(last_space) = find_last_space {
+                        if let Some(mut last_space) = find_last_space {
                             if last_space < position {
+                                last_space += 1;
                                 let new_line = (prompt_len + last_space) / line_size;
                                 let old_line = (prompt_len + position) / line_size;
                                 let diff_line = old_line - new_line;
@@ -383,12 +384,13 @@ where
                                 let new_pos_x = (prompt_len + last_space) % line_size;
                                 let old_pos_x = (prompt_len + position) % line_size;
                                 let diff_pos_x = new_pos_x as i64 - old_pos_x as i64;
+                                //println!("new_pos_x = {}, old_pos_x = {}, diff = {}", new_pos_x, old_pos_x, diff_pos_x);
                                 if diff_pos_x < 0 {
-                                    term.move_cursor_left((diff_pos_x * -1 - 1) as usize)?;
+                                    term.move_cursor_left((diff_pos_x * -1) as usize)?;
                                 } else {
-                                    term.move_cursor_right((diff_pos_x + 1) as usize)?;
+                                    term.move_cursor_right((diff_pos_x) as usize)?;
                                 }
-                                position = last_space + 1;
+                                position = last_space;
                             }
                         } else {
                             term.move_cursor_left(position)?;
@@ -408,7 +410,7 @@ where
                                 .iter()
                                 .take_while(|c| c.is_whitespace())
                                 .count();
-                            next_space += nb_space - 1;
+                            next_space += nb_space;
                             let new_line = (prompt_len + position + next_space) / line_size;
                             let old_line = (prompt_len + position) / line_size;
                             term.move_cursor_down(new_line - old_line)?;
@@ -417,11 +419,11 @@ where
                             let old_pos_x = (prompt_len + position) % line_size;
                             let diff_pos_x = new_pos_x as i64 - old_pos_x as i64;
                             if diff_pos_x < 0 {
-                                term.move_cursor_left((diff_pos_x * -1 - 1) as usize)?;
+                                term.move_cursor_left((diff_pos_x * -1) as usize)?;
                             } else {
-                                term.move_cursor_right((diff_pos_x + 1) as usize)?;
+                                term.move_cursor_right((diff_pos_x) as usize)?;
                             }
-                            position += next_space + 1;
+                            position += next_space;
                         } else {
                             let new_line = (prompt_len + chars.len()) / line_size;
                             let old_line = (prompt_len + position) / line_size;
