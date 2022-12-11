@@ -281,7 +281,6 @@ where
                     None
                 },
             )?;
-            term.flush()?;
 
             // Read input by keystroke so that we can suppress ascii control characters
             if !term.features().is_attended() {
@@ -298,6 +297,7 @@ where
                 chars = initial.chars().collect();
                 position = chars.len();
             }
+            term.flush()?;
 
             loop {
                 match term.read_key()? {
