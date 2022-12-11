@@ -219,8 +219,8 @@ impl FuzzySelect<'_> {
                     &matcher,
                     &search_term,
                 )?;
-                term.flush()?;
             }
+            term.flush()?;
 
             match (term.read_key()?, sel) {
                 (Key::Escape, _) if allow_quit => {
