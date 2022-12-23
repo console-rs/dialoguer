@@ -294,7 +294,7 @@ where
         loop {
             let default_string = self.default.as_ref().map(ToString::to_string);
 
-            let prompt_len = render.input_prompt(
+            let prompt = render.get_input_prompt(
                 &self.prompt,
                 if self.show_default {
                     default_string.as_deref()
@@ -321,7 +321,7 @@ where
             let mut rl = Editor::<()>::new()?;
 
             loop {
-                let readline = rl.readline("");
+                let readline = rl.readline(&prompt);
                 match readline {
                     Ok(line) => {
                         rl.add_history_entry(line.as_str());
