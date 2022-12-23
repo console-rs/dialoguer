@@ -1,6 +1,6 @@
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
-use std::{fmt::Debug, io, iter, str::FromStr};
+use std::{fmt::{Debug, Display, Formatter, self}, io, str::FromStr, error::Error};
 
 #[cfg(feature = "completion")]
 use crate::completion::Completion;
@@ -11,7 +11,7 @@ use crate::{
     validate::Validator,
 };
 
-use console::{Key, Term};
+use console:: Term;
 
 /// Renders an input prompt.
 ///
@@ -272,6 +272,30 @@ impl From<ReadlineError> for InteractError {
     }
 }
 
+impl Display for InteractError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            InteractError::Io(err) => std::fmt::Display::fmt(&err, f),
+            InteractError::Readline(err) => std::fmt::Display::fmt(&err, f),
+        }
+    }
+}
+
+impl Error for InteractError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            InteractError::Io(err) => Some(err),
+            InteractError::Readline(err) => Some(err),
+        }
+    }
+    fn cause(&self) -> Option<&dyn Error> {
+        match self {
+            InteractError::Io(err) => Some(err),
+            InteractError::Readline(err) => Some(err),
+        }
+    }
+}
+
 impl<T> Input<'_, T>
 where
     T: Clone + ToString + FromStr,
@@ -309,8 +333,6 @@ where
             }
 
             let mut chars = "".to_string();
-            #[cfg(feature = "history")]
-            let mut hist_pos = 0;
 
             if let Some(initial) = self.initial_text.as_ref() {
                 term.write_str(initial)?;

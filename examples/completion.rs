@@ -1,6 +1,6 @@
 use dialoguer::{theme::ColorfulTheme, Completion, Input};
 
-fn main() -> Result<(), std::io::Error> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Use the Right arrow or Tab to complete your command");
     let completion = MyCompletion::default();
     Input::<String>::with_theme(&ColorfulTheme::default())
