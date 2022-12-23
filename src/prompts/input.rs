@@ -338,6 +338,7 @@ where
             }
             let input = chars.clone();
 
+            term.move_cursor_up(1)?;
             term.clear_line()?;
             render.clear()?;
 
