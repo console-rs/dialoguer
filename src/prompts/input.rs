@@ -1,3 +1,5 @@
+use rustyline::error::ReadlineError;
+use rustyline::Editor;
 use std::{fmt::Debug, io, iter, str::FromStr};
 
 #[cfg(feature = "completion")]
@@ -251,6 +253,25 @@ where
     }
 }
 
+// create an error type that has both IO and readline
+#[derive(Debug)]
+pub enum InteractError {
+    Io(io::Error),
+    Readline(ReadlineError),
+}
+
+impl From<io::Error> for InteractError {
+    fn from(err: io::Error) -> Self {
+        InteractError::Io(err)
+    }
+}
+
+impl From<ReadlineError> for InteractError {
+    fn from(err: ReadlineError) -> Self {
+        InteractError::Readline(err)
+    }
+}
+
 impl<T> Input<'_, T>
 where
     T: Clone + ToString + FromStr,
@@ -262,12 +283,12 @@ where
     /// while [`interact`](#method.interact) allows virtually any character to be used e.g arrow keys.
     ///
     /// The dialog is rendered on stderr.
-    pub fn interact_text(&mut self) -> io::Result<T> {
+    pub fn interact_text(&mut self) -> Result<T, InteractError> {
         self.interact_text_on(&Term::stderr())
     }
 
     /// Like [`interact_text`](#method.interact_text) but allows a specific terminal to be set.
-    pub fn interact_text_on(&mut self, term: &Term) -> io::Result<T> {
+    pub fn interact_text_on(&mut self, term: &Term) -> Result<T, InteractError> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
@@ -287,264 +308,35 @@ where
                 return Ok("".to_owned().parse::<T>().unwrap());
             }
 
-            let mut chars: Vec<char> = Vec::new();
-            let mut position = 0;
+            let mut chars = "".to_string();
             #[cfg(feature = "history")]
             let mut hist_pos = 0;
 
             if let Some(initial) = self.initial_text.as_ref() {
                 term.write_str(initial)?;
-                chars = initial.chars().collect();
-                position = chars.len();
+                chars = initial.chars().collect::<String>();
             }
             term.flush()?;
 
+            let mut rl = Editor::<()>::new()?;
+
             loop {
-                match term.read_key()? {
-                    Key::Backspace if position > 0 => {
-                        position -= 1;
-                        chars.remove(position);
-                        let line_size = term.size().1 as usize;
-                        // Case we want to delete last char of a line so the cursor is at the beginning of the next line
-                        if (position + prompt_len) % (line_size - 1) == 0 {
-                            term.clear_line()?;
-                            term.move_cursor_up(1)?;
-                            term.move_cursor_right(line_size + 1)?;
-                        } else {
-                            term.clear_chars(1)?;
-                        }
-
-                        let tail: String = chars[position..].iter().collect();
-
-                        if !tail.is_empty() {
-                            term.write_str(&tail)?;
-
-                            let total = position + prompt_len + tail.len();
-                            let total_line = total / line_size;
-                            let line_cursor = (position + prompt_len) / line_size;
-                            term.move_cursor_up(total_line - line_cursor)?;
-
-                            term.move_cursor_left(line_size)?;
-                            term.move_cursor_right((position + prompt_len) % line_size)?;
-                        }
-
-                        term.flush()?;
+                let readline = rl.readline("");
+                match readline {
+                    Ok(line) => {
+                        rl.add_history_entry(line.as_str());
+                        chars = line.clone();
+                        break;
                     }
-                    Key::Char(chr) if !chr.is_ascii_control() => {
-                        chars.insert(position, chr);
-                        position += 1;
-                        let tail: String =
-                            iter::once(&chr).chain(chars[position..].iter()).collect();
-                        term.write_str(&tail)?;
-                        term.move_cursor_left(tail.len() - 1)?;
-                        term.flush()?;
+                    Err(ReadlineError::Interrupted) => break,
+                    Err(ReadlineError::Eof) => break,
+                    Err(err) => {
+                        println!("Error: {:?}", err);
+                        break;
                     }
-                    Key::ArrowLeft if position > 0 => {
-                        if (position + prompt_len) % term.size().1 as usize == 0 {
-                            term.move_cursor_up(1)?;
-                            term.move_cursor_right(term.size().1 as usize)?;
-                        } else {
-                            term.move_cursor_left(1)?;
-                        }
-                        position -= 1;
-                        term.flush()?;
-                    }
-                    Key::ArrowRight if position < chars.len() => {
-                        if (position + prompt_len) % (term.size().1 as usize - 1) == 0 {
-                            term.move_cursor_down(1)?;
-                            term.move_cursor_left(term.size().1 as usize)?;
-                        } else {
-                            term.move_cursor_right(1)?;
-                        }
-                        position += 1;
-                        term.flush()?;
-                    }
-                    Key::UnknownEscSeq(seq) if seq == vec!['b'] => {
-                        let line_size = term.size().1 as usize;
-                        let nb_space = chars[..position]
-                            .iter()
-                            .rev()
-                            .take_while(|c| c.is_whitespace())
-                            .count();
-                        let find_last_space = chars[..position - nb_space]
-                            .iter()
-                            .rposition(|c| c.is_whitespace());
-
-                        // If we find a space we set the cursor to the next char else we set it to the beginning of the input
-                        if let Some(mut last_space) = find_last_space {
-                            if last_space < position {
-                                last_space += 1;
-                                let new_line = (prompt_len + last_space) / line_size;
-                                let old_line = (prompt_len + position) / line_size;
-                                let diff_line = old_line - new_line;
-                                if diff_line != 0 {
-                                    term.move_cursor_up(old_line - new_line)?;
-                                }
-
-                                let new_pos_x = (prompt_len + last_space) % line_size;
-                                let old_pos_x = (prompt_len + position) % line_size;
-                                let diff_pos_x = new_pos_x as i64 - old_pos_x as i64;
-                                //println!("new_pos_x = {}, old_pos_x = {}, diff = {}", new_pos_x, old_pos_x, diff_pos_x);
-                                if diff_pos_x < 0 {
-                                    term.move_cursor_left((diff_pos_x * -1) as usize)?;
-                                } else {
-                                    term.move_cursor_right((diff_pos_x) as usize)?;
-                                }
-                                position = last_space;
-                            }
-                        } else {
-                            term.move_cursor_left(position)?;
-                            position = 0;
-                        }
-
-                        term.flush()?;
-                    }
-                    Key::UnknownEscSeq(seq) if seq == vec!['f'] => {
-                        let line_size = term.size().1 as usize;
-                        let find_next_space =
-                            chars[position..].iter().position(|c| c.is_whitespace());
-
-                        // If we find a space we set the cursor to the next char else we set it to the beginning of the input
-                        if let Some(mut next_space) = find_next_space {
-                            let nb_space = chars[position + next_space..]
-                                .iter()
-                                .take_while(|c| c.is_whitespace())
-                                .count();
-                            next_space += nb_space;
-                            let new_line = (prompt_len + position + next_space) / line_size;
-                            let old_line = (prompt_len + position) / line_size;
-                            term.move_cursor_down(new_line - old_line)?;
-
-                            let new_pos_x = (prompt_len + position + next_space) % line_size;
-                            let old_pos_x = (prompt_len + position) % line_size;
-                            let diff_pos_x = new_pos_x as i64 - old_pos_x as i64;
-                            if diff_pos_x < 0 {
-                                term.move_cursor_left((diff_pos_x * -1) as usize)?;
-                            } else {
-                                term.move_cursor_right((diff_pos_x) as usize)?;
-                            }
-                            position += next_space;
-                        } else {
-                            let new_line = (prompt_len + chars.len()) / line_size;
-                            let old_line = (prompt_len + position) / line_size;
-                            term.move_cursor_down(new_line - old_line)?;
-
-                            let new_pos_x = (prompt_len + chars.len()) % line_size;
-                            let old_pos_x = (prompt_len + position) % line_size;
-                            let diff_pos_x = new_pos_x as i64 - old_pos_x as i64;
-                            if diff_pos_x < 0 {
-                                term.move_cursor_left((diff_pos_x * -1 - 1) as usize)?;
-                            } else if diff_pos_x > 0 {
-                                term.move_cursor_right((diff_pos_x) as usize)?;
-                            }
-                            position = chars.len();
-                        }
-
-                        term.flush()?;
-                    }
-                    #[cfg(feature = "completion")]
-                    Key::ArrowRight | Key::Tab => {
-                        if let Some(completion) = &self.completion {
-                            let input: String = chars.clone().into_iter().collect();
-                            if let Some(x) = completion.get(&input) {
-                                term.clear_chars(chars.len())?;
-                                chars.clear();
-                                position = 0;
-                                for ch in x.chars() {
-                                    chars.insert(position, ch);
-                                    position += 1;
-                                }
-                                term.write_str(&x)?;
-                                term.flush()?;
-                            }
-                        }
-                    }
-                    #[cfg(feature = "history")]
-                    Key::ArrowUp => {
-                        let line_size = term.size().1 as usize;
-                        if let Some(history) = &self.history {
-                            if let Some(previous) = history.read(hist_pos) {
-                                hist_pos += 1;
-                                let mut chars_len = chars.len();
-                                while ((prompt_len + chars_len) / line_size) > 0 {
-                                    term.clear_chars(chars_len)?;
-                                    if (prompt_len + chars_len) % line_size == 0 {
-                                        chars_len -= std::cmp::min(chars_len, line_size);
-                                    } else {
-                                        chars_len -= std::cmp::min(
-                                            chars_len,
-                                            (prompt_len + chars_len + 1) % line_size,
-                                        );
-                                    }
-                                    if chars_len > 0 {
-                                        term.move_cursor_up(1)?;
-                                        term.move_cursor_right(line_size)?;
-                                    }
-                                }
-                                term.clear_chars(chars_len)?;
-                                chars.clear();
-                                position = 0;
-                                for ch in previous.chars() {
-                                    chars.insert(position, ch);
-                                    position += 1;
-                                }
-                                term.write_str(&previous)?;
-                                term.flush()?;
-                            }
-                        }
-                    }
-                    #[cfg(feature = "history")]
-                    Key::ArrowDown => {
-                        let line_size = term.size().1 as usize;
-                        if let Some(history) = &self.history {
-                            let mut chars_len = chars.len();
-                            while ((prompt_len + chars_len) / line_size) > 0 {
-                                term.clear_chars(chars_len)?;
-                                if (prompt_len + chars_len) % line_size == 0 {
-                                    chars_len -= std::cmp::min(chars_len, line_size);
-                                } else {
-                                    chars_len -= std::cmp::min(
-                                        chars_len,
-                                        (prompt_len + chars_len + 1) % line_size,
-                                    );
-                                }
-                                if chars_len > 0 {
-                                    term.move_cursor_up(1)?;
-                                    term.move_cursor_right(line_size)?;
-                                }
-                            }
-                            term.clear_chars(chars_len)?;
-                            chars.clear();
-                            position = 0;
-                            // Move the history position back one in case we have up arrowed into it
-                            // and the position is sitting on the next to read
-                            if let Some(pos) = hist_pos.checked_sub(1) {
-                                hist_pos = pos;
-                                // Move it back again to get the previous history entry
-                                if let Some(pos) = pos.checked_sub(1) {
-                                    if let Some(previous) = history.read(pos) {
-                                        for ch in previous.chars() {
-                                            chars.insert(position, ch);
-                                            position += 1;
-                                        }
-                                        term.write_str(&previous)?;
-                                    }
-                                }
-                            }
-                            term.flush()?;
-                        }
-                    }
-                    Key::Enter => break,
-                    Key::Unknown => {
-                        return Err(io::Error::new(
-                            io::ErrorKind::NotConnected,
-                            "Not a terminal",
-                        ))
-                    }
-                    _ => (),
                 }
             }
-            let input = chars.iter().collect::<String>();
+            let input = chars.clone();
 
             term.clear_line()?;
             render.clear()?;
