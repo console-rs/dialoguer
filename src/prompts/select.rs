@@ -13,11 +13,7 @@ use console::{Key, Term};
 /// ## Examples
 ///
 /// ```rust,no_run
-/// use dialoguer::{
-///     Select,
-///     theme::ColorfulTheme
-/// };
-/// use console::Term;
+/// use dialoguer::{console::Term, theme::ColorfulTheme, Select};
 ///
 /// fn main() -> std::io::Result<()> {
 ///     let items = vec!["Item 1", "item 2"];
@@ -188,8 +184,7 @@ impl Select<'_> {
     ///
     /// ## Examples
     ///```rust,no_run
-    /// use dialoguer::Select;
-    /// use console::Term;
+    /// use dialoguer::{console::Term, Select};
     ///
     /// fn main() -> std::io::Result<()> {
     ///     let selection = Select::new()
@@ -212,8 +207,7 @@ impl Select<'_> {
     ///
     /// ## Examples
     /// ```rust,no_run
-    /// use dialoguer::Select;
-    /// use console::Term;
+    /// use dialoguer::{console::Term, Select};
     ///
     /// fn main() -> std::io::Result<()> {
     ///     let selection = Select::new()
