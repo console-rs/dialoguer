@@ -99,9 +99,15 @@ impl Editor {
         let ts = fs::metadata(f.path())?.modified()?;
 
         let s: String = self.editor.clone().into_string().unwrap();
-        let mut iterator = s.split(' ');
-        let cmd = iterator.next().unwrap();
-        let args: Vec<&str> = iterator.collect();
+        let (cmd, args) = match shell_words::split(&s) {
+            Ok(mut parts) => {
+                let cmd = parts.remove(0);
+                (cmd, parts)
+            }
+            Err(_) => {
+                (s, vec![])
+            }
+        };
 
         let rv = process::Command::new(cmd)
             .args(args)
