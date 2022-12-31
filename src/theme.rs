@@ -318,30 +318,58 @@ pub struct ColorfulTheme {
 
 impl Default for ColorfulTheme {
     fn default() -> ColorfulTheme {
-        ColorfulTheme {
-            defaults_style: Style::new().for_stderr().cyan(),
-            prompt_style: Style::new().for_stderr().bold(),
-            prompt_prefix: style("?".to_string()).for_stderr().yellow(),
-            prompt_suffix: style("›".to_string()).for_stderr().black().bright(),
-            success_prefix: style("✔".to_string()).for_stderr().green(),
-            success_suffix: style("·".to_string()).for_stderr().black().bright(),
-            error_prefix: style("✘".to_string()).for_stderr().red(),
-            error_style: Style::new().for_stderr().red(),
-            hint_style: Style::new().for_stderr().black().bright(),
-            values_style: Style::new().for_stderr().green(),
-            active_item_style: Style::new().for_stderr().cyan(),
-            inactive_item_style: Style::new().for_stderr(),
-            active_item_prefix: style("❯".to_string()).for_stderr().green(),
-            inactive_item_prefix: style(" ".to_string()).for_stderr(),
-            checked_item_prefix: style("✔".to_string()).for_stderr().green(),
-            unchecked_item_prefix: style("✔".to_string()).for_stderr().black(),
-            picked_item_prefix: style("❯".to_string()).for_stderr().green(),
-            unpicked_item_prefix: style(" ".to_string()).for_stderr(),
-            #[cfg(feature = "fuzzy-select")]
-            fuzzy_cursor_style: Style::new().for_stderr().black().on_white(),
-            #[cfg(feature = "fuzzy-select")]
-            fuzzy_match_highlight_style: Style::new().for_stderr().bold(),
-            inline_selections: true,
+        if Term::stdout().features().wants_emoji() {
+            ColorfulTheme {
+                defaults_style: Style::new().for_stderr().cyan(),
+                prompt_style: Style::new().for_stderr().bold(),
+                prompt_prefix: style("?".to_string()).for_stderr().yellow(),
+                prompt_suffix: style("›".to_string()).for_stderr().black().bright(),
+                success_prefix: style("✔".to_string()).for_stderr().green(),
+                success_suffix: style("·".to_string()).for_stderr().black().bright(),
+                error_prefix: style("✘".to_string()).for_stderr().red(),
+                error_style: Style::new().for_stderr().red(),
+                hint_style: Style::new().for_stderr().black().bright(),
+                values_style: Style::new().for_stderr().green(),
+                active_item_style: Style::new().for_stderr().cyan(),
+                inactive_item_style: Style::new().for_stderr(),
+                active_item_prefix: style("❯".to_string()).for_stderr().green(),
+                inactive_item_prefix: style(" ".to_string()).for_stderr(),
+                checked_item_prefix: style("✔".to_string()).for_stderr().green(),
+                unchecked_item_prefix: style("✔".to_string()).for_stderr().black(),
+                picked_item_prefix: style("❯".to_string()).for_stderr().green(),
+                unpicked_item_prefix: style(" ".to_string()).for_stderr(),
+                #[cfg(feature = "fuzzy-select")]
+                fuzzy_cursor_style: Style::new().for_stderr().black().on_white(),
+                #[cfg(feature = "fuzzy-select")]
+                fuzzy_match_highlight_style: Style::new().for_stderr().bold(),
+                inline_selections: true,
+            }
+        } else {
+            ColorfulTheme {
+                defaults_style: Style::new().for_stderr().cyan(),
+                prompt_style: Style::new().for_stderr().bold(),
+                prompt_prefix: style("?".to_string()).for_stderr().yellow(),
+                prompt_suffix: style("›".to_string()).for_stderr().black().bright(),
+                success_prefix: style("√".to_string()).for_stderr().green(),
+                success_suffix: style("·".to_string()).for_stderr().black().bright(),
+                error_prefix: style("×".to_string()).for_stderr().red(),
+                error_style: Style::new().for_stderr().red(),
+                hint_style: Style::new().for_stderr().black().bright(),
+                values_style: Style::new().for_stderr().green(),
+                active_item_style: Style::new().for_stderr().cyan(),
+                inactive_item_style: Style::new().for_stderr(),
+                active_item_prefix: style(">".to_string()).for_stderr().green(),
+                inactive_item_prefix: style(" ".to_string()).for_stderr(),
+                checked_item_prefix: style("√".to_string()).for_stderr().green(),
+                unchecked_item_prefix: style("√".to_string()).for_stderr().black(),
+                picked_item_prefix: style(">".to_string()).for_stderr().green(),
+                unpicked_item_prefix: style(" ".to_string()).for_stderr(),
+                #[cfg(feature = "fuzzy-select")]
+                fuzzy_cursor_style: Style::new().for_stderr().black().on_white(),
+                #[cfg(feature = "fuzzy-select")]
+                fuzzy_match_highlight_style: Style::new().for_stderr().bold(),
+                inline_selections: true,
+            }
         }
     }
 }

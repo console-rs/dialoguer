@@ -46,6 +46,7 @@ pub struct Input<'a, T> {
     initial_text: Option<String>,
     theme: &'a dyn Theme,
     permit_empty: bool,
+    #[allow(clippy::type_complexity)]
     validator: Option<Box<dyn FnMut(&T) -> Option<String> + 'a>>,
     #[cfg(feature = "history")]
     history: Option<&'a mut dyn History<T>>,
