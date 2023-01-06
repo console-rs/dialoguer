@@ -208,17 +208,11 @@ impl MultiSelect<'_> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
 
-        let mut size_vec = Vec::new();
-
-        for items in self
-            .items
-            .iter()
+        let size_vec: Vec<_> = self.items.iter()
             .flat_map(|i| i.split('\n'))
-            .collect::<Vec<_>>()
-        {
-            let size = &items.len();
-            size_vec.push(*size);
-        }
+            // Formatting each item adds two more characters.
+            .map(|item| item.len() + 2)
+            .collect();
 
         let mut checked: Vec<bool> = self.defaults.clone();
 
