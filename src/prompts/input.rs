@@ -1,4 +1,4 @@
-use std::{fmt::Debug, io, iter, str::FromStr};
+use std::{cmp::Ordering, fmt::Debug, io, iter, str::FromStr};
 
 #[cfg(feature = "completion")]
 use crate::completion::Completion;
@@ -10,6 +10,8 @@ use crate::{
 };
 
 use console::{Key, Term};
+
+type ValidatorCallback<'a, T> = Box<dyn FnMut(&T) -> Option<String> + 'a>;
 
 /// Renders an input prompt.
 ///
@@ -46,7 +48,7 @@ pub struct Input<'a, T> {
     initial_text: Option<String>,
     theme: &'a dyn Theme,
     permit_empty: bool,
-    validator: Option<Box<dyn FnMut(&T) -> Option<String> + 'a>>,
+    validator: Option<ValidatorCallback<'a, T>>,
     #[cfg(feature = "history")]
     history: Option<&'a mut dyn History<T>>,
     #[cfg(feature = "completion")]
@@ -386,7 +388,7 @@ where
                                 let diff_pos_x = new_pos_x as i64 - old_pos_x as i64;
                                 //println!("new_pos_x = {}, old_pos_x = {}, diff = {}", new_pos_x, old_pos_x, diff_pos_x);
                                 if diff_pos_x < 0 {
-                                    term.move_cursor_left((diff_pos_x * -1) as usize)?;
+                                    term.move_cursor_left(-diff_pos_x as usize)?;
                                 } else {
                                     term.move_cursor_right((diff_pos_x) as usize)?;
                                 }
@@ -419,7 +421,7 @@ where
                             let old_pos_x = (prompt_len + position) % line_size;
                             let diff_pos_x = new_pos_x as i64 - old_pos_x as i64;
                             if diff_pos_x < 0 {
-                                term.move_cursor_left((diff_pos_x * -1) as usize)?;
+                                term.move_cursor_left(-diff_pos_x as usize)?;
                             } else {
                                 term.move_cursor_right((diff_pos_x) as usize)?;
                             }
@@ -432,10 +434,14 @@ where
                             let new_pos_x = (prompt_len + chars.len()) % line_size;
                             let old_pos_x = (prompt_len + position) % line_size;
                             let diff_pos_x = new_pos_x as i64 - old_pos_x as i64;
-                            if diff_pos_x < 0 {
-                                term.move_cursor_left((diff_pos_x * -1 - 1) as usize)?;
-                            } else if diff_pos_x > 0 {
-                                term.move_cursor_right((diff_pos_x) as usize)?;
+                            match diff_pos_x.cmp(&0) {
+                                Ordering::Less => {
+                                    term.move_cursor_left((-diff_pos_x - 1) as usize)?;
+                                }
+                                Ordering::Equal => {}
+                                Ordering::Greater => {
+                                    term.move_cursor_right((diff_pos_x) as usize)?;
+                                }
                             }
                             position = chars.len();
                         }
