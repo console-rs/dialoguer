@@ -104,9 +104,7 @@ impl Editor {
                 let cmd = parts.remove(0);
                 (cmd, parts)
             }
-            Err(_) => {
-                (s, vec![])
-            }
+            Err(_) => (s, vec![]),
         };
 
         let rv = process::Command::new(cmd)
