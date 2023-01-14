@@ -953,6 +953,7 @@ impl<'a> TermThemeRenderer<'a> {
         self.term
             .clear_last_lines(self.height + self.prompt_height)?;
         self.height = 0;
+        self.prompt_height = 0;
         Ok(())
     }
 
