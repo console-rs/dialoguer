@@ -754,6 +754,18 @@ impl<'a> TermThemeRenderer<'a> {
         Ok(measure_text_width(&buf))
     }
 
+    fn get_formatted_str<
+        F: FnOnce(&mut TermThemeRenderer, &mut dyn fmt::Write) -> fmt::Result,
+    >(
+        &mut self,
+        f: F,
+    ) -> io::Result<String> {
+        let mut buf = String::new();
+        f(self, &mut buf).map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+        self.height += buf.chars().filter(|&x| x == '\n').count();
+        Ok(buf)
+    }
+
     fn write_formatted_line<
         F: FnOnce(&mut TermThemeRenderer, &mut dyn fmt::Write) -> fmt::Result,
     >(
@@ -813,6 +825,10 @@ impl<'a> TermThemeRenderer<'a> {
 
     pub fn input_prompt(&mut self, prompt: &str, default: Option<&str>) -> io::Result<usize> {
         self.write_formatted_str(|this, buf| this.theme.format_input_prompt(buf, prompt, default))
+    }
+
+    pub fn get_input_prompt(&mut self, prompt: &str, default: Option<&str>) -> io::Result<String> {
+        self.get_formatted_str(|this, buf| this.theme.format_input_prompt(buf, prompt, default))
     }
 
     pub fn input_prompt_selection(&mut self, prompt: &str, sel: &str) -> io::Result<()> {
