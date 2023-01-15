@@ -15,5 +15,5 @@ Best paired with other libraries in the family:
 
 * [Documentation](https://docs.rs/dialoguer/)
 * [Issue Tracker](https://github.com/console-rs/dialoguer/issues)
-* [Examples](https://github.com/console-rs/dialoguer/tree/main/examples)
+* [Examples](https://github.com/console-rs/dialoguer/tree/master/examples)
 * License: [MIT](https://github.com/console-rs/dialoguer/blob/main/LICENSE)
