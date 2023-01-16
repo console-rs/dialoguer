@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.10.3
+
+### Enhancements
+
+* Fix various issues with fuzzy select
+* Enable customization of number of rows for fuzzy select
+* Added post completion text for input
+* Various cursor movement improvements
+* Correctly ignore unknown keys.
+* Reset prompt height in `TermThemeRenderer::clear`.
+
+## 0.10.2
+
+### Enhancements
+
+* Fix fuzzy select active item colors.
+* Fix fuzzy search clear on cancel.
+* Clear everything on cancel via escape key.
+
 ## 0.10.1
 
 ### Enhancements
