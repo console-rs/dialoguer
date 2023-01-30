@@ -173,7 +173,7 @@ impl MultiFuzzySelect<'_> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut cursor_position = 0;
 
-        let mut size_vec = self.items.iter().map(|item| item.len()).collect::<Vec<_>>();
+        let size_vec = self.items.iter().map(|item| item.len()).collect::<Vec<_>>();
 
         // Fuzzy matcher
         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
