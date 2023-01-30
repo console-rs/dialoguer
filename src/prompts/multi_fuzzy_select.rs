@@ -35,7 +35,6 @@ use std::{io, ops::Rem};
 ///     Ok(())
 /// }
 /// ```
-
 pub struct MultiFuzzySelect<'a> {
     defaults: Vec<bool>,
     items: Vec<String>,
@@ -168,17 +167,13 @@ impl MultiFuzzySelect<'_> {
     }
 
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Vec<usize>> {
-        let mut position = 0;
-        let mut search_term = String::new();
+        let mut current_fuzzy_term_length = 0;
+        let mut fuzzy_term = String::new();
 
         let mut render = TermThemeRenderer::new(term, self.theme);
-        let mut sel = 0;
+        let mut cursor_position = 0;
 
-        let mut size_vec = Vec::new();
-        for items in self.items.iter().as_slice() {
-            let size = &items.len();
-            size_vec.push(*size);
-        }
+        let mut size_vec = self.items.iter().map(|item| item.len()).collect::<Vec<_>>();
 
         // Fuzzy matcher
         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
@@ -198,19 +193,28 @@ impl MultiFuzzySelect<'_> {
 
         loop {
             render.clear()?;
-            render.multi_fuzzy_select_prompt(self.prompt.as_str(), &search_term, position)?;
+            render.multi_fuzzy_select_prompt(
+                self.prompt.as_str(),
+                &fuzzy_term,
+                current_fuzzy_term_length,
+            )?;
 
             // Maps all items to a tuple of item and its match score.
             let mut filtered_list = self
                 .items
                 .iter()
                 .enumerate()
-                .map(|(idx, item)| (idx, item, matcher.fuzzy_match(item, &search_term)))
-                .filter_map(|(idx, item, score)| score.map(|s| (idx, item, s)))
+                .map(|(idx, item)| (idx, item, matcher.fuzzy_match(item, &fuzzy_term)))
+                .filter_map(|(idx, item, score)| score.map(|score_value| (idx, item, score_value)))
                 .collect::<Vec<_>>();
 
             // Renders all matching items, from best match to worst.
-            filtered_list.sort_unstable_by(|(_, _, s1), (_, _, s2)| s2.cmp(s1));
+            filtered_list.sort_unstable_by(|(_, _, score_1), (_, _, score_2)| {
+                score_1.cmp(score_2).reverse()
+            });
+
+            // the cursor position cannot exceed the last element
+            cursor_position = cursor_position.min(filtered_list.len().saturating_sub(1));
 
             for (idx, (item_idx, item, _)) in filtered_list
                 .iter()
@@ -220,11 +224,11 @@ impl MultiFuzzySelect<'_> {
             {
                 render.multi_fuzzy_select_prompt_item(
                     item,
-                    idx == sel,
+                    idx == cursor_position,
                     checked[*item_idx],
                     self.highlight_matches,
                     &matcher,
-                    &search_term,
+                    &fuzzy_term,
                 )?;
                 term.flush()?;
             }
@@ -239,39 +243,41 @@ impl MultiFuzzySelect<'_> {
                     return Ok(vec![]);
                 }
                 Key::ArrowUp | Key::BackTab if !filtered_list.is_empty() => {
-                    if sel == 0 {
+                    if cursor_position == 0 {
+                        // wrap around display window top to bottom
                         starting_row =
                             filtered_list.len().max(visible_term_rows) - visible_term_rows;
-                    } else if sel == starting_row {
+                    } else if cursor_position == starting_row {
+                        // move display window up
                         starting_row -= 1;
                     }
-                    if sel == !0 {
-                        sel = filtered_list.len() - 1;
-                    } else {
-                        sel = ((sel as i64 - 1 + filtered_list.len() as i64)
-                            % (filtered_list.len() as i64)) as usize;
-                    }
+
+                    // move cursor up taking into account wrap around
+                    cursor_position = (cursor_position + filtered_list.len().saturating_sub(1))
+                        .rem(filtered_list.len());
+
                     term.flush()?;
                 }
                 Key::ArrowDown | Key::Tab if !filtered_list.is_empty() => {
-                    if sel == !0 {
-                        sel = 0;
-                    } else {
-                        sel = (sel as u64 + 1).rem(filtered_list.len() as u64) as usize;
-                    }
-                    if sel == visible_term_rows + starting_row {
-                        starting_row += 1;
-                    } else if sel == 0 {
+                    if cursor_position == filtered_list.len() - 1 {
+                        // wrap around display window bottom to top
                         starting_row = 0;
+                    } else if cursor_position == visible_term_rows + starting_row {
+                        // move display window down
+                        starting_row += 1;
                     }
+
+                    // move cursor down taking into account wrap around
+                    cursor_position = (cursor_position + 1).rem(filtered_list.len());
+
                     term.flush()?;
                 }
-                Key::ArrowLeft if position > 0 => {
-                    position -= 1;
+                Key::ArrowLeft if current_fuzzy_term_length > 0 => {
+                    current_fuzzy_term_length -= 1;
                     term.flush()?;
                 }
-                Key::ArrowRight if position < search_term.len() => {
-                    position += 1;
+                Key::ArrowRight if current_fuzzy_term_length < fuzzy_term.len() => {
+                    current_fuzzy_term_length += 1;
                     term.flush()?;
                 }
                 Key::Enter if !filtered_list.is_empty() => {
@@ -280,8 +286,10 @@ impl MultiFuzzySelect<'_> {
                     }
 
                     if self.report {
-                        render
-                            .input_prompt_selection(self.prompt.as_str(), filtered_list[sel].1)?;
+                        render.input_prompt_selection(
+                            self.prompt.as_str(),
+                            filtered_list[cursor_position].1,
+                        )?;
                     }
 
                     let selected_items = checked
@@ -293,34 +301,30 @@ impl MultiFuzzySelect<'_> {
                     term.show_cursor()?;
                     return Ok(selected_items);
                 }
-                Key::Backspace if position > 0 => {
-                    position -= 1;
-                    search_term.remove(position);
+                Key::Backspace if current_fuzzy_term_length > 0 => {
+                    current_fuzzy_term_length -= 1;
+                    fuzzy_term.remove(current_fuzzy_term_length);
                     term.flush()?;
                 }
                 Key::Char(' ') => {
                     if let Some(sel_string_pos_in_items) = filtered_list
-                        .get(sel)
-                        .map(|selection| selection.1)
-                        .and_then(|sel_string| {
-                            self.items.iter().position(|item| item.eq(sel_string))
+                        .get(cursor_position)
+                        .map(|(_, cursor_item_name, _)| cursor_item_name)
+                        .and_then(|&cursor_item_name| {
+                            self.items.iter().position(|item| item == cursor_item_name)
                         })
                     {
                         checked[sel_string_pos_in_items] = !checked[sel_string_pos_in_items];
                     }
 
-                    search_term.clear();
-                    position = 0;
-                    sel = 0;
-                    starting_row = 0;
+                    fuzzy_term.clear();
+                    current_fuzzy_term_length = 0;
                     term.flush()?;
                 }
                 Key::Char(chr) if !chr.is_ascii_control() => {
-                    search_term.insert(position, chr);
-                    position += 1;
+                    fuzzy_term.insert(current_fuzzy_term_length, chr);
+                    current_fuzzy_term_length += 1;
                     term.flush()?;
-                    sel = 0;
-                    starting_row = 0;
                 }
 
                 _ => {}
