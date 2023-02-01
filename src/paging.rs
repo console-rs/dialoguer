@@ -24,9 +24,7 @@ impl<'a> Paging<'a> {
         // Subtract -2 because we need space to render the prompt, if paging is active
         let capacity = max_capacity
             .unwrap_or(std::usize::MAX)
-            .min(term_size.0 as usize)
-            // Safeguard in case term_size or max_length is 2 or less. Guarantees no unwanted wrapping behavior.
-            .max(3)
+            .clamp(3, term_size.0 as usize)
             - 2;
         let pages = (items_len as f64 / capacity as f64).ceil() as usize;
 
@@ -53,8 +51,7 @@ impl<'a> Paging<'a> {
             self.capacity = self
                 .max_capacity
                 .unwrap_or(std::usize::MAX)
-                .min(self.current_term_size.0 as usize)
-                .max(3)
+                .clamp(3, self.current_term_size.0 as usize)
                 - 2;
             self.pages = (self.items_len as f64 / self.capacity as f64).ceil() as usize;
         }

@@ -17,6 +17,17 @@
 //! * Fuzzy select prompt
 //! * Other kind of prompts
 //! * Editor launching
+//!
+//! # Crate Features
+//!
+//! The following crate features are available:
+//! * `editor`: enables bindings to launch editor to edit strings
+//! * `fuzzy-select`: enables fuzzy select prompt
+//! * `history`: enables input prompts to be able to track history of inputs
+//! * `password`: enables password input prompt
+//! * `completion`: enables ability to implement custom tab-completion for input prompts
+//!
+//! By default `editor` and `password` are enabled.
 
 #![deny(clippy::all)]
 
