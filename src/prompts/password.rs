@@ -8,6 +8,8 @@ use crate::{
 use console::Term;
 use zeroize::Zeroizing;
 
+type PasswordValidatorCallback<'a> = Box<dyn FnMut(&String) -> Option<String> + 'a>;
+
 /// Renders a password input prompt.
 ///
 /// ## Example usage
@@ -28,7 +30,7 @@ pub struct Password<'a> {
     theme: &'a dyn Theme,
     allow_empty_password: bool,
     confirmation_prompt: Option<(String, String)>,
-    validator: Option<Box<dyn FnMut(&String) -> Option<String> + 'a>>,
+    validator: Option<PasswordValidatorCallback<'a>>,
 }
 
 impl Default for Password<'static> {
