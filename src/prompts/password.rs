@@ -82,7 +82,7 @@ impl<'a> Password<'a> {
     /// # Example
     ///
     /// ```no_run
-    /// # use dialoguer::Input;
+    /// # use dialoguer::Password;
     /// let password: String = Password::new()
     ///     .with_prompt("Enter password")
     ///     .validate_with(|input: &String| -> Result<(), &str> {
