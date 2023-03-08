@@ -1,14 +1,11 @@
 use std::io;
 
-use crate::{
-    theme::{SimpleTheme, TermThemeRenderer, Theme},
-    Validator,
-};
+use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
 
 use console::Term;
 use zeroize::Zeroizing;
 
-type PasswordValidatorCallback<'a> = Box<dyn FnMut(&String) -> Option<String> + 'a>;
+type PasswordValidatorCallback<'a> = Box<dyn Fn(&String) -> Option<String> + 'a>;
 
 /// Renders a password input prompt.
 ///
@@ -97,21 +94,21 @@ impl<'a> Password<'a> {
     ///     .interact()
     ///     .unwrap();
     /// ```
-    pub fn validate_with<V>(&mut self, mut validator: V) -> &mut Self
+    pub fn validate_with<V, E>(&mut self, validator: V) -> &mut Self
     where
-        V: Validator<String> + 'a,
-        V::Err: ToString,
+        V: Fn(&String) -> Result<(), E> + 'a,
+        E: ToString,
     {
-        let mut old_validator_func = self.validator.take();
+        let old_validator_func = self.validator.take();
 
         self.validator = Some(Box::new(move |value: &String| -> Option<String> {
-            if let Some(old) = old_validator_func.as_mut() {
+            if let Some(old) = &old_validator_func {
                 if let Some(err) = old(value) {
                     return Some(err);
                 }
             }
 
-            match validator.validate(value) {
+            match validator(value) {
                 Ok(()) => None,
                 Err(err) => Some(err.to_string()),
             }
@@ -124,19 +121,19 @@ impl<'a> Password<'a> {
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
-    pub fn interact(&mut self) -> io::Result<String> {
+    pub fn interact(&self) -> io::Result<String> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    pub fn interact_on(&mut self, term: &Term) -> io::Result<String> {
+    pub fn interact_on(&self, term: &Term) -> io::Result<String> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         render.set_prompts_reset_height(false);
 
         loop {
             let password = Zeroizing::new(self.prompt_password(&mut render, &self.prompt)?);
 
-            if let Some(ref mut validator) = self.validator {
+            if let Some(ref validator) = self.validator {
                 if let Some(err) = validator(&password) {
                     render.error(&err)?;
                     continue;
