@@ -1,9 +1,14 @@
 use std::io;
 
-use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
+use crate::{
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    validate::PasswordValidator,
+};
 
 use console::Term;
 use zeroize::Zeroizing;
+
+type PasswordValidatorCallback<'a> = Box<dyn Fn(&String) -> Option<String> + 'a>;
 
 /// Renders a password input prompt.
 ///
@@ -25,6 +30,7 @@ pub struct Password<'a> {
     theme: &'a dyn Theme,
     allow_empty_password: bool,
     confirmation_prompt: Option<(String, String)>,
+    validator: Option<PasswordValidatorCallback<'a>>,
 }
 
 impl Default for Password<'static> {
@@ -40,7 +46,7 @@ impl Password<'static> {
     }
 }
 
-impl Password<'_> {
+impl<'a> Password<'a> {
     /// Sets the password input prompt.
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = prompt.into();
@@ -73,6 +79,47 @@ impl Password<'_> {
         self
     }
 
+    /// Registers a validator.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use dialoguer::Password;
+    /// let password: String = Password::new()
+    ///     .with_prompt("Enter password")
+    ///     .validate_with(|input: &String| -> Result<(), &str> {
+    ///         if input.len() > 8 {
+    ///             Ok(())
+    ///         } else {
+    ///             Err("Password must be longer than 8")
+    ///         }
+    ///     })
+    ///     .interact()
+    ///     .unwrap();
+    /// ```
+    pub fn validate_with<V>(&mut self, validator: V) -> &mut Self
+    where
+        V: PasswordValidator + 'a,
+        V::Err: ToString,
+    {
+        let old_validator_func = self.validator.take();
+
+        self.validator = Some(Box::new(move |value: &String| -> Option<String> {
+            if let Some(old) = &old_validator_func {
+                if let Some(err) = old(value) {
+                    return Some(err);
+                }
+            }
+
+            match validator.validate(value) {
+                Ok(()) => None,
+                Err(err) => Some(err.to_string()),
+            }
+        }));
+
+        self
+    }
+
     /// Enables user interaction and returns the result.
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
@@ -89,28 +136,30 @@ impl Password<'_> {
         loop {
             let password = Zeroizing::new(self.prompt_password(&mut render, &self.prompt)?);
 
+            if let Some(ref validator) = self.validator {
+                if let Some(err) = validator(&password) {
+                    render.error(&err)?;
+                    continue;
+                }
+            }
+
             if let Some((ref prompt, ref err)) = self.confirmation_prompt {
                 let pw2 = Zeroizing::new(self.prompt_password(&mut render, prompt)?);
 
-                if *password == *pw2 {
-                    render.clear()?;
-                    if self.report {
-                        render.password_prompt_selection(&self.prompt)?;
-                    }
-                    term.flush()?;
-                    return Ok((*password).clone());
+                if *password != *pw2 {
+                    render.error(err)?;
+                    continue;
                 }
-
-                render.error(err)?;
-            } else {
-                render.clear()?;
-                if self.report {
-                    render.password_prompt_selection(&self.prompt)?;
-                }
-                term.flush()?;
-
-                return Ok((*password).clone());
             }
+
+            render.clear()?;
+
+            if self.report {
+                render.password_prompt_selection(&self.prompt)?;
+            }
+            term.flush()?;
+
+            return Ok((*password).clone());
         }
     }
 
@@ -139,6 +188,7 @@ impl<'a> Password<'a> {
             theme,
             allow_empty_password: false,
             confirmation_prompt: None,
+            validator: None,
         }
     }
 }
