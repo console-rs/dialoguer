@@ -8,7 +8,7 @@ use crate::{
 use console::Term;
 use zeroize::Zeroizing;
 
-type PasswordValidatorCallback<'a> = Box<dyn Fn(&str) -> Option<String> + 'a>;
+type PasswordValidatorCallback<'a> = Box<dyn Fn(&String) -> Option<String> + 'a>;
 
 /// Renders a password input prompt.
 ///
@@ -87,7 +87,7 @@ impl<'a> Password<'a> {
     /// # use dialoguer::Password;
     /// let password: String = Password::new()
     ///     .with_prompt("Enter password")
-    ///     .validate_with(|input: &str| -> Result<(), &str> {
+    ///     .validate_with(|input: &String| -> Result<(), &str> {
     ///         if input.len() > 8 {
     ///             Ok(())
     ///         } else {
@@ -104,7 +104,7 @@ impl<'a> Password<'a> {
     {
         let old_validator_func = self.validator.take();
 
-        self.validator = Some(Box::new(move |value: &str| -> Option<String> {
+        self.validator = Some(Box::new(move |value: &String| -> Option<String> {
             if let Some(old) = &old_validator_func {
                 if let Some(err) = old(value) {
                     return Some(err);
