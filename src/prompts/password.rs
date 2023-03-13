@@ -1,11 +1,14 @@
 use std::io;
 
-use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
+use crate::{
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    validate::PasswordValidator,
+};
 
 use console::Term;
 use zeroize::Zeroizing;
 
-type PasswordValidatorCallback<'a> = Box<dyn Fn(&String) -> Option<String> + 'a>;
+type PasswordValidatorCallback<'a> = Box<dyn Fn(&str) -> Option<String> + 'a>;
 
 /// Renders a password input prompt.
 ///
@@ -84,7 +87,7 @@ impl<'a> Password<'a> {
     /// # use dialoguer::Password;
     /// let password: String = Password::new()
     ///     .with_prompt("Enter password")
-    ///     .validate_with(|input: &String| -> Result<(), &str> {
+    ///     .validate_with(|input: &str| -> Result<(), &str> {
     ///         if input.len() > 8 {
     ///             Ok(())
     ///         } else {
@@ -94,21 +97,21 @@ impl<'a> Password<'a> {
     ///     .interact()
     ///     .unwrap();
     /// ```
-    pub fn validate_with<V, E>(&mut self, validator: V) -> &mut Self
+    pub fn validate_with<V>(&mut self, validator: V) -> &mut Self
     where
-        V: Fn(&String) -> Result<(), E> + 'a,
-        E: ToString,
+        V: PasswordValidator + 'a,
+        V::Err: ToString,
     {
         let old_validator_func = self.validator.take();
 
-        self.validator = Some(Box::new(move |value: &String| -> Option<String> {
+        self.validator = Some(Box::new(move |value: &str| -> Option<String> {
             if let Some(old) = &old_validator_func {
                 if let Some(err) = old(value) {
                     return Some(err);
                 }
             }
 
-            match validator(value) {
+            match validator.validate(value) {
                 Ok(()) => None,
                 Err(err) => Some(err.to_string()),
             }
