@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.4
+
+### Enhancements
+
+* Added validator for password input
+
 ## 0.10.3
 
 ### Enhancements
