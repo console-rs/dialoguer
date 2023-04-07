@@ -2,7 +2,7 @@
 name = "dialoguer"
 description = "A command line prompting library."
 version = "0.10.4"
-edition = "2018"
+edition = "2021"
 authors = [
 	"Armin Ronacher <armin.ronacher@active-4.com>",
 	"Pavan Kumar Sunkara <pavan.sss1991@gmail.com>"
@@ -10,8 +10,8 @@ authors = [
 keywords = ["cli", "menu", "prompt"]
 categories = ["command-line-interface"]
 license = "MIT"
-homepage = "https://github.com/mitsuhiko/dialoguer"
-repository = "https://github.com/mitsuhiko/dialoguer"
+homepage = "https://github.com/console-rs/dialoguer"
+repository = "https://github.com/console-rs/dialoguer"
 documentation = "https://docs.rs/dialoguer"
 readme = "README.md"
 

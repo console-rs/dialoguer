@@ -15,7 +15,7 @@ type PasswordValidatorCallback<'a> = Box<dyn Fn(&String) -> Option<String> + 'a>
 /// ## Example usage
 ///
 /// ```rust,no_run
-/// # fn test() -> Result<(), Box<std::error::Error>> {
+/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
 /// use dialoguer::Password;
 ///
 /// let password = Password::new().with_prompt("New Password")

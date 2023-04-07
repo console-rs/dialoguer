@@ -222,8 +222,8 @@ pub trait Theme {
         write!(f, "{} ", if active { ">" } else { " " })?;
 
         if highlight_matches {
-            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
-                for (idx, c) in text.chars().into_iter().enumerate() {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, search_term) {
+                for (idx, c) in text.chars().enumerate() {
                     if indices.contains(&idx) {
                         write!(f, "{}", style(c).for_stderr().bold())?;
                     } else {
@@ -248,7 +248,7 @@ pub trait Theme {
         cursor_pos: usize,
     ) -> fmt::Result {
         if !prompt.is_empty() {
-            write!(f, "{} ", prompt,)?;
+            write!(f, "{} ", prompt)?;
         }
 
         if cursor_pos < search_term.len() {
@@ -258,7 +258,7 @@ pub trait Theme {
             write!(f, "{}{}{}", st_head, st_cursor, st_tail)
         } else {
             let cursor = "|".to_string();
-            write!(f, "{}{}", search_term.to_string(), cursor)
+            write!(f, "{}{}", search_term, cursor)
         }
     }
 }
@@ -636,8 +636,8 @@ impl Theme for ColorfulTheme {
         )?;
 
         if highlight_matches {
-            if let Some((_score, indices)) = matcher.fuzzy_indices(text, &search_term) {
-                for (idx, c) in text.chars().into_iter().enumerate() {
+            if let Some((_score, indices)) = matcher.fuzzy_indices(text, search_term) {
+                for (idx, c) in text.chars().enumerate() {
                     if indices.contains(&idx) {
                         if active {
                             write!(
@@ -649,12 +649,10 @@ impl Theme for ColorfulTheme {
                         } else {
                             write!(f, "{}", self.fuzzy_match_highlight_style.apply_to(c))?;
                         }
+                    } else if active {
+                        write!(f, "{}", self.active_item_style.apply_to(c))?;
                     } else {
-                        if active {
-                            write!(f, "{}", self.active_item_style.apply_to(c))?;
-                        } else {
-                            write!(f, "{}", c)?;
-                        }
+                        write!(f, "{}", c)?;
                     }
                 }
 
@@ -696,13 +694,7 @@ impl Theme for ColorfulTheme {
             )
         } else {
             let cursor = self.fuzzy_cursor_style.apply_to(" ");
-            write!(
-                f,
-                "{} {}{}",
-                &self.prompt_suffix,
-                search_term.to_string(),
-                cursor
-            )
+            write!(f, "{} {}{}", &self.prompt_suffix, search_term, cursor)
         }
     }
 }
