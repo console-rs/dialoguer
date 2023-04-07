@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.0
+
+### Enhancements
+
+### Breaking
+
+* Updated MSRV to `1.59.0`
+
 ## 0.10.4
 
 ### Enhancements
