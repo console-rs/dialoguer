@@ -546,7 +546,6 @@ where
             }
             let input = chars.iter().collect::<String>();
 
-            term.clear_line()?;
             render.clear()?;
 
             if chars.is_empty() {
@@ -643,7 +642,6 @@ where
             };
 
             render.add_line();
-            term.clear_line()?;
             render.clear()?;
 
             if input.is_empty() {

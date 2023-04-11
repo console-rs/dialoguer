@@ -941,9 +941,16 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
+    /// Clear the current theme.
+    ///
+    /// Position the cursor at the beginning of the current line.
     pub fn clear(&mut self) -> io::Result<()> {
+        // clear the current line first, so the cursor ends at the beginning of the current line.
+        self.term.clear_line()?;
         self.term
             .clear_last_lines(self.height + self.prompt_height)?;
+        // self.term now contains self.height + self.prompt_height empty lines after
+        // the current line. That doesn't really matter, as these are empty.
         self.height = 0;
         self.prompt_height = 0;
         Ok(())
