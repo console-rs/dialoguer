@@ -50,7 +50,7 @@ impl Password<'static> {
 
 impl<'a> Password<'a> {
     /// Sets the password input prompt.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
+    pub fn with_prompt<S: Into<String>>(mut self, prompt: S) -> Self {
         self.prompt = prompt.into();
         self
     }
@@ -58,13 +58,13 @@ impl<'a> Password<'a> {
     /// Indicates whether to report confirmation after interaction.
     ///
     /// The default is to report.
-    pub fn report(&mut self, val: bool) -> &mut Self {
+    pub fn report(mut self, val: bool) -> Self {
         self.report = val;
         self
     }
 
     /// Enables confirmation prompting.
-    pub fn with_confirmation<A, B>(&mut self, prompt: A, mismatch_err: B) -> &mut Self
+    pub fn with_confirmation<A, B>(mut self, prompt: A, mismatch_err: B) -> Self
     where
         A: Into<String>,
         B: Into<String>,
@@ -76,7 +76,7 @@ impl<'a> Password<'a> {
     /// Allows/Disables empty password.
     ///
     /// By default this setting is set to false (i.e. password is not empty).
-    pub fn allow_empty_password(&mut self, allow_empty_password: bool) -> &mut Self {
+    pub fn allow_empty_password(mut self, allow_empty_password: bool) -> Self {
         self.allow_empty_password = allow_empty_password;
         self
     }
@@ -102,7 +102,7 @@ impl<'a> Password<'a> {
     ///         .unwrap();
     /// }
     /// ```
-    pub fn validate_with<V>(&mut self, validator: V) -> &mut Self
+    pub fn validate_with<V>(mut self, validator: V) -> Self
     where
         V: PasswordValidator + 'a,
         V::Err: ToString,
@@ -129,12 +129,12 @@ impl<'a> Password<'a> {
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
-    pub fn interact(&self) -> Result<String> {
+    pub fn interact(self) -> Result<String> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
-    pub fn interact_on(&self, term: &Term) -> Result<String> {
+    pub fn interact_on(self, term: &Term) -> Result<String> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         render.set_prompts_reset_height(false);
 

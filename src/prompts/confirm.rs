@@ -51,7 +51,7 @@ impl Confirm<'static> {
 
 impl Confirm<'_> {
     /// Sets the confirm prompt.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
+    pub fn with_prompt<S: Into<String>>(mut self, prompt: S) -> Self {
         self.prompt = prompt.into();
         self
     }
@@ -59,7 +59,7 @@ impl Confirm<'_> {
     /// Indicates whether or not to report the chosen selection after interaction.
     ///
     /// The default is to report the chosen selection.
-    pub fn report(&mut self, val: bool) -> &mut Self {
+    pub fn report(mut self, val: bool) -> Self {
         self.report = val;
         self
     }
@@ -73,7 +73,7 @@ impl Confirm<'_> {
     /// When `true`, the user must type their choice and hit the Enter key before
     /// proceeding. Valid inputs can be "yes", "no", "y", "n", or an empty string
     /// to accept the default.
-    pub fn wait_for_newline(&mut self, wait: bool) -> &mut Self {
+    pub fn wait_for_newline(mut self, wait: bool) -> Self {
         self.wait_for_newline = wait;
         self
     }
@@ -83,7 +83,7 @@ impl Confirm<'_> {
     /// Out of the box the prompt does not have a default and will continue
     /// to display until the user inputs something and hits enter. If a default is set the user
     /// can instead accept the default with enter.
-    pub fn default(&mut self, val: bool) -> &mut Self {
+    pub fn default(mut self, val: bool) -> Self {
         self.default = Some(val);
         self
     }
@@ -91,7 +91,7 @@ impl Confirm<'_> {
     /// Disables or enables the default value display.
     ///
     /// The default is to append the default value to the prompt to tell the user.
-    pub fn show_default(&mut self, val: bool) -> &mut Self {
+    pub fn show_default(mut self, val: bool) -> Self {
         self.show_default = val;
         self
     }
@@ -103,7 +103,7 @@ impl Confirm<'_> {
     /// Result contains `bool` if user answered "yes" or "no" or `default` (configured in [`default`](Self::default) if pushes enter.
     /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
-    pub fn interact(&self) -> Result<bool> {
+    pub fn interact(self) -> Result<bool> {
         self.interact_on(&Term::stderr())
     }
 
@@ -131,13 +131,13 @@ impl Confirm<'_> {
     /// }
     /// ```
     #[inline]
-    pub fn interact_opt(&self) -> Result<Option<bool>> {
+    pub fn interact_opt(self) -> Result<Option<bool>> {
         self.interact_on_opt(&Term::stderr())
     }
 
     /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on(&self, term: &Term) -> Result<bool> {
+    pub fn interact_on(self, term: &Term) -> Result<bool> {
         Ok(self
             ._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
@@ -145,11 +145,11 @@ impl Confirm<'_> {
 
     /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on_opt(&self, term: &Term) -> Result<Option<bool>> {
+    pub fn interact_on_opt(self, term: &Term) -> Result<Option<bool>> {
         self._interact_on(term, true)
     }
 
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> Result<Option<bool>> {
+    fn _interact_on(self, term: &Term, allow_quit: bool) -> Result<Option<bool>> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         let default_if_show = if self.show_default {

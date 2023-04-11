@@ -4,11 +4,16 @@
 
 ### Enhancements
 
+* Added `dialouger::Result` and `dialouger::Error`
+
 ### Breaking
 
 * Updated MSRV to `1.59.0`
 * Removed deprecated `Confirm::with_text`
-* Operations now return `dialouger::Result` instead of `std::io::Result`
+* Prompt builder functions now take `mut self` instead of `&mut self`
+* Prompt builder functions now return `Self` instead of `&mut Self`
+* Prompt interaction functions now take `self` instead of `&self`
+* Prompt interaction functions and other operations now return `dialouger::Result` instead of `std::io::Result`
 
 ## 0.10.4
 

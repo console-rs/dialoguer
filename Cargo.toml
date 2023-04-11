@@ -41,7 +41,7 @@ name = "editor"
 required-features = ["editor"]
 
 [[example]]
-name = "fuzzyselect"
+name = "fuzzy_select"
 required-features = ["fuzzy-select"]
 
 [[example]]

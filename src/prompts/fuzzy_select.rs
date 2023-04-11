@@ -62,25 +62,25 @@ impl FuzzySelect<'_> {
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu.
-    pub fn clear(&mut self, val: bool) -> &mut Self {
+    pub fn clear(mut self, val: bool) -> Self {
         self.clear = val;
         self
     }
 
     /// Sets a default for the menu
-    pub fn default(&mut self, val: usize) -> &mut Self {
+    pub fn default(mut self, val: usize) -> Self {
         self.default = Some(val);
         self
     }
 
     /// Add a single item to the fuzzy selector.
-    pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
+    pub fn item<T: ToString>(mut self, item: T) -> Self {
         self.items.push(item.to_string());
         self
     }
 
     /// Adds multiple items to the fuzzy selector.
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
+    pub fn items<T: ToString>(mut self, items: &[T]) -> Self {
         for item in items {
             self.items.push(item.to_string());
         }
@@ -88,7 +88,7 @@ impl FuzzySelect<'_> {
     }
 
     /// Sets the search text that a fuzzy search starts with.
-    pub fn with_initial_text<S: Into<String>>(&mut self, initial_text: S) -> &mut Self {
+    pub fn with_initial_text<S: Into<String>>(mut self, initial_text: S) -> Self {
         self.initial_text = initial_text.into();
         self
     }
@@ -97,7 +97,7 @@ impl FuzzySelect<'_> {
     ///
     /// When a prompt is set the system also prints out a confirmation after
     /// the fuzzy selection.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
+    pub fn with_prompt<S: Into<String>>(mut self, prompt: S) -> Self {
         self.prompt = prompt.into();
         self
     }
@@ -105,7 +105,7 @@ impl FuzzySelect<'_> {
     /// Indicates whether to report the selected value after interaction.
     ///
     /// The default is to report the selection.
-    pub fn report(&mut self, val: bool) -> &mut Self {
+    pub fn report(mut self, val: bool) -> Self {
         self.report = val;
         self
     }
@@ -113,7 +113,7 @@ impl FuzzySelect<'_> {
     /// Indicates whether to highlight matched indices
     ///
     /// The default is to highlight the indices
-    pub fn highlight_matches(&mut self, val: bool) -> &mut Self {
+    pub fn highlight_matches(mut self, val: bool) -> Self {
         self.highlight_matches = val;
         self
     }
@@ -121,7 +121,7 @@ impl FuzzySelect<'_> {
     /// Sets the maximum number of visible options.
     ///
     /// The default is the height of the terminal minus 2.
-    pub fn max_length(&mut self, rows: usize) -> &mut Self {
+    pub fn max_length(mut self, rows: usize) -> Self {
         self.max_length = Some(rows);
         self
     }
@@ -133,7 +133,7 @@ impl FuzzySelect<'_> {
     /// Result contains `index` of selected item if user hit 'Enter'.
     /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
-    pub fn interact(&self) -> Result<usize> {
+    pub fn interact(self) -> Result<usize> {
         self.interact_on(&Term::stderr())
     }
 
@@ -163,13 +163,13 @@ impl FuzzySelect<'_> {
     /// }
     /// ```
     #[inline]
-    pub fn interact_opt(&self) -> Result<Option<usize>> {
+    pub fn interact_opt(self) -> Result<Option<usize>> {
         self.interact_on_opt(&Term::stderr())
     }
 
     /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on(&self, term: &Term) -> Result<usize> {
+    pub fn interact_on(self, term: &Term) -> Result<usize> {
         Ok(self
             ._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
@@ -177,11 +177,11 @@ impl FuzzySelect<'_> {
 
     /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on_opt(&self, term: &Term) -> Result<Option<usize>> {
+    pub fn interact_on_opt(self, term: &Term) -> Result<Option<usize>> {
         self._interact_on(term, true)
     }
 
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> Result<Option<usize>> {
+    fn _interact_on(self, term: &Term, allow_quit: bool) -> Result<Option<usize>> {
         // Place cursor at the end of the search term
         let mut position = self.initial_text.len();
         let mut search_term = self.initial_text.to_owned();

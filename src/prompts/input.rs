@@ -74,16 +74,13 @@ impl<T> Input<'_, T> {
     }
 
     /// Sets the input prompt.
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
+    pub fn with_prompt<S: Into<String>>(mut self, prompt: S) -> Self {
         self.prompt = prompt.into();
         self
     }
 
     /// Changes the prompt text to the post completion text after input is complete
-    pub fn with_post_completion_text<S: Into<String>>(
-        &mut self,
-        post_completion_text: S,
-    ) -> &mut Self {
+    pub fn with_post_completion_text<S: Into<String>>(mut self, post_completion_text: S) -> Self {
         self.post_completion_text = Some(post_completion_text.into());
         self
     }
@@ -91,13 +88,13 @@ impl<T> Input<'_, T> {
     /// Indicates whether to report the input value after interaction.
     ///
     /// The default is to report the input value.
-    pub fn report(&mut self, val: bool) -> &mut Self {
+    pub fn report(mut self, val: bool) -> Self {
         self.report = val;
         self
     }
 
     /// Sets initial text that user can accept or erase.
-    pub fn with_initial_text<S: Into<String>>(&mut self, val: S) -> &mut Self {
+    pub fn with_initial_text<S: Into<String>>(mut self, val: S) -> Self {
         self.initial_text = Some(val.into());
         self
     }
@@ -107,7 +104,7 @@ impl<T> Input<'_, T> {
     /// Out of the box the prompt does not have a default and will continue
     /// to display until the user inputs something and hits enter. If a default is set the user
     /// can instead accept the default with enter.
-    pub fn default(&mut self, value: T) -> &mut Self {
+    pub fn default(mut self, value: T) -> Self {
         self.default = Some(value);
         self
     }
@@ -115,7 +112,7 @@ impl<T> Input<'_, T> {
     /// Enables or disables an empty input
     ///
     /// By default, if there is no default value set for the input, the user must input a non-empty string.
-    pub fn allow_empty(&mut self, val: bool) -> &mut Self {
+    pub fn allow_empty(mut self, val: bool) -> Self {
         self.permit_empty = val;
         self
     }
@@ -126,7 +123,7 @@ impl<T> Input<'_, T> {
     /// user what is the default value.
     ///
     /// This method does not affect existence of default value, only its display in the prompt!
-    pub fn show_default(&mut self, val: bool) -> &mut Self {
+    pub fn show_default(mut self, val: bool) -> Self {
         self.show_default = val;
         self
     }
@@ -189,7 +186,7 @@ impl<'a, T> Input<'a, T> {
     ///         self.history.get(pos).cloned()
     ///     }
     ///
-    ///     fn write(&mut self, val: &T)
+    ///     fn write(mut self, val: &T)
     ///     where
     ///     {
     ///         self.history.push_front(val.to_string());
@@ -206,7 +203,7 @@ impl<'a, T> Input<'a, T> {
     /// }
     /// ```
     #[cfg(feature = "history")]
-    pub fn history_with<H>(&mut self, history: &'a mut H) -> &mut Self
+    pub fn history_with<H>(mut self, history: &'a mut H) -> Self
     where
         H: History<T>,
     {
@@ -216,7 +213,7 @@ impl<'a, T> Input<'a, T> {
 
     /// Enable completion
     #[cfg(feature = "completion")]
-    pub fn completion_with<C>(&mut self, completion: &'a C) -> &mut Self
+    pub fn completion_with<C>(mut self, completion: &'a C) -> Self
     where
         C: Completion,
     {
@@ -250,7 +247,7 @@ where
     ///         .unwrap();
     /// }
     /// ```
-    pub fn validate_with<V>(&mut self, mut validator: V) -> &mut Self
+    pub fn validate_with<V>(mut self, mut validator: V) -> Self
     where
         V: Validator<T> + 'a,
         V::Err: ToString,
@@ -285,12 +282,12 @@ where
     /// while [`interact`](Self::interact) allows virtually any character to be used e.g arrow keys.
     ///
     /// The dialog is rendered on stderr.
-    pub fn interact_text(&mut self) -> Result<T> {
+    pub fn interact_text(self) -> Result<T> {
         self.interact_text_on(&Term::stderr())
     }
 
     /// Like [`interact_text`](Self::interact_text) but allows a specific terminal to be set.
-    pub fn interact_text_on(&mut self, term: &Term) -> Result<T> {
+    pub fn interact_text_on(mut self, term: &Term) -> Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
@@ -636,12 +633,12 @@ where
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
-    pub fn interact(&mut self) -> Result<T> {
+    pub fn interact(self) -> Result<T> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
-    pub fn interact_on(&mut self, term: &Term) -> Result<T> {
+    pub fn interact_on(mut self, term: &Term) -> Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {

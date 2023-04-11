@@ -57,13 +57,13 @@ impl MultiSelect<'_> {
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu.
-    pub fn clear(&mut self, val: bool) -> &mut Self {
+    pub fn clear(mut self, val: bool) -> Self {
         self.clear = val;
         self
     }
 
     /// Sets a defaults for the menu.
-    pub fn defaults(&mut self, val: &[bool]) -> &mut Self {
+    pub fn defaults(mut self, val: &[bool]) -> Self {
         self.defaults = val
             .to_vec()
             .iter()
@@ -77,7 +77,7 @@ impl MultiSelect<'_> {
     /// Sets an optional max length for a page
     ///
     /// Max length is disabled by None
-    pub fn max_length(&mut self, val: usize) -> &mut Self {
+    pub fn max_length(mut self, val: usize) -> Self {
         // Paging subtracts two from the capacity, paging does this to
         // make an offset for the page indicator. So to make sure that
         // we can show the intended amount of items we need to add two
@@ -88,19 +88,19 @@ impl MultiSelect<'_> {
 
     /// Add a single item to the selector.
     #[inline]
-    pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
+    pub fn item<T: ToString>(self, item: T) -> Self {
         self.item_checked(item, false)
     }
 
     /// Add a single item to the selector with a default checked state.
-    pub fn item_checked<T: ToString>(&mut self, item: T, checked: bool) -> &mut Self {
+    pub fn item_checked<T: ToString>(mut self, item: T, checked: bool) -> Self {
         self.items.push(item.to_string());
         self.defaults.push(checked);
         self
     }
 
     /// Adds multiple items to the selector.
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
+    pub fn items<T: ToString>(mut self, items: &[T]) -> Self {
         for item in items {
             self.items.push(item.to_string());
             self.defaults.push(false);
@@ -109,7 +109,7 @@ impl MultiSelect<'_> {
     }
 
     /// Adds multiple items to the selector with checked state
-    pub fn items_checked<T: ToString>(&mut self, items: &[(T, bool)]) -> &mut Self {
+    pub fn items_checked<T: ToString>(mut self, items: &[(T, bool)]) -> Self {
         for &(ref item, checked) in items {
             self.items.push(item.to_string());
             self.defaults.push(checked);
@@ -121,7 +121,7 @@ impl MultiSelect<'_> {
     ///
     /// By default, when a prompt is set the system also prints out a confirmation after
     /// the selection. You can opt-out of this with [`report`](Self::report).
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
+    pub fn with_prompt<S: Into<String>>(mut self, prompt: S) -> Self {
         self.prompt = Some(prompt.into());
         self
     }
@@ -129,7 +129,7 @@ impl MultiSelect<'_> {
     /// Indicates whether to report the selected values after interaction.
     ///
     /// The default is to report the selections.
-    pub fn report(&mut self, val: bool) -> &mut Self {
+    pub fn report(mut self, val: bool) -> Self {
         self.report = val;
         self
     }
@@ -141,7 +141,7 @@ impl MultiSelect<'_> {
     /// Result contains `Vec<index>` if user hit 'Enter'.
     /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
-    pub fn interact(&self) -> Result<Vec<usize>> {
+    pub fn interact(self) -> Result<Vec<usize>> {
         self.interact_on(&Term::stderr())
     }
 
@@ -177,13 +177,13 @@ impl MultiSelect<'_> {
     /// }
     /// ```
     #[inline]
-    pub fn interact_opt(&self) -> Result<Option<Vec<usize>>> {
+    pub fn interact_opt(self) -> Result<Option<Vec<usize>>> {
         self.interact_on_opt(&Term::stderr())
     }
 
     /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on(&self, term: &Term) -> Result<Vec<usize>> {
+    pub fn interact_on(self, term: &Term) -> Result<Vec<usize>> {
         Ok(self
             ._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
@@ -191,11 +191,11 @@ impl MultiSelect<'_> {
 
     /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on_opt(&self, term: &Term) -> Result<Option<Vec<usize>>> {
+    pub fn interact_on_opt(self, term: &Term) -> Result<Option<Vec<usize>>> {
         self._interact_on(term, true)
     }
 
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> Result<Option<Vec<usize>>> {
+    fn _interact_on(self, term: &Term, allow_quit: bool) -> Result<Option<Vec<usize>>> {
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,

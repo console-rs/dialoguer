@@ -56,7 +56,7 @@ impl Select<'_> {
     /// Indicates whether select menu should be erased from the screen after interaction.
     ///
     /// The default is to clear the menu.
-    pub fn clear(&mut self, val: bool) -> &mut Self {
+    pub fn clear(mut self, val: bool) -> Self {
         self.clear = val;
         self
     }
@@ -64,7 +64,7 @@ impl Select<'_> {
     /// Sets initial selected element when select menu is rendered
     ///
     /// Element is indicated by the index at which it appears in [`item`](Self::item) method invocation or [`items`](Self::items) slice.
-    pub fn default(&mut self, val: usize) -> &mut Self {
+    pub fn default(mut self, val: usize) -> Self {
         self.default = val;
         self
     }
@@ -72,7 +72,7 @@ impl Select<'_> {
     /// Sets an optional max length for a page.
     ///
     /// Max length is disabled by None
-    pub fn max_length(&mut self, val: usize) -> &mut Self {
+    pub fn max_length(mut self, val: usize) -> Self {
         // Paging subtracts two from the capacity, paging does this to
         // make an offset for the page indicator. So to make sure that
         // we can show the intended amount of items we need to add two
@@ -96,13 +96,13 @@ impl Select<'_> {
     ///         .unwrap();
     /// }
     /// ```
-    pub fn item<T: ToString>(&mut self, item: T) -> &mut Self {
+    pub fn item<T: ToString>(mut self, item: T) -> Self {
         self.items.push(item.to_string());
         self
     }
 
     /// Adds multiple items to the selector.
-    pub fn items<T: ToString>(&mut self, items: &[T]) -> &mut Self {
+    pub fn items<T: ToString>(mut self, items: &[T]) -> Self {
         for item in items {
             self.items.push(item.to_string());
         }
@@ -113,7 +113,7 @@ impl Select<'_> {
     ///
     /// By default, when a prompt is set the system also prints out a confirmation after
     /// the selection. You can opt-out of this with [`report`](Self::report).
-    pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
+    pub fn with_prompt<S: Into<String>>(mut self, prompt: S) -> Self {
         self.prompt = Some(prompt.into());
         self.report = true;
         self
@@ -122,7 +122,7 @@ impl Select<'_> {
     /// Indicates whether to report the selected value after interaction.
     ///
     /// The default is to report the selection.
-    pub fn report(&mut self, val: bool) -> &mut Self {
+    pub fn report(mut self, val: bool) -> Self {
         self.report = val;
         self
     }
@@ -134,7 +134,7 @@ impl Select<'_> {
     /// Result contains `index` if user selected one of items using 'Enter'.
     /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
-    pub fn interact(&self) -> Result<usize> {
+    pub fn interact(self) -> Result<usize> {
         self.interact_on(&Term::stderr())
     }
 
@@ -165,13 +165,13 @@ impl Select<'_> {
     /// }
     ///```
     #[inline]
-    pub fn interact_opt(&self) -> Result<Option<usize>> {
+    pub fn interact_opt(self) -> Result<Option<usize>> {
         self.interact_on_opt(&Term::stderr())
     }
 
     /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on(&self, term: &Term) -> Result<usize> {
+    pub fn interact_on(self, term: &Term) -> Result<usize> {
         Ok(self
             ._interact_on(term, false)?
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
@@ -179,12 +179,12 @@ impl Select<'_> {
 
     /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on_opt(&self, term: &Term) -> Result<Option<usize>> {
+    pub fn interact_on_opt(self, term: &Term) -> Result<Option<usize>> {
         self._interact_on(term, true)
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> Result<Option<usize>> {
+    fn _interact_on(self, term: &Term, allow_quit: bool) -> Result<Option<usize>> {
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
