@@ -1,6 +1,9 @@
 use std::io;
 
-use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
+use crate::{
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    Result,
+};
 
 use console::{Key, Term};
 
@@ -101,7 +104,7 @@ impl Confirm<'_> {
     /// Result contains `bool` if user answered "yes" or "no" or `default` (configured in [`default`](Self::default) if pushes enter.
     /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
-    pub fn interact(&self) -> io::Result<bool> {
+    pub fn interact(&self) -> Result<bool> {
         self.interact_on(&Term::stderr())
     }
 
@@ -112,7 +115,7 @@ impl Confirm<'_> {
     /// Result contains `Some(bool)` if user answered "yes" or "no" or `Some(default)` (configured in [`default`](Self::default)) if pushes enter,
     /// or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
-    pub fn interact_opt(&self) -> io::Result<Option<bool>> {
+    pub fn interact_opt(&self) -> Result<Option<bool>> {
         self.interact_on_opt(&Term::stderr())
     }
 
@@ -132,9 +135,10 @@ impl Confirm<'_> {
     /// # }
     /// ```
     #[inline]
-    pub fn interact_on(&self, term: &Term) -> io::Result<bool> {
-        self._interact_on(term, false)?
-            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
+    pub fn interact_on(&self, term: &Term) -> Result<bool> {
+        Ok(self
+            ._interact_on(term, false)?
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
     }
 
     /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
@@ -157,11 +161,11 @@ impl Confirm<'_> {
     /// }
     /// ```
     #[inline]
-    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<bool>> {
+    pub fn interact_on_opt(&self, term: &Term) -> Result<Option<bool>> {
         self._interact_on(term, true)
     }
 
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<bool>> {
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> Result<Option<bool>> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         let default_if_show = if self.show_default {
@@ -210,7 +214,7 @@ impl Confirm<'_> {
                         return Err(io::Error::new(
                             io::ErrorKind::NotConnected,
                             "Not a terminal",
-                        ))
+                        ))?;
                     }
                     _ => {
                         continue;
@@ -234,7 +238,7 @@ impl Confirm<'_> {
                         return Err(io::Error::new(
                             io::ErrorKind::NotConnected,
                             "Not a terminal",
-                        ))
+                        ))?;
                     }
                     _ => {
                         continue;

@@ -1,12 +1,11 @@
-use std::io;
+use console::Term;
+use zeroize::Zeroizing;
 
 use crate::{
     theme::{SimpleTheme, TermThemeRenderer, Theme},
     validate::PasswordValidator,
+    Result,
 };
-
-use console::Term;
-use zeroize::Zeroizing;
 
 type PasswordValidatorCallback<'a> = Box<dyn Fn(&String) -> Option<String> + 'a>;
 
@@ -124,12 +123,12 @@ impl<'a> Password<'a> {
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
-    pub fn interact(&self) -> io::Result<String> {
+    pub fn interact(&self) -> Result<String> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    pub fn interact_on(&self, term: &Term) -> io::Result<String> {
+    pub fn interact_on(&self, term: &Term) -> Result<String> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         render.set_prompts_reset_height(false);
 
@@ -163,7 +162,7 @@ impl<'a> Password<'a> {
         }
     }
 
-    fn prompt_password(&self, render: &mut TermThemeRenderer, prompt: &str) -> io::Result<String> {
+    fn prompt_password(&self, render: &mut TermThemeRenderer, prompt: &str) -> Result<String> {
         loop {
             render.password_prompt(prompt)?;
             render.term().flush()?;

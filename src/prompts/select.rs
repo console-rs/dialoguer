@@ -1,9 +1,11 @@
 use std::{io, ops::Rem};
 
-use crate::paging::Paging;
-use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
-
 use console::{Key, Term};
+
+use crate::{
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    Paging, Result,
+};
 
 /// Renders a select prompt.
 ///
@@ -166,7 +168,7 @@ impl Select<'_> {
     /// Result contains `index` if user selected one of items using 'Enter'.
     /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
-    pub fn interact(&self) -> io::Result<usize> {
+    pub fn interact(&self) -> Result<usize> {
         self.interact_on(&Term::stderr())
     }
 
@@ -176,7 +178,7 @@ impl Select<'_> {
     /// The dialog is rendered on stderr.
     /// Result contains `Some(index)` if user selected one of items using 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
-    pub fn interact_opt(&self) -> io::Result<Option<usize>> {
+    pub fn interact_opt(&self) -> Result<Option<usize>> {
         self.interact_on_opt(&Term::stderr())
     }
 
@@ -198,9 +200,10 @@ impl Select<'_> {
     /// }
     ///```
     #[inline]
-    pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
-        self._interact_on(term, false)?
-            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
+    pub fn interact_on(&self, term: &Term) -> Result<usize> {
+        Ok(self
+            ._interact_on(term, false)?
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
     }
 
     /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
@@ -224,17 +227,17 @@ impl Select<'_> {
     /// }
     /// ```
     #[inline]
-    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<usize>> {
+    pub fn interact_on_opt(&self, term: &Term) -> Result<Option<usize>> {
         self._interact_on(term, true)
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> Result<Option<usize>> {
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
                 "Empty list of items given to `Select`",
-            ));
+            ))?;
         }
 
         let mut paging = Paging::new(term, self.items.len(), self.max_length);

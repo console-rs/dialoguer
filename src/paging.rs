@@ -2,6 +2,8 @@ use std::io;
 
 use console::Term;
 
+use crate::Result;
+
 /// Creates a paging module
 ///
 /// The paging module serves as tracking structure to allow paged views
@@ -78,9 +80,9 @@ impl<'a> Paging<'a> {
     /// Renders a prompt when the following conditions are met:
     /// * Paging is active
     /// * Transition of the paging activity happened (active -> inactive / inactive -> active)
-    pub fn render_prompt<F>(&mut self, mut render_prompt: F) -> io::Result<()>
+    pub fn render_prompt<F>(&mut self, mut render_prompt: F) -> Result
     where
-        F: FnMut(Option<(usize, usize)>) -> io::Result<()>,
+        F: FnMut(Option<(usize, usize)>) -> Result,
     {
         if self.active {
             let paging_info = Some((self.current_page + 1, self.pages));

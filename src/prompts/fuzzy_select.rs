@@ -1,7 +1,12 @@
-use crate::theme::{SimpleTheme, TermThemeRenderer, Theme};
+use std::{io, ops::Rem};
+
 use console::{Key, Term};
 use fuzzy_matcher::FuzzyMatcher;
-use std::{io, ops::Rem};
+
+use crate::{
+    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    Result,
+};
 
 /// Renders a selection menu that user can fuzzy match to reduce set.
 ///
@@ -135,7 +140,7 @@ impl FuzzySelect<'_> {
     /// Result contains `index` of selected item if user hit 'Enter'.
     /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
-    pub fn interact(&self) -> io::Result<usize> {
+    pub fn interact(&self) -> Result<usize> {
         self.interact_on(&Term::stderr())
     }
 
@@ -145,25 +150,26 @@ impl FuzzySelect<'_> {
     /// The dialog is rendered on stderr.
     /// Result contains `Some(index)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
-    pub fn interact_opt(&self) -> io::Result<Option<usize>> {
+    pub fn interact_opt(&self) -> Result<Option<usize>> {
         self.interact_on_opt(&Term::stderr())
     }
 
     /// Like `interact` but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on(&self, term: &Term) -> io::Result<usize> {
-        self._interact_on(term, false)?
-            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
+    pub fn interact_on(&self, term: &Term) -> Result<usize> {
+        Ok(self
+            ._interact_on(term, false)?
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
     }
 
     /// Like `interact` but allows a specific terminal to be set.
     #[inline]
-    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<usize>> {
+    pub fn interact_on_opt(&self, term: &Term) -> Result<Option<usize>> {
         self._interact_on(term, true)
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<usize>> {
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> Result<Option<usize>> {
         // Place cursor at the end of the search term
         let mut position = self.initial_text.len();
         let mut search_term = self.initial_text.to_owned();

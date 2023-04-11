@@ -1,11 +1,11 @@
 use std::{io, iter::repeat, ops::Rem};
 
+use console::{Key, Term};
+
 use crate::{
     theme::{SimpleTheme, TermThemeRenderer, Theme},
-    Paging,
+    Paging, Result,
 };
-
-use console::{Key, Term};
 
 /// Renders a multi select prompt.
 ///
@@ -132,7 +132,7 @@ impl MultiSelect<'_> {
     /// Result contains `Vec<index>` if user hit 'Enter'.
     /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
-    pub fn interact(&self) -> io::Result<Vec<usize>> {
+    pub fn interact(&self) -> Result<Vec<usize>> {
         self.interact_on(&Term::stderr())
     }
 
@@ -142,7 +142,7 @@ impl MultiSelect<'_> {
     /// The dialog is rendered on stderr.
     /// Result contains `Some(Vec<index>)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
     #[inline]
-    pub fn interact_opt(&self) -> io::Result<Option<Vec<usize>>> {
+    pub fn interact_opt(&self) -> Result<Option<Vec<usize>>> {
         self.interact_on_opt(&Term::stderr())
     }
 
@@ -165,9 +165,10 @@ impl MultiSelect<'_> {
     /// }
     ///```
     #[inline]
-    pub fn interact_on(&self, term: &Term) -> io::Result<Vec<usize>> {
-        self._interact_on(term, false)?
-            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))
+    pub fn interact_on(&self, term: &Term) -> Result<Vec<usize>> {
+        Ok(self
+            ._interact_on(term, false)?
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
     }
 
     /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
@@ -192,16 +193,16 @@ impl MultiSelect<'_> {
     /// }
     /// ```
     #[inline]
-    pub fn interact_on_opt(&self, term: &Term) -> io::Result<Option<Vec<usize>>> {
+    pub fn interact_on_opt(&self, term: &Term) -> Result<Option<Vec<usize>>> {
         self._interact_on(term, true)
     }
 
-    fn _interact_on(&self, term: &Term, allow_quit: bool) -> io::Result<Option<Vec<usize>>> {
+    fn _interact_on(&self, term: &Term, allow_quit: bool) -> Result<Option<Vec<usize>>> {
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
                 "Empty list of items given to `MultiSelect`",
-            ));
+            ))?;
         }
 
         let mut paging = Paging::new(term, self.items.len(), self.max_length);

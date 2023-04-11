@@ -1,4 +1,6 @@
-use std::{cmp::Ordering, fmt::Debug, io, iter, str::FromStr};
+use std::{cmp::Ordering, fmt::Debug, iter, str::FromStr};
+
+use console::{Key, Term};
 
 #[cfg(feature = "completion")]
 use crate::completion::Completion;
@@ -7,9 +9,8 @@ use crate::history::History;
 use crate::{
     theme::{SimpleTheme, TermThemeRenderer, Theme},
     validate::Validator,
+    Result,
 };
-
-use console::{Key, Term};
 
 type ValidatorCallback<'a, T> = Box<dyn FnMut(&T) -> Option<String> + 'a>;
 
@@ -264,12 +265,12 @@ where
     /// while [`interact`](#method.interact) allows virtually any character to be used e.g arrow keys.
     ///
     /// The dialog is rendered on stderr.
-    pub fn interact_text(&mut self) -> io::Result<T> {
+    pub fn interact_text(&mut self) -> Result<T> {
         self.interact_text_on(&Term::stderr())
     }
 
     /// Like [`interact_text`](#method.interact_text) but allows a specific terminal to be set.
-    pub fn interact_text_on(&mut self, term: &Term) -> io::Result<T> {
+    pub fn interact_text_on(&mut self, term: &Term) -> Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
@@ -615,12 +616,12 @@ where
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
-    pub fn interact(&mut self) -> io::Result<T> {
+    pub fn interact(&mut self) -> Result<T> {
         self.interact_on(&Term::stderr())
     }
 
     /// Like [`interact`](#method.interact) but allows a specific terminal to be set.
-    pub fn interact_on(&mut self, term: &Term) -> io::Result<T> {
+    pub fn interact_on(&mut self, term: &Term) -> Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {

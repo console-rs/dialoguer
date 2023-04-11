@@ -5,6 +5,8 @@ use console::{measure_text_width, style, Style, StyledObject, Term};
 #[cfg(feature = "fuzzy-select")]
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 
+use crate::Result;
+
 /// Implements a theme for dialoguer.
 pub trait Theme {
     /// Formats a prompt.
@@ -738,7 +740,7 @@ impl<'a> TermThemeRenderer<'a> {
     >(
         &mut self,
         f: F,
-    ) -> io::Result<usize> {
+    ) -> Result<usize> {
         let mut buf = String::new();
         f(self, &mut buf).map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
         self.height += buf.chars().filter(|&x| x == '\n').count();
@@ -751,11 +753,11 @@ impl<'a> TermThemeRenderer<'a> {
     >(
         &mut self,
         f: F,
-    ) -> io::Result<()> {
+    ) -> Result {
         let mut buf = String::new();
         f(self, &mut buf).map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
         self.height += buf.chars().filter(|&x| x == '\n').count() + 1;
-        self.term.write_line(&buf)
+        Ok(self.term.write_line(&buf)?)
     }
 
     fn write_formatted_prompt<
@@ -763,7 +765,7 @@ impl<'a> TermThemeRenderer<'a> {
     >(
         &mut self,
         f: F,
-    ) -> io::Result<()> {
+    ) -> Result {
         self.write_formatted_line(f)?;
         if self.prompts_reset_height {
             self.prompt_height = self.height;
@@ -776,15 +778,15 @@ impl<'a> TermThemeRenderer<'a> {
         write!(buf, " [Page {}/{}] ", paging_info.0, paging_info.1)
     }
 
-    pub fn error(&mut self, err: &str) -> io::Result<()> {
+    pub fn error(&mut self, err: &str) -> Result {
         self.write_formatted_line(|this, buf| this.theme.format_error(buf, err))
     }
 
-    pub fn confirm_prompt(&mut self, prompt: &str, default: Option<bool>) -> io::Result<usize> {
+    pub fn confirm_prompt(&mut self, prompt: &str, default: Option<bool>) -> Result<usize> {
         self.write_formatted_str(|this, buf| this.theme.format_confirm_prompt(buf, prompt, default))
     }
 
-    pub fn confirm_prompt_selection(&mut self, prompt: &str, sel: Option<bool>) -> io::Result<()> {
+    pub fn confirm_prompt_selection(&mut self, prompt: &str, sel: Option<bool>) -> Result {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_confirm_prompt_selection(buf, prompt, sel)
         })
@@ -796,25 +798,25 @@ impl<'a> TermThemeRenderer<'a> {
         prompt: &str,
         search_term: &str,
         cursor_pos: usize,
-    ) -> io::Result<()> {
+    ) -> Result {
         self.write_formatted_prompt(|this, buf| {
             this.theme
                 .format_fuzzy_select_prompt(buf, prompt, search_term, cursor_pos)
         })
     }
 
-    pub fn input_prompt(&mut self, prompt: &str, default: Option<&str>) -> io::Result<usize> {
+    pub fn input_prompt(&mut self, prompt: &str, default: Option<&str>) -> Result<usize> {
         self.write_formatted_str(|this, buf| this.theme.format_input_prompt(buf, prompt, default))
     }
 
-    pub fn input_prompt_selection(&mut self, prompt: &str, sel: &str) -> io::Result<()> {
+    pub fn input_prompt_selection(&mut self, prompt: &str, sel: &str) -> Result {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_input_prompt_selection(buf, prompt, sel)
         })
     }
 
     #[cfg(feature = "password")]
-    pub fn password_prompt(&mut self, prompt: &str) -> io::Result<usize> {
+    pub fn password_prompt(&mut self, prompt: &str) -> Result<usize> {
         self.write_formatted_str(|this, buf| {
             write!(buf, "\r")?;
             this.theme.format_password_prompt(buf, prompt)
@@ -822,17 +824,13 @@ impl<'a> TermThemeRenderer<'a> {
     }
 
     #[cfg(feature = "password")]
-    pub fn password_prompt_selection(&mut self, prompt: &str) -> io::Result<()> {
+    pub fn password_prompt_selection(&mut self, prompt: &str) -> Result {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_password_prompt_selection(buf, prompt)
         })
     }
 
-    pub fn select_prompt(
-        &mut self,
-        prompt: &str,
-        paging_info: Option<(usize, usize)>,
-    ) -> io::Result<()> {
+    pub fn select_prompt(&mut self, prompt: &str, paging_info: Option<(usize, usize)>) -> Result {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_select_prompt(buf, prompt)?;
 
@@ -844,13 +842,13 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
-    pub fn select_prompt_selection(&mut self, prompt: &str, sel: &str) -> io::Result<()> {
+    pub fn select_prompt_selection(&mut self, prompt: &str, sel: &str) -> Result {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_select_prompt_selection(buf, prompt, sel)
         })
     }
 
-    pub fn select_prompt_item(&mut self, text: &str, active: bool) -> io::Result<()> {
+    pub fn select_prompt_item(&mut self, text: &str, active: bool) -> Result {
         self.write_formatted_line(|this, buf| {
             this.theme.format_select_prompt_item(buf, text, active)
         })
@@ -864,7 +862,7 @@ impl<'a> TermThemeRenderer<'a> {
         highlight: bool,
         matcher: &SkimMatcherV2,
         search_term: &str,
-    ) -> io::Result<()> {
+    ) -> Result {
         self.write_formatted_line(|this, buf| {
             this.theme.format_fuzzy_select_prompt_item(
                 buf,
@@ -881,7 +879,7 @@ impl<'a> TermThemeRenderer<'a> {
         &mut self,
         prompt: &str,
         paging_info: Option<(usize, usize)>,
-    ) -> io::Result<()> {
+    ) -> Result {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_multi_select_prompt(buf, prompt)?;
 
@@ -893,30 +891,21 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
-    pub fn multi_select_prompt_selection(&mut self, prompt: &str, sel: &[&str]) -> io::Result<()> {
+    pub fn multi_select_prompt_selection(&mut self, prompt: &str, sel: &[&str]) -> Result {
         self.write_formatted_prompt(|this, buf| {
             this.theme
                 .format_multi_select_prompt_selection(buf, prompt, sel)
         })
     }
 
-    pub fn multi_select_prompt_item(
-        &mut self,
-        text: &str,
-        checked: bool,
-        active: bool,
-    ) -> io::Result<()> {
+    pub fn multi_select_prompt_item(&mut self, text: &str, checked: bool, active: bool) -> Result {
         self.write_formatted_line(|this, buf| {
             this.theme
                 .format_multi_select_prompt_item(buf, text, checked, active)
         })
     }
 
-    pub fn sort_prompt(
-        &mut self,
-        prompt: &str,
-        paging_info: Option<(usize, usize)>,
-    ) -> io::Result<()> {
+    pub fn sort_prompt(&mut self, prompt: &str, paging_info: Option<(usize, usize)>) -> Result {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_sort_prompt(buf, prompt)?;
 
@@ -928,20 +917,20 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
-    pub fn sort_prompt_selection(&mut self, prompt: &str, sel: &[&str]) -> io::Result<()> {
+    pub fn sort_prompt_selection(&mut self, prompt: &str, sel: &[&str]) -> Result {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_sort_prompt_selection(buf, prompt, sel)
         })
     }
 
-    pub fn sort_prompt_item(&mut self, text: &str, picked: bool, active: bool) -> io::Result<()> {
+    pub fn sort_prompt_item(&mut self, text: &str, picked: bool, active: bool) -> Result {
         self.write_formatted_line(|this, buf| {
             this.theme
                 .format_sort_prompt_item(buf, text, picked, active)
         })
     }
 
-    pub fn clear(&mut self) -> io::Result<()> {
+    pub fn clear(&mut self) -> Result {
         self.term
             .clear_last_lines(self.height + self.prompt_height)?;
         self.height = 0;
@@ -949,7 +938,7 @@ impl<'a> TermThemeRenderer<'a> {
         Ok(())
     }
 
-    pub fn clear_preserve_prompt(&mut self, size_vec: &[usize]) -> io::Result<()> {
+    pub fn clear_preserve_prompt(&mut self, size_vec: &[usize]) -> Result {
         let mut new_height = self.height;
         let prefix_width = 2;
         //Check each item size, increment on finding an overflow
