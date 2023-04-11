@@ -1,26 +1,31 @@
 use std::io;
 
+use console::{Key, Term};
+
 use crate::{
     theme::{SimpleTheme, TermThemeRenderer, Theme},
     Result,
 };
 
-use console::{Key, Term};
-
 /// Renders a confirm prompt.
 ///
-/// ## Example usage
+/// ## Example
 ///
 /// ```rust,no_run
-/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
 /// use dialoguer::Confirm;
 ///
-/// if Confirm::new().with_prompt("Do you want to continue?").interact()? {
-///     println!("Looks like you want to continue");
-/// } else {
-///     println!("nevermind then :(");
+/// fn main() {
+///     let confirmation = Confirm::new()
+///         .with_prompt("Do you want to continue?")
+///         .interact()
+///         .unwrap();
+///
+///     if confirmation {
+///         println!("Looks like you want to continue");
+///     } else {
+///         println!("nevermind then :(");
+///     }
 /// }
-/// # Ok(()) } fn main() { test().unwrap(); }
 /// ```
 pub struct Confirm<'a> {
     prompt: String,
@@ -38,7 +43,7 @@ impl Default for Confirm<'static> {
 }
 
 impl Confirm<'static> {
-    /// Creates a confirm prompt.
+    /// Creates a confirm prompt with default theme.
     pub fn new() -> Self {
         Self::with_theme(&SimpleTheme)
     }
@@ -57,12 +62,6 @@ impl Confirm<'_> {
     pub fn report(&mut self, val: bool) -> &mut Self {
         self.report = val;
         self
-    }
-
-    #[deprecated(note = "Use with_prompt() instead", since = "0.6.0")]
-    #[inline]
-    pub fn with_text(&mut self, text: &str) -> &mut Self {
-        self.with_prompt(text)
     }
 
     /// Sets when to react to user input.
@@ -114,26 +113,29 @@ impl Confirm<'_> {
     ///
     /// Result contains `Some(bool)` if user answered "yes" or "no" or `Some(default)` (configured in [`default`](Self::default)) if pushes enter,
     /// or `None` if user cancelled with 'Esc' or 'q'.
+    ///
+    /// ## Example
+    ///
+    /// ```rust,no_run
+    /// use dialoguer::Confirm;
+    ///
+    /// fn main() {
+    ///     let confirmation = Confirm::new()
+    ///         .interact_opt()
+    ///         .unwrap();
+    ///
+    ///     match confirmation {
+    ///         Some(answer) => println!("User answered {}", if answer { "yes" } else { "no " }),
+    ///         None => println!("User did not answer")
+    ///     }
+    /// }
+    /// ```
     #[inline]
     pub fn interact_opt(&self) -> Result<Option<bool>> {
         self.interact_on_opt(&Term::stderr())
     }
 
-    /// Like [interact](#method.interact) but allows a specific terminal to be set.
-    ///
-    /// ## Examples
-    ///
-    /// ```rust,no_run
-    /// use dialoguer::Confirm;
-    /// use console::Term;
-    ///
-    /// # fn main() -> std::io::Result<()> {
-    /// let proceed = Confirm::new()
-    ///     .with_prompt("Do you wish to continue?")
-    ///     .interact_on(&Term::stderr())?;
-    /// #   Ok(())
-    /// # }
-    /// ```
+    /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
     #[inline]
     pub fn interact_on(&self, term: &Term) -> Result<bool> {
         Ok(self
@@ -142,24 +144,6 @@ impl Confirm<'_> {
     }
 
     /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
-    ///
-    /// ## Examples
-    /// ```rust,no_run
-    /// use dialoguer::Confirm;
-    /// use console::Term;
-    ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let confirmation = Confirm::new()
-    ///         .interact_on_opt(&Term::stdout())?;
-    ///
-    ///     match confirmation {
-    ///         Some(answer) => println!("User answered {}", if answer { "yes" } else { "no " }),
-    ///         None => println!("User did not answer")
-    ///     }
-    ///
-    ///     Ok(())
-    /// }
-    /// ```
     #[inline]
     pub fn interact_on_opt(&self, term: &Term) -> Result<Option<bool>> {
         self._interact_on(term, true)
@@ -264,19 +248,16 @@ impl Confirm<'_> {
 impl<'a> Confirm<'a> {
     /// Creates a confirm prompt with a specific theme.
     ///
-    /// ## Examples
-    /// ```rust,no_run
-    /// use dialoguer::{
-    ///     Confirm,
-    ///     theme::ColorfulTheme
-    /// };
+    /// ## Example
     ///
-    /// # fn main() -> std::io::Result<()> {
-    /// let proceed = Confirm::with_theme(&ColorfulTheme::default())
-    ///     .with_prompt("Do you wish to continue?")
-    ///     .interact()?;
-    /// #    Ok(())
-    /// # }
+    /// ```rust,no_run
+    /// use dialoguer::{theme::ColorfulTheme, Confirm};
+    ///
+    /// fn main() {
+    ///     let confirmation = Confirm::with_theme(&ColorfulTheme::default())
+    ///         .interact()
+    ///         .unwrap();
+    /// }
     /// ```
     pub fn with_theme(theme: &'a dyn Theme) -> Self {
         Self {

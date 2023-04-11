@@ -9,17 +9,26 @@ use crate::{
 
 /// Renders a multi select prompt.
 ///
-/// ## Example usage
+/// ## Example
+///
 /// ```rust,no_run
-/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
 /// use dialoguer::MultiSelect;
 ///
-/// let items = vec!["Option 1", "Option 2"];
-/// let chosen : Vec<usize> = MultiSelect::new()
-///     .items(&items)
-///     .interact()?;
-/// # Ok(())
-/// # }
+/// fn main() {
+///     let items = vec!["foo", "bar", "baz"];
+///
+///     let selection = MultiSelect::new()
+///         .with_prompt("What do you choose?")
+///         .items(&items)
+///         .interact()
+///         .unwrap();
+///
+///     println!("You chose:");
+///
+///     for i in selection {
+///         println!("{}", items[i]);
+///     }
+/// }
 /// ```
 pub struct MultiSelect<'a> {
     defaults: Vec<bool>,
@@ -38,7 +47,7 @@ impl Default for MultiSelect<'static> {
 }
 
 impl MultiSelect<'static> {
-    /// Creates a multi select prompt.
+    /// Creates a multi select prompt with default theme.
     pub fn new() -> Self {
         Self::with_theme(&SimpleTheme)
     }
@@ -111,7 +120,7 @@ impl MultiSelect<'_> {
     /// Prefaces the menu with a prompt.
     ///
     /// By default, when a prompt is set the system also prints out a confirmation after
-    /// the selection. You can opt-out of this with [`report`](#method.report).
+    /// the selection. You can opt-out of this with [`report`](Self::report).
     pub fn with_prompt<S: Into<String>>(&mut self, prompt: S) -> &mut Self {
         self.prompt = Some(prompt.into());
         self
@@ -141,29 +150,38 @@ impl MultiSelect<'_> {
     /// The user can select the items with the 'Space' bar and on 'Enter' the indices of selected items will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `Some(Vec<index>)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
+    ///
+    /// ## Example
+    ///
+    /// ```rust,no_run
+    /// use dialoguer::MultiSelect;
+    ///
+    /// fn main() {
+    ///     let items = vec!["foo", "bar", "baz"];
+    ///
+    ///     let ordered = MultiSelect::new()
+    ///         .items(&items)
+    ///         .interact_opt()
+    ///         .unwrap();
+    ///
+    ///     match ordered {
+    ///         Some(positions) => {
+    ///             println!("You chose:");
+    ///
+    ///             for i in positions {
+    ///                 println!("{}", items[i]);
+    ///             }
+    ///         },
+    ///         None => println!("You did not choose anything.")
+    ///     }
+    /// }
+    /// ```
     #[inline]
     pub fn interact_opt(&self) -> Result<Option<Vec<usize>>> {
         self.interact_on_opt(&Term::stderr())
     }
 
-    /// Like [interact](#method.interact) but allows a specific terminal to be set.
-    ///
-    /// ## Examples
-    ///```rust,no_run
-    /// use dialoguer::MultiSelect;
-    /// use console::Term;
-    ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let selections = MultiSelect::new()
-    ///         .item("Option A")
-    ///         .item("Option B")
-    ///         .interact_on(&Term::stderr())?;
-    ///
-    ///     println!("User selected options at indices {:?}", selections);
-    ///
-    ///     Ok(())
-    /// }
-    ///```
+    /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
     #[inline]
     pub fn interact_on(&self, term: &Term) -> Result<Vec<usize>> {
         Ok(self
@@ -172,26 +190,6 @@ impl MultiSelect<'_> {
     }
 
     /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
-    ///
-    /// ## Examples
-    /// ```rust,no_run
-    /// use dialoguer::MultiSelect;
-    /// use console::Term;
-    ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let selections = MultiSelect::new()
-    ///         .item("Option A")
-    ///         .item("Option B")
-    ///         .interact_on_opt(&Term::stdout())?;
-    ///
-    ///     match selections {
-    ///         Some(positions) => println!("User selected options at indices {:?}", positions),
-    ///         None => println!("User exited using Esc or q")
-    ///     }
-    ///
-    ///     Ok(())
-    /// }
-    /// ```
     #[inline]
     pub fn interact_on_opt(&self, term: &Term) -> Result<Option<Vec<usize>>> {
         self._interact_on(term, true)
@@ -343,6 +341,19 @@ impl MultiSelect<'_> {
 
 impl<'a> MultiSelect<'a> {
     /// Creates a multi select prompt with a specific theme.
+    ///
+    /// ## Example
+    ///
+    /// ```rust,no_run
+    /// use dialoguer::{theme::ColorfulTheme, MultiSelect};
+    ///
+    /// fn main() {
+    ///     let selection = MultiSelect::with_theme(&ColorfulTheme::default())
+    ///         .items(&["foo", "bar", "baz"])
+    ///         .interact()
+    ///         .unwrap();
+    /// }
+    /// ```
     pub fn with_theme(theme: &'a dyn Theme) -> Self {
         Self {
             items: vec![],

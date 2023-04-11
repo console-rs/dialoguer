@@ -7,6 +7,8 @@
 ### Breaking
 
 * Updated MSRV to `1.59.0`
+* Removed deprecated `Confirm::with_text`
+* Operations now return `dialouger::Result` instead of `std::io::Result`
 
 ## 0.10.4
 

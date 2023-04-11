@@ -1,10 +1,12 @@
 use std::{
     env,
     ffi::{OsStr, OsString},
-    fs, io,
+    fs,
     io::{Read, Write},
     process,
 };
+
+use crate::Result;
 
 /// Launches the default editor to edit a string.
 ///
@@ -88,7 +90,7 @@ impl Editor {
     ///
     /// Returns `None` if the file was not saved or otherwise the
     /// entered text.
-    pub fn edit(&self, s: &str) -> io::Result<Option<String>> {
+    pub fn edit(&self, s: &str) -> Result<Option<String>> {
         let mut f = tempfile::Builder::new()
             .prefix("edit-")
             .suffix(&self.extension)

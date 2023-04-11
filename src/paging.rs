@@ -1,5 +1,3 @@
-use std::io;
-
 use console::Term;
 
 use crate::Result;
@@ -45,7 +43,7 @@ impl<'a> Paging<'a> {
     }
 
     /// Updates all internal based on the current terminal size and cursor position
-    pub fn update(&mut self, cursor_pos: usize) -> io::Result<()> {
+    pub fn update(&mut self, cursor_pos: usize) -> Result {
         let new_term_size = self.term.size();
 
         if self.current_term_size != new_term_size {

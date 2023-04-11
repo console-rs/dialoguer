@@ -11,17 +11,20 @@ type PasswordValidatorCallback<'a> = Box<dyn Fn(&String) -> Option<String> + 'a>
 
 /// Renders a password input prompt.
 ///
-/// ## Example usage
+/// ## Example
 ///
 /// ```rust,no_run
-/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
 /// use dialoguer::Password;
 ///
-/// let password = Password::new().with_prompt("New Password")
-///     .with_confirmation("Confirm password", "Passwords mismatching")
-///     .interact()?;
-/// println!("Length of the password is: {}", password.len());
-/// # Ok(()) } fn main() { test().unwrap(); }
+/// fn main() {
+///     let password = Password::new()
+///         .with_prompt("New Password")
+///         .with_confirmation("Confirm password", "Passwords mismatching")
+///         .interact()
+///         .unwrap();
+///
+///     println!("Your password length is: {}", password.len());
+/// }
 /// ```
 pub struct Password<'a> {
     prompt: String,
@@ -39,7 +42,7 @@ impl Default for Password<'static> {
 }
 
 impl Password<'static> {
-    /// Creates a password input prompt.
+    /// Creates a password input prompt with default theme.
     pub fn new() -> Password<'static> {
         Self::with_theme(&SimpleTheme)
     }
@@ -82,19 +85,22 @@ impl<'a> Password<'a> {
     ///
     /// # Example
     ///
-    /// ```no_run
-    /// # use dialoguer::Password;
-    /// let password: String = Password::new()
-    ///     .with_prompt("Enter password")
-    ///     .validate_with(|input: &String| -> Result<(), &str> {
-    ///         if input.len() > 8 {
-    ///             Ok(())
-    ///         } else {
-    ///             Err("Password must be longer than 8")
-    ///         }
-    ///     })
-    ///     .interact()
-    ///     .unwrap();
+    /// ```rust,no_run
+    /// use dialoguer::Password;
+    ///
+    /// fn main() {
+    ///     let password: String = Password::new()
+    ///         .with_prompt("Enter password")
+    ///         .validate_with(|input: &String| -> Result<(), &str> {
+    ///             if input.len() > 8 {
+    ///                 Ok(())
+    ///             } else {
+    ///                 Err("Password must be longer than 8")
+    ///             }
+    ///         })
+    ///         .interact()
+    ///         .unwrap();
+    /// }
     /// ```
     pub fn validate_with<V>(&mut self, validator: V) -> &mut Self
     where
@@ -127,7 +133,7 @@ impl<'a> Password<'a> {
         self.interact_on(&Term::stderr())
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
+    /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
     pub fn interact_on(&self, term: &Term) -> Result<String> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         render.set_prompts_reset_height(false);
@@ -180,6 +186,18 @@ impl<'a> Password<'a> {
 
 impl<'a> Password<'a> {
     /// Creates a password input prompt with a specific theme.
+    ///
+    /// ## Example
+    ///
+    /// ```rust,no_run
+    /// use dialoguer::{theme::ColorfulTheme, Password};
+    ///
+    /// fn main() {
+    ///     let password = Password::with_theme(&ColorfulTheme::default())
+    ///         .interact()
+    ///         .unwrap();
+    /// }
+    /// ```
     pub fn with_theme(theme: &'a dyn Theme) -> Self {
         Self {
             prompt: "".into(),

@@ -8,33 +8,26 @@ use crate::{
     Result,
 };
 
-/// Renders a selection menu that user can fuzzy match to reduce set.
+/// Renders a select prompt with fuzzy search.
 ///
 /// User can use fuzzy search to limit selectable items.
 /// Interaction returns index of an item selected in the order they appear in `item` invocation or `items` slice.
 ///
-/// ## Examples
+/// ## Example
 ///
 /// ```rust,no_run
-/// use dialoguer::{
-///     FuzzySelect,
-///     theme::ColorfulTheme
-/// };
-/// use console::Term;
+/// use dialoguer::FuzzySelect;
 ///
-/// fn main() -> std::io::Result<()> {
-///     let items = vec!["Item 1", "item 2"];
-///     let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
+/// fn main() {
+///     let items = vec!["foo", "bar", "baz"];
+///
+///     let selection = FuzzySelect::new()
+///         .with_prompt("What do you choose?")
 ///         .items(&items)
-///         .default(0)
-///         .interact_on_opt(&Term::stderr())?;
+///         .interact()
+///         .unwrap();
 ///
-///     match selection {
-///         Some(index) => println!("User selected item : {}", items[index]),
-///         None => println!("User did not select anything")
-///     }
-///
-///     Ok(())
+///     println!("You chose: {}", items[selection]);
 /// }
 /// ```
 
@@ -59,7 +52,7 @@ impl Default for FuzzySelect<'static> {
 }
 
 impl FuzzySelect<'static> {
-    /// Creates the prompt with a specific text.
+    /// Creates a fuzzy select prompt with default theme.
     pub fn new() -> Self {
         Self::with_theme(&SimpleTheme)
     }
@@ -138,7 +131,7 @@ impl FuzzySelect<'_> {
     /// The user can select the items using 'Enter' and the index of selected item will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `index` of selected item if user hit 'Enter'.
-    /// This unlike [interact_opt](#method.interact_opt) does not allow to quit with 'Esc' or 'q'.
+    /// This unlike [`interact_opt`](Self::interact_opt) does not allow to quit with 'Esc' or 'q'.
     #[inline]
     pub fn interact(&self) -> Result<usize> {
         self.interact_on(&Term::stderr())
@@ -149,12 +142,32 @@ impl FuzzySelect<'_> {
     /// The user can select the items using 'Enter' and the index of selected item will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `Some(index)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
+    ///
+    /// ## Example
+    ///
+    /// ```rust,no_run
+    /// use dialoguer::FuzzySelect;
+    ///
+    /// fn main() {
+    ///     let items = vec!["foo", "bar", "baz"];
+    ///
+    ///     let selection = FuzzySelect::new()
+    ///         .items(&items)
+    ///         .interact_opt()
+    ///         .unwrap();
+    ///
+    ///     match selection {
+    ///         Some(index) => println!("You chose: {}", items[index]),
+    ///         None => println!("You did not choose anything.")
+    ///     }
+    /// }
+    /// ```
     #[inline]
     pub fn interact_opt(&self) -> Result<Option<usize>> {
         self.interact_on_opt(&Term::stderr())
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
+    /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
     #[inline]
     pub fn interact_on(&self, term: &Term) -> Result<usize> {
         Ok(self
@@ -162,13 +175,12 @@ impl FuzzySelect<'_> {
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
+    /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
     #[inline]
     pub fn interact_on_opt(&self, term: &Term) -> Result<Option<usize>> {
         self._interact_on(term, true)
     }
 
-    /// Like `interact` but allows a specific terminal to be set.
     fn _interact_on(&self, term: &Term, allow_quit: bool) -> Result<Option<usize>> {
         // Place cursor at the end of the search term
         let mut position = self.initial_text.len();
@@ -315,7 +327,20 @@ impl FuzzySelect<'_> {
 }
 
 impl<'a> FuzzySelect<'a> {
-    /// Same as `new` but with a specific theme.
+    /// Creates a fuzzy select prompt with a specific theme.
+    ///
+    /// ## Example
+    ///
+    /// ```rust,no_run
+    /// use dialoguer::{theme::ColorfulTheme, FuzzySelect};
+    ///
+    /// fn main() {
+    ///     let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
+    ///         .items(&["foo", "bar", "baz"])
+    ///         .interact()
+    ///         .unwrap();
+    /// }
+    /// ```
     pub fn with_theme(theme: &'a dyn Theme) -> Self {
         Self {
             default: None,

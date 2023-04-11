@@ -1,13 +1,15 @@
 use dialoguer::{theme::ColorfulTheme, Completion, Input};
 
-fn main() -> Result<(), std::io::Error> {
+fn main() {
     println!("Use the Right arrow or Tab to complete your command");
+
     let completion = MyCompletion::default();
+
     Input::<String>::with_theme(&ColorfulTheme::default())
         .with_prompt("dialoguer")
         .completion_with(&completion)
-        .interact_text()?;
-    Ok(())
+        .interact_text()
+        .unwrap();
 }
 
 struct MyCompletion {

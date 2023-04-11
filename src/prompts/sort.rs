@@ -1,28 +1,36 @@
 use std::{io, ops::Rem};
 
+use console::{Key, Term};
+
 use crate::{
     theme::{SimpleTheme, TermThemeRenderer, Theme},
     Paging, Result,
 };
 
-use console::{Key, Term};
-
 /// Renders a sort prompt.
 ///
 /// Returns list of indices in original items list sorted according to user input.
 ///
-/// ## Example usage
+/// ## Example
+///
 /// ```rust,no_run
 /// use dialoguer::Sort;
 ///
-/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
-/// let items_to_order = vec!["Item 1", "Item 2", "Item 3"];
-/// let ordered = Sort::new()
-///     .with_prompt("Order the items")
-///     .items(&items_to_order)
-///     .interact()?;
-/// # Ok(())
-/// # }
+/// fn main() {
+///     let items = vec!["foo", "bar", "baz"];
+///
+///     let ordered = Sort::new()
+///         .with_prompt("Which order do you prefer?")
+///         .items(&items)
+///         .interact()
+///         .unwrap();
+///
+///     println!("You prefer:");
+///
+///     for i in ordered {
+///         println!("{}", items[i]);
+///     }
+/// }
 /// ```
 pub struct Sort<'a> {
     items: Vec<String>,
@@ -40,7 +48,7 @@ impl Default for Sort<'static> {
 }
 
 impl Sort<'static> {
-    /// Creates a sort prompt.
+    /// Creates a sort prompt with default theme.
     pub fn new() -> Self {
         Self::with_theme(&SimpleTheme)
     }
@@ -114,29 +122,38 @@ impl Sort<'_> {
     /// The user can order the items with the 'Space' bar and the arrows. On 'Enter' ordered list of the incides of items will be returned.
     /// The dialog is rendered on stderr.
     /// Result contains `Some(Vec<index>)` if user hit 'Enter' or `None` if user cancelled with 'Esc' or 'q'.
+    ///
+    /// ## Example
+    ///
+    /// ```rust,no_run
+    /// use dialoguer::Sort;
+    ///
+    /// fn main() {
+    ///     let items = vec!["foo", "bar", "baz"];
+    ///
+    ///     let ordered = Sort::new()
+    ///         .items(&items)
+    ///         .interact_opt()
+    ///         .unwrap();
+    ///
+    ///     match ordered {
+    ///         Some(positions) => {
+    ///             println!("You prefer:");
+    ///
+    ///             for i in positions {
+    ///                 println!("{}", items[i]);
+    ///             }
+    ///         },
+    ///         None => println!("You did not prefer anything.")
+    ///     }
+    /// }
+    /// ```
     #[inline]
     pub fn interact_opt(&self) -> Result<Option<Vec<usize>>> {
         self.interact_on_opt(&Term::stderr())
     }
 
-    /// Like [interact](#method.interact) but allows a specific terminal to be set.
-    ///
-    /// ## Examples
-    ///```rust,no_run
-    /// use dialoguer::Sort;
-    /// use console::Term;
-    ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let selections = Sort::new()
-    ///         .item("Option A")
-    ///         .item("Option B")
-    ///         .interact_on(&Term::stderr())?;
-    ///
-    ///     println!("User sorted options as indices {:?}", selections);
-    ///
-    ///     Ok(())
-    /// }
-    ///```
+    /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
     #[inline]
     pub fn interact_on(&self, term: &Term) -> Result<Vec<usize>> {
         Ok(self
@@ -145,26 +162,6 @@ impl Sort<'_> {
     }
 
     /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
-    ///
-    /// ## Examples
-    /// ```rust,no_run
-    /// use dialoguer::Sort;
-    /// use console::Term;
-    ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let selections = Sort::new()
-    ///         .item("Option A")
-    ///         .item("Option B")
-    ///         .interact_on_opt(&Term::stdout())?;
-    ///
-    ///     match selections {
-    ///         Some(positions) => println!("User sorted options as indices {:?}", positions),
-    ///         None => println!("User exited using Esc or q")
-    ///     }
-    ///
-    ///     Ok(())
-    /// }
-    /// ```
     #[inline]
     pub fn interact_on_opt(&self, term: &Term) -> Result<Option<Vec<usize>>> {
         self._interact_on(term, true)
@@ -336,6 +333,19 @@ impl Sort<'_> {
 
 impl<'a> Sort<'a> {
     /// Creates a sort prompt with a specific theme.
+    ///
+    /// ## Example
+    ///
+    /// ```rust,no_run
+    /// use dialoguer::{theme::ColorfulTheme, Sort};
+    ///
+    /// fn main() {
+    ///     let ordered = Sort::with_theme(&ColorfulTheme::default())
+    ///         .items(&["foo", "bar", "baz"])
+    ///         .interact()
+    ///         .unwrap();
+    /// }
+    /// ```
     pub fn with_theme(theme: &'a dyn Theme) -> Self {
         Self {
             items: vec![],

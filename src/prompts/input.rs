@@ -16,29 +16,34 @@ type ValidatorCallback<'a, T> = Box<dyn FnMut(&T) -> Option<String> + 'a>;
 
 /// Renders an input prompt.
 ///
-/// ## Example usage
+/// ## Example
 ///
 /// ```rust,no_run
 /// use dialoguer::Input;
 ///
-/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
-/// let input : String = Input::new()
-///     .with_prompt("Tea or coffee?")
-///     .with_initial_text("Yes")
-///     .default("No".into())
-///     .interact_text()?;
-/// # Ok(())
-/// # }
+/// fn main() {
+///     let name: String = Input::new()
+///         .with_prompt("Your name?")
+///         .interact_text()
+///         .unwrap();
+///
+///     println!("Your name is: {}", name);
+/// }
 /// ```
+///
 /// It can also be used with turbofish notation:
 ///
 /// ```rust,no_run
-/// # fn test() -> Result<(), Box<dyn std::error::Error>> {
-/// # use dialoguer::Input;
-/// let input = Input::<String>::new()
-///     .interact_text()?;
-/// # Ok(())
-/// # }
+/// use dialoguer::Input;
+///
+/// fn main() {
+///     let name = Input::<String>::new()
+///         .with_prompt("Your name?")
+///         .interact_text()
+///         .unwrap();
+///
+///     println!("Your name is: {}", name);
+/// }
 /// ```
 pub struct Input<'a, T> {
     prompt: String,
@@ -63,7 +68,7 @@ impl<T> Default for Input<'static, T> {
 }
 
 impl<T> Input<'_, T> {
-    /// Creates an input prompt.
+    /// Creates an input prompt with default theme.
     pub fn new() -> Self {
         Self::with_theme(&SimpleTheme)
     }
@@ -129,6 +134,18 @@ impl<T> Input<'_, T> {
 
 impl<'a, T> Input<'a, T> {
     /// Creates an input prompt with a specific theme.
+    ///
+    /// ## Example
+    ///
+    /// ```rust,no_run
+    /// use dialoguer::{theme::ColorfulTheme, Input};
+    ///
+    /// fn main() {
+    ///     let name: String = Input::with_theme(&ColorfulTheme::default())
+    ///         .interact()
+    ///         .unwrap();
+    /// }
+    /// ```
     pub fn with_theme(theme: &'a dyn Theme) -> Self {
         Self {
             prompt: "".into(),
@@ -149,44 +166,44 @@ impl<'a, T> Input<'a, T> {
 
     /// Enable history processing
     ///
-    /// # Example
+    /// ## Example
     ///
-    /// ```no_run
-    /// # use dialoguer::{History, Input};
-    /// # use std::{collections::VecDeque, fmt::Display};
-    /// let mut history = MyHistory::default();
-    /// loop {
-    ///     if let Ok(input) = Input::<String>::new()
-    ///         .with_prompt("hist")
-    ///         .history_with(&mut history)
-    ///         .interact_text()
-    ///     {
-    ///         // Do something with the input
+    /// ```rust,no_run
+    /// use std::{collections::VecDeque, fmt::Display};
+    /// use dialoguer::{History, Input};
+    ///
+    /// struct MyHistory {
+    ///     history: VecDeque<String>,
+    /// }
+    ///
+    /// impl Default for MyHistory {
+    ///     fn default() -> Self {
+    ///         MyHistory {
+    ///             history: VecDeque::new(),
+    ///         }
     ///     }
     /// }
-    /// # struct MyHistory {
-    /// #     history: VecDeque<String>,
-    /// # }
-    /// #
-    /// # impl Default for MyHistory {
-    /// #     fn default() -> Self {
-    /// #         MyHistory {
-    /// #             history: VecDeque::new(),
-    /// #         }
-    /// #     }
-    /// # }
-    /// #
-    /// # impl<T: ToString> History<T> for MyHistory {
-    /// #     fn read(&self, pos: usize) -> Option<String> {
-    /// #         self.history.get(pos).cloned()
-    /// #     }
-    /// #
-    /// #     fn write(&mut self, val: &T)
-    /// #     where
-    /// #     {
-    /// #         self.history.push_front(val.to_string());
-    /// #     }
-    /// # }
+    ///
+    /// impl<T: ToString> History<T> for MyHistory {
+    ///     fn read(&self, pos: usize) -> Option<String> {
+    ///         self.history.get(pos).cloned()
+    ///     }
+    ///
+    ///     fn write(&mut self, val: &T)
+    ///     where
+    ///     {
+    ///         self.history.push_front(val.to_string());
+    ///     }
+    /// }
+    ///
+    /// fn main() {
+    ///     let mut history = MyHistory::default();
+    ///
+    ///     let input = Input::<String>::new()
+    ///         .history_with(&mut history)
+    ///         .interact_text()
+    ///         .unwrap();
+    /// }
     /// ```
     #[cfg(feature = "history")]
     pub fn history_with<H>(&mut self, history: &'a mut H) -> &mut Self
@@ -216,19 +233,22 @@ where
     ///
     /// # Example
     ///
-    /// ```no_run
-    /// # use dialoguer::Input;
-    /// let mail: String = Input::new()
-    ///     .with_prompt("Enter email")
-    ///     .validate_with(|input: &String| -> Result<(), &str> {
-    ///         if input.contains('@') {
-    ///             Ok(())
-    ///         } else {
-    ///             Err("This is not a mail address")
-    ///         }
-    ///     })
-    ///     .interact()
-    ///     .unwrap();
+    /// ```rust,no_run
+    /// use dialoguer::Input;
+    ///
+    /// fn main() {
+    ///     let mail: String = Input::new()
+    ///         .with_prompt("Enter email")
+    ///         .validate_with(|input: &String| -> Result<(), &str> {
+    ///             if input.contains('@') {
+    ///                 Ok(())
+    ///             } else {
+    ///                 Err("This is not a mail address")
+    ///             }
+    ///         })
+    ///         .interact()
+    ///         .unwrap();
+    /// }
     /// ```
     pub fn validate_with<V>(&mut self, mut validator: V) -> &mut Self
     where
@@ -261,15 +281,15 @@ where
 {
     /// Enables the user to enter a printable ascii sequence and returns the result.
     ///
-    /// Its difference from [`interact`](#method.interact) is that it only allows ascii characters for string,
-    /// while [`interact`](#method.interact) allows virtually any character to be used e.g arrow keys.
+    /// Its difference from [`interact`](Self::interact) is that it only allows ascii characters for string,
+    /// while [`interact`](Self::interact) allows virtually any character to be used e.g arrow keys.
     ///
     /// The dialog is rendered on stderr.
     pub fn interact_text(&mut self) -> Result<T> {
         self.interact_text_on(&Term::stderr())
     }
 
-    /// Like [`interact_text`](#method.interact_text) but allows a specific terminal to be set.
+    /// Like [`interact_text`](Self::interact_text) but allows a specific terminal to be set.
     pub fn interact_text_on(&mut self, term: &Term) -> Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
@@ -612,7 +632,7 @@ where
     ///
     /// Allows any characters as input, including e.g arrow keys.
     /// Some of the keys might have undesired behavior.
-    /// For more limited version, see [`interact_text`](#method.interact_text).
+    /// For more limited version, see [`interact_text`](Self::interact_text).
     ///
     /// If the user confirms the result is `true`, `false` otherwise.
     /// The dialog is rendered on stderr.
@@ -620,7 +640,7 @@ where
         self.interact_on(&Term::stderr())
     }
 
-    /// Like [`interact`](#method.interact) but allows a specific terminal to be set.
+    /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
     pub fn interact_on(&mut self, term: &Term) -> Result<T> {
         let mut render = TermThemeRenderer::new(term, self.theme);
 
