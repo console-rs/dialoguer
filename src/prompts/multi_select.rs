@@ -3,7 +3,7 @@ use std::{io, iter::repeat, ops::Rem};
 use console::{Key, Term};
 
 use crate::{
-    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    theme::{render::TermThemeRenderer, SimpleTheme, Theme},
     Paging, Result,
 };
 

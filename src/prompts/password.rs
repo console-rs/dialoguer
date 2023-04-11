@@ -2,7 +2,7 @@ use console::Term;
 use zeroize::Zeroizing;
 
 use crate::{
-    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    theme::{render::TermThemeRenderer, SimpleTheme, Theme},
     validate::PasswordValidator,
     Result,
 };

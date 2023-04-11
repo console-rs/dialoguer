@@ -4,7 +4,7 @@ use console::{Key, Term};
 use fuzzy_matcher::FuzzyMatcher;
 
 use crate::{
-    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    theme::{render::TermThemeRenderer, SimpleTheme, Theme},
     Result,
 };
 

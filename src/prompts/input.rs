@@ -7,7 +7,7 @@ use crate::completion::Completion;
 #[cfg(feature = "history")]
 use crate::history::History;
 use crate::{
-    theme::{SimpleTheme, TermThemeRenderer, Theme},
+    theme::{render::TermThemeRenderer, SimpleTheme, Theme},
     validate::Validator,
     Result,
 };
