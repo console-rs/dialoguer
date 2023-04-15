@@ -186,7 +186,7 @@ impl<'a, T> Input<'a, T> {
     ///         self.history.get(pos).cloned()
     ///     }
     ///
-    ///     fn write(mut self, val: &T)
+    ///     fn write(&mut self, val: &T)
     ///     where
     ///     {
     ///         self.history.push_front(val.to_string());
