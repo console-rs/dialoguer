@@ -51,9 +51,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install rust
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.59.0
           components: rustfmt, clippy
       - name: Checkout
         uses: actions/checkout@v3
