@@ -38,6 +38,7 @@ pub struct FuzzySelect<'a> {
     report: bool,
     clear: bool,
     highlight_matches: bool,
+    enable_vim_mode: bool,
     max_length: Option<usize>,
     theme: &'a dyn Theme,
     /// Search string that a fuzzy search with start with.
@@ -115,6 +116,17 @@ impl FuzzySelect<'_> {
     /// The default is to highlight the indices
     pub fn highlight_matches(mut self, val: bool) -> Self {
         self.highlight_matches = val;
+        self
+    }
+
+    /// Indicated whether to allow the use of vim mode
+    ///
+    /// Vim mode can be entered by pressing Escape.
+    /// This then allows the user to navigate using hjkl.
+    ///
+    /// The default is to disable vim mode.
+    pub fn enable_vim_mode(mut self, val: bool) -> Self {
+        self.enable_vim_mode = val;
         self
     }
 
@@ -243,7 +255,15 @@ impl FuzzySelect<'_> {
             term.flush()?;
 
             match (term.read_key()?, sel, vim_mode) {
-                (Key::Escape, _, false) => {
+                (Key::Escape, _, _) if allow_quit && !self.enable_vim_mode => {
+                    if self.clear {
+                        render.clear()?;
+                        term.flush()?;
+                    }
+                    term.show_cursor()?;
+                    return Ok(None);
+                }
+                (Key::Escape, _, false) if self.enable_vim_mode => {
                     vim_mode = true;
                 }
                 (Key::Char('i' | 'a'), _, true) => {
@@ -356,6 +376,7 @@ impl<'a> FuzzySelect<'a> {
             report: true,
             clear: true,
             highlight_matches: true,
+            enable_vim_mode: false,
             max_length: None,
             theme,
             initial_text: "".into(),
