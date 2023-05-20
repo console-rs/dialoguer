@@ -209,6 +209,8 @@ impl FuzzySelect<'_> {
 
         term.hide_cursor()?;
 
+        let mut vim_mode = false;
+
         loop {
             render.clear()?;
             render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, position)?;
@@ -240,16 +242,16 @@ impl FuzzySelect<'_> {
             }
             term.flush()?;
 
-            match (term.read_key()?, sel) {
-                (Key::Escape, _) if allow_quit => {
-                    if self.clear {
-                        render.clear()?;
-                        term.flush()?;
-                    }
-                    term.show_cursor()?;
-                    return Ok(None);
+            match (term.read_key()?, sel, vim_mode) {
+                (Key::Escape, _, false) => {
+                    vim_mode = true;
                 }
-                (Key::ArrowUp | Key::BackTab, _) if !filtered_list.is_empty() => {
+                (Key::Char('i' | 'a'), _, true) => {
+                    vim_mode = false;
+                }
+                (Key::ArrowUp | Key::BackTab, _, _) | (Key::Char('k'), _, true)
+                    if !filtered_list.is_empty() =>
+                {
                     if sel == Some(0) {
                         starting_row =
                             filtered_list.len().max(visible_term_rows) - visible_term_rows;
@@ -266,7 +268,9 @@ impl FuzzySelect<'_> {
                     };
                     term.flush()?;
                 }
-                (Key::ArrowDown | Key::Tab, _) if !filtered_list.is_empty() => {
+                (Key::ArrowDown | Key::Tab, _, _) | (Key::Char('j'), _, true)
+                    if !filtered_list.is_empty() =>
+                {
                     sel = match sel {
                         None => Some(0),
                         Some(sel) => {
@@ -280,15 +284,17 @@ impl FuzzySelect<'_> {
                     }
                     term.flush()?;
                 }
-                (Key::ArrowLeft, _) if position > 0 => {
+                (Key::ArrowLeft, _, _) | (Key::Char('h'), _, true) if position > 0 => {
                     position -= 1;
                     term.flush()?;
                 }
-                (Key::ArrowRight, _) if position < search_term.len() => {
+                (Key::ArrowRight, _, _) | (Key::Char('l'), _, true)
+                    if position < search_term.len() =>
+                {
                     position += 1;
                     term.flush()?;
                 }
-                (Key::Enter, Some(sel)) if !filtered_list.is_empty() => {
+                (Key::Enter, Some(sel), _) if !filtered_list.is_empty() => {
                     if self.clear {
                         render.clear()?;
                     }
@@ -305,17 +311,18 @@ impl FuzzySelect<'_> {
                     term.show_cursor()?;
                     return Ok(sel_string_pos_in_items);
                 }
-                (Key::Backspace, _) if position > 0 => {
+                (Key::Backspace, _, _) if position > 0 => {
                     position -= 1;
                     search_term.remove(position);
                     term.flush()?;
                 }
-                (Key::Char(chr), _) if !chr.is_ascii_control() => {
+                (Key::Char(chr), _, _) if !chr.is_ascii_control() => {
                     search_term.insert(position, chr);
                     position += 1;
                     term.flush()?;
                     sel = Some(0);
                     starting_row = 0;
+                    vim_mode = false;
                 }
 
                 _ => {}
