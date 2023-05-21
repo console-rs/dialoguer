@@ -150,6 +150,10 @@ impl Confirm<'_> {
     }
 
     fn _interact_on(self, term: &Term, allow_quit: bool) -> Result<Option<bool>> {
+        if !term.is_term() {
+            return Err(io::Error::new(io::ErrorKind::NotConnected, "not a terminal").into());
+        }
+
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         let default_if_show = if self.show_default {

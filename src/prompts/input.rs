@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fmt::Debug, iter, str::FromStr};
+use std::{cmp::Ordering, fmt::Debug, io, iter, str::FromStr};
 
 use console::{Key, Term};
 
@@ -288,6 +288,10 @@ where
 
     /// Like [`interact_text`](Self::interact_text) but allows a specific terminal to be set.
     pub fn interact_text_on(mut self, term: &Term) -> Result<T> {
+        if !term.is_term() {
+            return Err(io::Error::new(io::ErrorKind::NotConnected, "not a terminal").into());
+        }
+
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {
@@ -639,6 +643,10 @@ where
 
     /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
     pub fn interact_on(mut self, term: &Term) -> Result<T> {
+        if !term.is_term() {
+            return Err(io::Error::new(io::ErrorKind::NotConnected, "not a terminal").into());
+        }
+
         let mut render = TermThemeRenderer::new(term, self.theme);
 
         loop {

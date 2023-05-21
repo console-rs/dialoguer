@@ -196,6 +196,10 @@ impl MultiSelect<'_> {
     }
 
     fn _interact_on(self, term: &Term, allow_quit: bool) -> Result<Option<Vec<usize>>> {
+        if !term.is_term() {
+            return Err(io::Error::new(io::ErrorKind::NotConnected, "not a terminal").into());
+        }
+
         if self.items.is_empty() {
             return Err(io::Error::new(
                 io::ErrorKind::Other,

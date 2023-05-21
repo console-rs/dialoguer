@@ -1,3 +1,5 @@
+use std::io;
+
 use console::Term;
 use zeroize::Zeroizing;
 
@@ -135,6 +137,10 @@ impl<'a> Password<'a> {
 
     /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
     pub fn interact_on(self, term: &Term) -> Result<String> {
+        if !term.is_term() {
+            return Err(io::Error::new(io::ErrorKind::NotConnected, "not a terminal").into());
+        }
+
         let mut render = TermThemeRenderer::new(term, self.theme);
         render.set_prompts_reset_height(false);
 
