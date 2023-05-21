@@ -125,7 +125,7 @@ impl FuzzySelect<'_> {
     /// This then allows the user to navigate using hjkl.
     ///
     /// The default is to disable vim mode.
-    pub fn enable_vim_mode(mut self, val: bool) -> Self {
+    pub fn vim_mode(mut self, val: bool) -> Self {
         self.enable_vim_mode = val;
         self
     }
@@ -255,16 +255,16 @@ impl FuzzySelect<'_> {
             term.flush()?;
 
             match (term.read_key()?, sel, vim_mode) {
-                (Key::Escape, _, _) if allow_quit && !self.enable_vim_mode => {
+                (Key::Escape, _, false) if self.enable_vim_mode => {
+                    vim_mode = true;
+                }
+                (Key::Escape, _, _) if allow_quit => {
                     if self.clear {
                         render.clear()?;
                         term.flush()?;
                     }
                     term.show_cursor()?;
                     return Ok(None);
-                }
-                (Key::Escape, _, false) if self.enable_vim_mode => {
-                    vim_mode = true;
                 }
                 (Key::Char('i' | 'a'), _, true) => {
                     vim_mode = false;
@@ -342,7 +342,6 @@ impl FuzzySelect<'_> {
                     term.flush()?;
                     sel = Some(0);
                     starting_row = 0;
-                    vim_mode = false;
                 }
 
                 _ => {}
