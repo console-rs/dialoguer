@@ -258,7 +258,7 @@ impl FuzzySelect<'_> {
                 (Key::Escape, _, false) if self.enable_vim_mode => {
                     vim_mode = true;
                 }
-                (Key::Escape, _, _) if allow_quit => {
+                (Key::Escape, _, false) | (Key::Char('q'), _, true) if allow_quit => {
                     if self.clear {
                         render.clear()?;
                         term.flush()?;
