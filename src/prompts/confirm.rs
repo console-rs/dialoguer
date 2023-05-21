@@ -194,12 +194,6 @@ impl Confirm<'_> {
                     Key::Escape | Key::Char('q') if allow_quit => {
                         value = None;
                     }
-                    Key::Unknown => {
-                        return Err(io::Error::new(
-                            io::ErrorKind::NotConnected,
-                            "Not a terminal",
-                        ))?;
-                    }
                     _ => {
                         continue;
                     }
@@ -218,12 +212,6 @@ impl Confirm<'_> {
                     Key::Char('n') | Key::Char('N') => Some(false),
                     Key::Enter if self.default.is_some() => Some(self.default.unwrap()),
                     Key::Escape | Key::Char('q') if allow_quit => None,
-                    Key::Unknown => {
-                        return Err(io::Error::new(
-                            io::ErrorKind::NotConnected,
-                            "Not a terminal",
-                        ))?;
-                    }
                     _ => {
                         continue;
                     }
