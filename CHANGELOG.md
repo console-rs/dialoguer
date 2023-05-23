@@ -5,6 +5,7 @@
 ### Enhancements
 
 * Added `dialouger::Result` and `dialouger::Error`
+* Resolve some issues on Windows where pressing shift keys sometimes aborted dialogs.
 
 ### Breaking
 
