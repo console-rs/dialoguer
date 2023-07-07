@@ -213,6 +213,7 @@ impl Select<'_> {
         }
 
         term.hide_cursor()?;
+        paging.update(sel)?;
 
         loop {
             if let Some(ref prompt) = self.prompt {
