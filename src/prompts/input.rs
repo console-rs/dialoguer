@@ -343,7 +343,7 @@ where
                         if !tail.is_empty() {
                             term.write_str(&tail)?;
 
-                            let total = position + prompt_len + tail.len();
+                            let total = position + prompt_len + tail.chars().count();
                             let total_line = total / line_size;
                             let line_cursor = (position + prompt_len) / line_size;
                             term.move_cursor_up(total_line - line_cursor)?;
@@ -360,7 +360,7 @@ where
                         let tail: String =
                             iter::once(&chr).chain(chars[position..].iter()).collect();
                         term.write_str(&tail)?;
-                        term.move_cursor_left(tail.len() - 1)?;
+                        term.move_cursor_left(tail.chars().count() - 1)?;
                         term.flush()?;
                     }
                     Key::ArrowLeft if position > 0 => {
