@@ -9,7 +9,7 @@
 
 ### Breaking
 
-* Updated MSRV to `1.59.0`
+* Updated MSRV to `1.63.0` due to multiple dependencies on different platforms: `rustix`, `tempfile`,`linux-raw-sys`
 * Removed deprecated `Confirm::with_text`
 * Prompt builder functions now take `mut self` instead of `&mut self`
 * Prompt builder functions now return `Self` instead of `&mut Self`
