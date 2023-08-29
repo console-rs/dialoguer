@@ -592,16 +592,16 @@ where
 
             match input.parse::<T>() {
                 Ok(value) => {
+                    #[cfg(feature = "history")]
+                    if let Some(history) = &mut self.history {
+                        history.write(&value);
+                    }
+
                     if let Some(ref mut validator) = self.validator {
                         if let Some(err) = validator(&value) {
                             render.error(&err)?;
                             continue;
                         }
-                    }
-
-                    #[cfg(feature = "history")]
-                    if let Some(history) = &mut self.history {
-                        history.write(&value);
                     }
 
                     if self.report {
