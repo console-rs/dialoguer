@@ -1,17 +1,12 @@
-use dialoguer::{theme::ColorfulTheme, History, Input};
+use dialoguer::{theme::ColorfulTheme, Input};
 use std::{collections::VecDeque, process};
 
 fn main() {
     println!("Use 'exit' to quit the prompt");
-    println!("In this example, history is limited to 4 entries");
     println!("Use the Up/Down arrows to scroll through history");
     println!();
 
-    let mut history = MyHistory::default();
-
-    /// We can also use `Vec` or `VecDeque` directly for a simple infinite history.
-    // let mut history = Vec::new();
-    // let mut history = VecDeque::new();
+    let mut history = VecDeque::new();
 
     loop {
         if let Ok(cmd) = Input::<String>::with_theme(&ColorfulTheme::default())
@@ -24,32 +19,5 @@ fn main() {
             }
             println!("Entered {}", cmd);
         }
-    }
-}
-
-struct MyHistory {
-    max: usize,
-    history: VecDeque<String>,
-}
-
-impl Default for MyHistory {
-    fn default() -> Self {
-        MyHistory {
-            max: 4,
-            history: VecDeque::new(),
-        }
-    }
-}
-
-impl<T: ToString> History<T> for MyHistory {
-    fn read(&self, pos: usize) -> Option<String> {
-        self.history.get(pos).cloned()
-    }
-
-    fn write(&mut self, val: &T) {
-        if self.history.len() == self.max {
-            self.history.pop_back();
-        }
-        self.history.push_front(val.to_string());
     }
 }

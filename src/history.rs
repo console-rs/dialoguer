@@ -16,6 +16,7 @@ pub trait History<T> {
     fn write(&mut self, val: &T);
 }
 
+
 impl<T: ToString> History<T> for VecDeque<String> {
     fn read(&self, pos: usize) -> Option<String> {
         self.get(pos).cloned()
