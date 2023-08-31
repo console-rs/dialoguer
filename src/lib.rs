@@ -37,7 +37,7 @@ pub use console;
 #[cfg(feature = "editor")]
 pub use edit::Editor;
 #[cfg(feature = "history")]
-pub use history::History;
+pub use history::{History, BasicHistory};
 use paging::Paging;
 pub use prompts::{
     confirm::Confirm, input::Input, multi_select::MultiSelect, select::Select, sort::Sort,

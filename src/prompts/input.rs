@@ -13,27 +13,6 @@ use console::{Key, Term};
 
 type ValidatorCallback<'a, T> = Box<dyn FnMut(&T) -> Option<String> + 'a>;
 
-#[cfg(feature = "history")]
-enum HistoryBox<'a, T> {
-    Borrowed(&'a mut dyn History<T>),
-    Owned(Box<dyn History<T>>),
-}
-
-impl<'a, T> History<T> for HistoryBox<'a, T> {
-    fn read(&self, pos: usize) -> Option<String> {
-        match self {
-            HistoryBox::Borrowed(h) => h.read(pos),
-            HistoryBox::Owned(h) => h.read(pos),
-        }
-    }
-
-    fn write(&mut self, val: &T) {
-        match self {
-            HistoryBox::Borrowed(h) => h.write(val),
-            HistoryBox::Owned(h) => h.write(val),
-        }
-    }
-}
 
 /// Renders an input prompt.
 ///
@@ -72,8 +51,7 @@ pub struct Input<'a, T> {
     permit_empty: bool,
     validator: Option<ValidatorCallback<'a, T>>,
     #[cfg(feature = "history")]
-    history: Option<HistoryBox<'a, T>>,
-    // history: Option<&'a mut dyn History<T>>,
+    history: Option<&'a mut dyn History<T>>,
     #[cfg(feature = "completion")]
     completion: Option<&'a dyn Completion>,
 }
@@ -215,25 +193,7 @@ impl<'a, T> Input<'a, T> {
     where
         H: History<T>,
     {
-        self.history = Some(HistoryBox::Borrowed(history));
-        self
-    }
-
-    #[cfg(feature = "history")]
-    pub fn history_from<H: History<T> + 'static>(&mut self, history: H) -> &mut Self {
-        self.history = Some(HistoryBox::Owned(Box::new(history)));
-        self
-    }
-
-    #[cfg(feature = "history")]
-    pub fn history_infinite(&mut self) -> &mut Self
-    where
-        T: ToString,
-    {
-        use std::collections::VecDeque;
-
-        let history = VecDeque::new();
-        self.history = Some(HistoryBox::Owned(Box::new(history)));
+        self.history = Some(history);
         self
     }
 
