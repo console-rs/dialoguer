@@ -6,7 +6,7 @@
 
 * Added `dialouger::Result` and `dialouger::Error`
 * Resolve some issues on Windows where pressing shift keys sometimes aborted dialogs.
-* Resolve `MultiSelect` checked and unchecked variants looking the same on Windows. More compatible '✔️' and '❌' used instead of '✔' colors.
+* Resolve `MultiSelect` checked and unchecked variants looking the same on Windows.
 
 ### Breaking
 
