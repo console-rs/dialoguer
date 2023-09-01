@@ -1,13 +1,13 @@
-use dialoguer::{theme::ColorfulTheme, History, Input};
-use std::{collections::VecDeque, process};
+use dialoguer::{theme::ColorfulTheme, BasicHistory, Input};
+use std::process;
 
 fn main() {
     println!("Use 'exit' to quit the prompt");
-    println!("In this example, history is limited to 4 entries");
+    println!("In this example, history is limited to 8 entries and contains no duplicates");
     println!("Use the Up/Down arrows to scroll through history");
     println!();
 
-    let mut history = MyHistory::default();
+    let mut history = BasicHistory::new().max_entries(8).no_duplicates(true);
 
     loop {
         if let Ok(cmd) = Input::<String>::with_theme(&ColorfulTheme::default())
@@ -20,32 +20,5 @@ fn main() {
             }
             println!("Entered {}", cmd);
         }
-    }
-}
-
-struct MyHistory {
-    max: usize,
-    history: VecDeque<String>,
-}
-
-impl Default for MyHistory {
-    fn default() -> Self {
-        MyHistory {
-            max: 4,
-            history: VecDeque::new(),
-        }
-    }
-}
-
-impl<T: ToString> History<T> for MyHistory {
-    fn read(&self, pos: usize) -> Option<String> {
-        self.history.get(pos).cloned()
-    }
-
-    fn write(&mut self, val: &T) {
-        if self.history.len() == self.max {
-            self.history.pop_back();
-        }
-        self.history.push_front(val.to_string());
     }
 }
