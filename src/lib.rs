@@ -39,7 +39,7 @@ pub use completion::Completion;
 pub use edit::Editor;
 pub use error::{Error, Result};
 #[cfg(feature = "history")]
-pub use history::History;
+pub use history::{History, BasicHistory};
 use paging::Paging;
 pub use validate::Validator;
 

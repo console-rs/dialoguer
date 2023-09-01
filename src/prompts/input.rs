@@ -14,6 +14,7 @@ use crate::{
 
 type ValidatorCallback<'a, T> = Box<dyn FnMut(&T) -> Option<String> + 'a>;
 
+
 /// Renders an input prompt.
 ///
 /// ## Example
