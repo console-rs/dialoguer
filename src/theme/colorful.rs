@@ -72,7 +72,7 @@ impl Default for ColorfulTheme {
             active_item_prefix: style("❯".to_string()).for_stderr().green(),
             inactive_item_prefix: style(" ".to_string()).for_stderr(),
             checked_item_prefix: style("✔".to_string()).for_stderr().green(),
-            unchecked_item_prefix: style("◌".to_string()).for_stderr(),
+            unchecked_item_prefix: style("⬚".to_string()).for_stderr().magenta(),
             picked_item_prefix: style("❯".to_string()).for_stderr().green(),
             unpicked_item_prefix: style(" ".to_string()).for_stderr(),
             #[cfg(feature = "fuzzy-select")]
