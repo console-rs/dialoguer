@@ -25,11 +25,11 @@ pub struct BasicHistory {
 impl BasicHistory {
     /// Creates a new basic history value which has no limit on the number of
     /// entries and allows for duplicates.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// A history with at most 8 entries and no duplicates:
-    /// 
+    ///
     /// ```rs
     /// let mut history = BasicHistory::new().max_entries(8).no_duplicates(true);
     /// ```
