@@ -30,6 +30,7 @@ use crate::{
 ///     }
 /// }
 /// ```
+#[derive(Clone)]
 pub struct MultiSelect<'a> {
     defaults: Vec<bool>,
     items: Vec<String>,
@@ -368,5 +369,17 @@ impl<'a> MultiSelect<'a> {
             max_length: None,
             theme,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_clone() {
+        let multi_select = MultiSelect::new().with_prompt("Select your favorite(s)");
+
+        let _ = multi_select.clone();
     }
 }

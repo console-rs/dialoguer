@@ -30,7 +30,7 @@ use crate::{
 ///     println!("You chose: {}", items[selection]);
 /// }
 /// ```
-
+#[derive(Clone)]
 pub struct FuzzySelect<'a> {
     default: Option<usize>,
     items: Vec<String>,
@@ -380,5 +380,17 @@ impl<'a> FuzzySelect<'a> {
             theme,
             initial_text: "".into(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_clone() {
+        let fuzzy_select = FuzzySelect::new().with_prompt("Do you want to continue?");
+
+        let _ = fuzzy_select.clone();
     }
 }

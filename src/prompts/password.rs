@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, sync::Arc};
 
 use console::Term;
 use zeroize::Zeroizing;
@@ -9,7 +9,7 @@ use crate::{
     Result,
 };
 
-type PasswordValidatorCallback<'a> = Box<dyn Fn(&String) -> Option<String> + 'a>;
+type PasswordValidatorCallback<'a> = Arc<dyn Fn(&String) -> Option<String> + 'a>;
 
 /// Renders a password input prompt.
 ///
@@ -28,6 +28,7 @@ type PasswordValidatorCallback<'a> = Box<dyn Fn(&String) -> Option<String> + 'a>
 ///     println!("Your password length is: {}", password.len());
 /// }
 /// ```
+#[derive(Clone)]
 pub struct Password<'a> {
     prompt: String,
     report: bool,
@@ -50,7 +51,7 @@ impl Password<'static> {
     }
 }
 
-impl<'a> Password<'a> {
+impl Password<'_> {
     /// Sets the password input prompt.
     pub fn with_prompt<S: Into<String>>(mut self, prompt: S) -> Self {
         self.prompt = prompt.into();
@@ -80,50 +81,6 @@ impl<'a> Password<'a> {
     /// By default this setting is set to false (i.e. password is not empty).
     pub fn allow_empty_password(mut self, allow_empty_password: bool) -> Self {
         self.allow_empty_password = allow_empty_password;
-        self
-    }
-
-    /// Registers a validator.
-    ///
-    /// # Example
-    ///
-    /// ```rust,no_run
-    /// use dialoguer::Password;
-    ///
-    /// fn main() {
-    ///     let password: String = Password::new()
-    ///         .with_prompt("Enter password")
-    ///         .validate_with(|input: &String| -> Result<(), &str> {
-    ///             if input.len() > 8 {
-    ///                 Ok(())
-    ///             } else {
-    ///                 Err("Password must be longer than 8")
-    ///             }
-    ///         })
-    ///         .interact()
-    ///         .unwrap();
-    /// }
-    /// ```
-    pub fn validate_with<V>(mut self, validator: V) -> Self
-    where
-        V: PasswordValidator + 'a,
-        V::Err: ToString,
-    {
-        let old_validator_func = self.validator.take();
-
-        self.validator = Some(Box::new(move |value: &String| -> Option<String> {
-            if let Some(old) = &old_validator_func {
-                if let Some(err) = old(value) {
-                    return Some(err);
-                }
-            }
-
-            match validator.validate(value) {
-                Ok(()) => None,
-                Err(err) => Some(err.to_string()),
-            }
-        }));
-
         self
     }
 
@@ -191,6 +148,50 @@ impl<'a> Password<'a> {
 }
 
 impl<'a> Password<'a> {
+    /// Registers a validator.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use dialoguer::Password;
+    ///
+    /// fn main() {
+    ///     let password: String = Password::new()
+    ///         .with_prompt("Enter password")
+    ///         .validate_with(|input: &String| -> Result<(), &str> {
+    ///             if input.len() > 8 {
+    ///                 Ok(())
+    ///             } else {
+    ///                 Err("Password must be longer than 8")
+    ///             }
+    ///         })
+    ///         .interact()
+    ///         .unwrap();
+    /// }
+    /// ```
+    pub fn validate_with<V>(mut self, validator: V) -> Self
+    where
+        V: PasswordValidator + 'a,
+        V::Err: ToString,
+    {
+        let old_validator_func = self.validator.take();
+
+        self.validator = Some(Arc::new(move |value: &String| -> Option<String> {
+            if let Some(old) = &old_validator_func {
+                if let Some(err) = old(value) {
+                    return Some(err);
+                }
+            }
+
+            match validator.validate(value) {
+                Ok(()) => None,
+                Err(err) => Some(err.to_string()),
+            }
+        }));
+
+        self
+    }
+
     /// Creates a password input prompt with a specific theme.
     ///
     /// ## Example
@@ -213,5 +214,17 @@ impl<'a> Password<'a> {
             confirmation_prompt: None,
             validator: None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_clone() {
+        let password = Password::new().with_prompt("Enter password");
+
+        let _ = password.clone();
     }
 }

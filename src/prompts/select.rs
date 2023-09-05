@@ -29,6 +29,7 @@ use crate::{
 ///     println!("You chose: {}", items[selection]);
 /// }
 /// ```
+#[derive(Clone)]
 pub struct Select<'a> {
     default: usize,
     items: Vec<String>,
@@ -334,6 +335,13 @@ impl<'a> Select<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_clone() {
+        let select = Select::new().with_prompt("Do you want to continue?");
+
+        let _ = select.clone();
+    }
 
     #[test]
     fn test_str() {

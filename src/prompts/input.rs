@@ -1,4 +1,10 @@
-use std::{cmp::Ordering, fmt::Debug, io, iter, str::FromStr};
+use std::{
+    cmp::Ordering,
+    fmt::Debug,
+    io, iter,
+    str::FromStr,
+    sync::{Arc, Mutex},
+};
 
 use console::{Key, Term};
 
@@ -8,11 +14,11 @@ use crate::completion::Completion;
 use crate::history::History;
 use crate::{
     theme::{render::TermThemeRenderer, SimpleTheme, Theme},
-    validate::Validator,
+    validate::InputValidator,
     Result,
 };
 
-type ValidatorCallback<'a, T> = Box<dyn FnMut(&T) -> Option<String> + 'a>;
+type InputValidatorCallback<'a, T> = Arc<Mutex<dyn FnMut(&T) -> Option<String> + 'a>>;
 
 /// Renders an input prompt.
 ///
@@ -45,6 +51,7 @@ type ValidatorCallback<'a, T> = Box<dyn FnMut(&T) -> Option<String> + 'a>;
 ///     println!("Your name is: {}", name);
 /// }
 /// ```
+#[derive(Clone)]
 pub struct Input<'a, T> {
     prompt: String,
     post_completion_text: Option<String>,
@@ -54,9 +61,9 @@ pub struct Input<'a, T> {
     initial_text: Option<String>,
     theme: &'a dyn Theme,
     permit_empty: bool,
-    validator: Option<ValidatorCallback<'a, T>>,
+    validator: Option<InputValidatorCallback<'a, T>>,
     #[cfg(feature = "history")]
-    history: Option<&'a mut dyn History<T>>,
+    history: Option<Arc<Mutex<&'a mut dyn History<T>>>>,
     #[cfg(feature = "completion")]
     completion: Option<&'a dyn Completion>,
 }
@@ -207,7 +214,7 @@ impl<'a, T> Input<'a, T> {
     where
         H: History<T>,
     {
-        self.history = Some(history);
+        self.history = Some(Arc::new(Mutex::new(history)));
         self
     }
 
@@ -249,14 +256,14 @@ where
     /// ```
     pub fn validate_with<V>(mut self, mut validator: V) -> Self
     where
-        V: Validator<T> + 'a,
+        V: InputValidator<T> + 'a,
         V::Err: ToString,
     {
         let mut old_validator_func = self.validator.take();
 
-        self.validator = Some(Box::new(move |value: &T| -> Option<String> {
+        self.validator = Some(Arc::new(Mutex::new(move |value: &T| -> Option<String> {
             if let Some(old) = old_validator_func.as_mut() {
-                if let Some(err) = old(value) {
+                if let Some(err) = old.lock().unwrap()(value) {
                     return Some(err);
                 }
             }
@@ -265,7 +272,7 @@ where
                 Ok(()) => None,
                 Err(err) => Some(err.to_string()),
             }
-        }));
+        })));
 
         self
     }
@@ -491,7 +498,7 @@ where
                     Key::ArrowUp => {
                         let line_size = term.size().1 as usize;
                         if let Some(history) = &self.history {
-                            if let Some(previous) = history.read(hist_pos) {
+                            if let Some(previous) = history.lock().unwrap().read(hist_pos) {
                                 hist_pos += 1;
                                 let mut chars_len = chars.len();
                                 while ((prompt_len + chars_len) / line_size) > 0 {
@@ -550,7 +557,7 @@ where
                                 hist_pos = pos;
                                 // Move it back again to get the previous history entry
                                 if let Some(pos) = pos.checked_sub(1) {
-                                    if let Some(previous) = history.read(pos) {
+                                    if let Some(previous) = history.lock().unwrap().read(pos) {
                                         for ch in previous.chars() {
                                             chars.insert(position, ch);
                                             position += 1;
@@ -574,7 +581,7 @@ where
             if chars.is_empty() {
                 if let Some(ref default) = self.default {
                     if let Some(ref mut validator) = self.validator {
-                        if let Some(err) = validator(default) {
+                        if let Some(err) = validator.lock().unwrap()(default) {
                             render.error(&err)?;
                             continue;
                         }
@@ -594,11 +601,11 @@ where
                 Ok(value) => {
                     #[cfg(feature = "history")]
                     if let Some(history) = &mut self.history {
-                        history.write(&value);
+                        history.lock().unwrap().write(&value);
                     }
 
                     if let Some(ref mut validator) = self.validator {
-                        if let Some(err) = validator(&value) {
+                        if let Some(err) = validator.lock().unwrap()(&value) {
                             render.error(&err)?;
                             continue;
                         }
@@ -675,7 +682,7 @@ where
             if input.is_empty() {
                 if let Some(ref default) = self.default {
                     if let Some(ref mut validator) = self.validator {
-                        if let Some(err) = validator(default) {
+                        if let Some(err) = validator.lock().unwrap()(default) {
                             render.error(&err)?;
                             continue;
                         }
@@ -694,7 +701,7 @@ where
             match input.parse::<T>() {
                 Ok(value) => {
                     if let Some(ref mut validator) = self.validator {
-                        if let Some(err) = validator(&value) {
+                        if let Some(err) = validator.lock().unwrap()(&value) {
                             render.error(&err)?;
                             continue;
                         }
@@ -713,5 +720,17 @@ where
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_clone() {
+        let input = Input::<String>::new().with_prompt("Your name");
+
+        let _ = input.clone();
     }
 }

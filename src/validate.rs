@@ -4,7 +4,7 @@
 ///
 /// A generic implementation for `Fn(&str) -> Result<(), E>` is provided
 /// to facilitate development.
-pub trait Validator<T> {
+pub trait InputValidator<T> {
     type Err;
 
     /// Invoked with the value to validate.
@@ -14,7 +14,7 @@ pub trait Validator<T> {
     fn validate(&mut self, input: &T) -> Result<(), Self::Err>;
 }
 
-impl<T, F, E> Validator<T> for F
+impl<T, F, E> InputValidator<T> for F
 where
     F: FnMut(&T) -> Result<(), E>,
 {

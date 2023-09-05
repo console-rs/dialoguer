@@ -41,7 +41,7 @@ pub use error::{Error, Result};
 #[cfg(feature = "history")]
 pub use history::{BasicHistory, History};
 use paging::Paging;
-pub use validate::Validator;
+pub use validate::{InputValidator, PasswordValidator};
 
 #[cfg(feature = "fuzzy-select")]
 pub use prompts::fuzzy_select::FuzzySelect;

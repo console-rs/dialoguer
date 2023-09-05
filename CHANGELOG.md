@@ -5,8 +5,17 @@
 ### Enhancements
 
 * Added `dialouger::Result` and `dialouger::Error`
-* Resolve some issues on Windows where pressing shift keys sometimes aborted dialogs.
-* Resolve `MultiSelect` checked and unchecked variants looking the same on Windows.
+* Added a `BasicHistory` implementation for `History`
+* Added vim mode for `FuzzySelect`
+* All prompts implement `Clone`
+
+### Bug fixes
+
+* Resolve some issues on Windows where pressing shift keys sometimes aborted dialogs
+* Resolve `MultiSelect` checked and unchecked variants looking the same on Windows
+* `Input` values that are invalid are now also stored in `History`
+* Resolve some issues with cursor positioning in `Input` when using `utf-8` characters
+* Correct page is shown when default selected option is not on the first page for `Select`
 
 ### Breaking
 
@@ -16,6 +25,7 @@
 * Prompt builder functions now return `Self` instead of `&mut Self`
 * Prompt interaction functions now take `self` instead of `&self`
 * Prompt interaction functions and other operations now return `dialouger::Result` instead of `std::io::Result`
+* Rename `Validator` to `InputValidator`
 
 ## 0.10.4
 
@@ -111,7 +121,7 @@
 
 ## 0.6.1
 
-### Bugfixes
+### Bug fixes
 
 * `theme::ColorfulTheme` default styles are for stderr
 

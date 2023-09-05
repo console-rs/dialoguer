@@ -32,6 +32,7 @@ use crate::{
 ///     }
 /// }
 /// ```
+#[derive(Clone)]
 pub struct Sort<'a> {
     items: Vec<String>,
     prompt: Option<String>,
@@ -359,5 +360,17 @@ impl<'a> Sort<'a> {
             max_length: None,
             theme,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_clone() {
+        let sort = Sort::new().with_prompt("Which order do you prefer?");
+
+        let _ = sort.clone();
     }
 }

@@ -27,6 +27,7 @@ use crate::{
 ///     }
 /// }
 /// ```
+#[derive(Clone)]
 pub struct Confirm<'a> {
     prompt: String,
     report: bool,
@@ -260,5 +261,17 @@ impl<'a> Confirm<'a> {
             wait_for_newline: false,
             theme,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_clone() {
+        let confirm = Confirm::new().with_prompt("Do you want to continue?");
+
+        let _ = confirm.clone();
     }
 }
