@@ -86,7 +86,7 @@ impl Password<'_> {
 
     /// Enables user interaction and returns the result.
     ///
-    /// If the user confirms the result is `true`, `false` otherwise.
+    /// If the user confirms the result is `Ok()`, `Err()` otherwise.
     /// The dialog is rendered on stderr.
     pub fn interact(self) -> Result<String> {
         self.interact_on(&Term::stderr())
