@@ -21,6 +21,7 @@
 
 * Updated MSRV to `1.63.0` due to multiple dependencies on different platforms: `rustix`, `tempfile`,`linux-raw-sys`
 * Removed deprecated `Confirm::with_text`
+* Removed deprecated `ColorfulTheme::inline_selections`
 * Prompt builder functions now take `mut self` instead of `&mut self`
 * Prompt builder functions now return `Self` instead of `&mut Self`
 * Prompt interaction functions now take `self` instead of `&self`
