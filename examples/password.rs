@@ -5,7 +5,7 @@ fn main() {
         .with_prompt("Password")
         .with_confirmation("Repeat password", "Error: the passwords don't match.")
         .validate_with(|input: &String| -> Result<(), &str> {
-            if input.len() > 3 {
+            if input.chars().count() > 3 {
                 Ok(())
             } else {
                 Err("Password must be longer than 3")
@@ -14,5 +14,8 @@ fn main() {
         .interact()
         .unwrap();
 
-    println!("Your password is {} characters long", password.len());
+    println!(
+        "Your password is {} characters long",
+        password.chars().count()
+    );
 }
