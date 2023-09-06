@@ -50,8 +50,6 @@ pub struct ColorfulTheme {
     // Formats the highlighting if matched characters
     #[cfg(feature = "fuzzy-select")]
     pub fuzzy_match_highlight_style: Style,
-    /// Show the selections from certain prompts inline
-    pub inline_selections: bool,
 }
 
 impl Default for ColorfulTheme {
@@ -79,7 +77,6 @@ impl Default for ColorfulTheme {
             fuzzy_cursor_style: Style::new().for_stderr().black().on_white(),
             #[cfg(feature = "fuzzy-select")]
             fuzzy_match_highlight_style: Style::new().for_stderr().bold(),
-            inline_selections: true,
         }
     }
 }
@@ -260,15 +257,13 @@ impl Theme for ColorfulTheme {
 
         write!(f, "{} ", &self.success_suffix)?;
 
-        if self.inline_selections {
-            for (idx, sel) in selections.iter().enumerate() {
-                write!(
-                    f,
-                    "{}{}",
-                    if idx == 0 { "" } else { ", " },
-                    self.values_style.apply_to(sel)
-                )?;
-            }
+        for (idx, sel) in selections.iter().enumerate() {
+            write!(
+                f,
+                "{}{}",
+                if idx == 0 { "" } else { ", " },
+                self.values_style.apply_to(sel)
+            )?;
         }
 
         Ok(())
