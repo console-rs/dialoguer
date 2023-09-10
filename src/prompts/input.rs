@@ -1,6 +1,5 @@
 use std::{
     cmp::Ordering,
-    fmt::Debug,
     io, iter,
     str::FromStr,
     sync::{Arc, Mutex},
@@ -281,7 +280,7 @@ where
 impl<T> Input<'_, T>
 where
     T: Clone + ToString + FromStr,
-    <T as FromStr>::Err: Debug + ToString,
+    <T as FromStr>::Err: ToString,
 {
     /// Enables the user to enter a printable ascii sequence and returns the result.
     ///
@@ -338,11 +337,6 @@ where
                     None
                 },
             )?;
-
-            // Read input by keystroke so that we can suppress ascii control characters
-            if !term.features().is_attended() {
-                return Ok(Some("".to_owned().parse::<T>().unwrap()));
-            }
 
             let mut chars: Vec<char> = Vec::new();
             let mut position = 0;
@@ -661,13 +655,7 @@ where
             }
         }
     }
-}
 
-impl<T> Input<'_, T>
-where
-    T: Clone + ToString + FromStr,
-    <T as FromStr>::Err: ToString,
-{
     /// Enables user interaction and returns the result.
     ///
     /// Allows any characters as input, including e.g arrow keys.
