@@ -288,7 +288,7 @@ where
     /// while [`interact`](Self::interact) allows virtually any character to be used e.g arrow keys.
     ///
     /// The dialog is rendered on stderr.
-    /// This unlike [`interact_text_opt`](Self::interact_text_opt) does not allow to quit with 'Esc'
+    /// This unlike [`interact_text_opt`](Self::interact_text_opt) does not allow to quit with 'Esc'.
     #[inline]
     pub fn interact_text(self) -> Result<T> {
         self.interact_text_on(&Term::stderr())
@@ -296,11 +296,11 @@ where
 
     /// Enables the user to enter a printable ascii sequence and returns the result.
     ///
-    /// Its difference from [`interact_opt`](Self::interact_opt) is that it only allows ascii characters for string,
-    /// while [`interact_opt`](Self::interact_opt) allows virtually any character to be used e.g arrow keys.
-    ///
+    /// Unlike [`interact`](Self::interact) it only allows ascii characters for string,
+    /// and can be cancelled with 'Esc'.
+    /// 
     /// The dialog is rendered on stderr.
-    /// Result contains `Some(T)` if user hit 'Enter' or `None` if user cancelled with 'Esc'
+    /// Result contains `Some(T)` if user hit 'Enter' or `None` if user cancelled with 'Esc'.
     #[inline]
     pub fn interact_text_opt(self) -> Result<Option<T>> {
         self.interact_text_on_opt(&Term::stderr())
@@ -663,7 +663,7 @@ where
     /// Some of the keys might have undesired behavior.
     /// For more limited version, see [`interact_text`](Self::interact_text).
     ///
-    /// If the user confirms the result is `true`, `false` otherwise.
+    /// Returns the parsed value once the user validates their input with 'Enter'.
     /// The dialog is rendered on stderr.
     pub fn interact(self) -> Result<T> {
         self.interact_on(&Term::stderr())
