@@ -289,6 +289,7 @@ where
     ///
     /// The dialog is rendered on stderr.
     /// This unlike [`interact_text_opt`](Self::interact_text_opt) does not allow to quit with 'Esc'
+    #[inline]
     pub fn interact_text(self) -> Result<T> {
         self.interact_text_on(&Term::stderr())
     }
