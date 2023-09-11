@@ -343,6 +343,10 @@ impl FuzzySelect<'_> {
                     search_term.remove(byte_indices[cursor]);
                     term.flush()?;
                 }
+                (Key::Del, _, _) if cursor < byte_indices.len() - 1 => {
+                    search_term.remove(byte_indices[cursor]);
+                    term.flush()?;
+                }
                 (Key::Char(chr), _, _) if !chr.is_ascii_control() => {
                     search_term.insert(byte_indices[cursor], chr);
                     cursor += 1;
