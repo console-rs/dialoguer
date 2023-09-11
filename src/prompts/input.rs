@@ -354,6 +354,7 @@ where
             loop {
                 match term.read_key()? {
                     Key::Escape if allow_quit => {
+                        term.clear_line()?;
                         render.clear()?;
                         term.flush()?;
                         term.show_cursor()?;
