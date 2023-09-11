@@ -8,6 +8,7 @@
 * Added a `BasicHistory` implementation for `History`
 * Added vim mode for `FuzzySelect`
 * All prompts implement `Clone`
+* `Confirm` now also accepts '1' and '0' as confirmations for international accessibility
 
 ### Bug fixes
 

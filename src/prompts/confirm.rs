@@ -68,11 +68,11 @@ impl Confirm<'_> {
     /// Sets when to react to user input.
     ///
     /// When `false` (default), we check on each user keystroke immediately as
-    /// it is typed. Valid inputs can be one of 'y', 'n', or a newline to accept
+    /// it is typed. Valid inputs can be one of 'y', 'n', '1', '0' or a newline to accept
     /// the default.
     ///
     /// When `true`, the user must type their choice and hit the Enter key before
-    /// proceeding. Valid inputs can be "yes", "no", "y", "n", or an empty string
+    /// proceeding. Valid inputs can be "yes", "no", "y", "n", "1", "0" or an empty string
     /// to accept the default.
     pub fn wait_for_newline(mut self, wait: bool) -> Self {
         self.wait_for_newline = wait;
@@ -179,10 +179,10 @@ impl Confirm<'_> {
                 let input = term.read_key()?;
 
                 match input {
-                    Key::Char('y') | Key::Char('Y') => {
+                    Key::Char('y') | Key::Char('Y') | Key::Char('1') => {
                         value = Some(true);
                     }
-                    Key::Char('n') | Key::Char('N') => {
+                    Key::Char('n') | Key::Char('N') | Key::Char('0') => {
                         value = Some(false);
                     }
                     Key::Enter => {
@@ -213,8 +213,8 @@ impl Confirm<'_> {
             loop {
                 let input = term.read_key()?;
                 let value = match input {
-                    Key::Char('y') | Key::Char('Y') => Some(true),
-                    Key::Char('n') | Key::Char('N') => Some(false),
+                    Key::Char('y') | Key::Char('Y') | Key::Char('1') => Some(true),
+                    Key::Char('n') | Key::Char('N') | Key::Char('0') => Some(false),
                     Key::Enter if self.default.is_some() => Some(self.default.unwrap()),
                     Key::Escape | Key::Char('q') if allow_quit => None,
                     _ => {
