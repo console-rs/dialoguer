@@ -403,31 +403,24 @@ impl Theme for ColorfulTheme {
         f: &mut dyn fmt::Write,
         prompt: &str,
         search_term: &str,
-        cursor_pos: usize,
+        bytes_pos: usize,
     ) -> fmt::Result {
         if !prompt.is_empty() {
             write!(
                 f,
                 "{} {} ",
-                &self.prompt_prefix,
+                self.prompt_prefix,
                 self.prompt_style.apply_to(prompt)
             )?;
         }
 
-        if cursor_pos < search_term.len() {
-            let st_head = search_term[0..cursor_pos].to_string();
-            let st_tail = search_term[cursor_pos + 1..search_term.len()].to_string();
-            let st_cursor = self
-                .fuzzy_cursor_style
-                .apply_to(search_term.to_string().chars().nth(cursor_pos).unwrap());
-            write!(
-                f,
-                "{} {}{}{}",
-                &self.prompt_suffix, st_head, st_cursor, st_tail
-            )
-        } else {
-            let cursor = self.fuzzy_cursor_style.apply_to(" ");
-            write!(f, "{} {}{}", &self.prompt_suffix, search_term, cursor)
-        }
+        let (st_head, remaining) = search_term.split_at(bytes_pos);
+        let mut chars = remaining.chars();
+        let chr = chars.next().unwrap_or(' ');
+        let st_cursor = self.fuzzy_cursor_style.apply_to(chr);
+        let st_tail = chars.as_str();
+
+        let prompt_suffix = &self.prompt_suffix;
+        write!(f, "{prompt_suffix} {st_head}{st_cursor}{st_tail}",)
     }
 }

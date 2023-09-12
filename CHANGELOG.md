@@ -16,6 +16,8 @@
 * `Input` values that are invalid are now also stored in `History`
 * Resolve some issues with cursor positioning in `Input` when using `utf-8` characters
 * Correct page is shown when default selected option is not on the first page for `Select`
+* Fix panic in `FuzzySelect` when using non-ASCII characters
+* Add handling of `Delete` key for `FuzzySelect`
 
 ### Breaking
 
@@ -27,6 +29,7 @@
 * Prompt interaction functions now take `self` instead of `&self`
 * Prompt interaction functions and other operations now return `dialouger::Result` instead of `std::io::Result`
 * Rename `Validator` to `InputValidator`
+* The trait method `Theme::format_fuzzy_select_prompt()` now takes a byte position instead of a cursor position in order to support UTF-8.
 
 ## 0.10.4
 

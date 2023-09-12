@@ -195,7 +195,7 @@ impl FuzzySelect<'_> {
 
     fn _interact_on(self, term: &Term, allow_quit: bool) -> Result<Option<usize>> {
         // Place cursor at the end of the search term
-        let mut position = self.initial_text.len();
+        let mut cursor = self.initial_text.chars().count();
         let mut search_term = self.initial_text.to_owned();
 
         let mut render = TermThemeRenderer::new(term, self.theme);
@@ -224,8 +224,15 @@ impl FuzzySelect<'_> {
         let mut vim_mode = false;
 
         loop {
+            let mut byte_indices = search_term
+                .char_indices()
+                .map(|(index, _)| index)
+                .collect::<Vec<_>>();
+
+            byte_indices.push(search_term.len());
+
             render.clear()?;
-            render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, position)?;
+            render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, byte_indices[cursor])?;
 
             // Maps all items to a tuple of item and its match score.
             let mut filtered_list = self
@@ -304,14 +311,14 @@ impl FuzzySelect<'_> {
                     }
                     term.flush()?;
                 }
-                (Key::ArrowLeft, _, _) | (Key::Char('h'), _, true) if position > 0 => {
-                    position -= 1;
+                (Key::ArrowLeft, _, _) | (Key::Char('h'), _, true) if cursor > 0 => {
+                    cursor -= 1;
                     term.flush()?;
                 }
                 (Key::ArrowRight, _, _) | (Key::Char('l'), _, true)
-                    if position < search_term.len() =>
+                    if cursor < byte_indices.len() - 1 =>
                 {
-                    position += 1;
+                    cursor += 1;
                     term.flush()?;
                 }
                 (Key::Enter, Some(sel), _) if !filtered_list.is_empty() => {
@@ -331,14 +338,18 @@ impl FuzzySelect<'_> {
                     term.show_cursor()?;
                     return Ok(sel_string_pos_in_items);
                 }
-                (Key::Backspace, _, _) if position > 0 => {
-                    position -= 1;
-                    search_term.remove(position);
+                (Key::Backspace, _, _) if cursor > 0 => {
+                    cursor -= 1;
+                    search_term.remove(byte_indices[cursor]);
+                    term.flush()?;
+                }
+                (Key::Del, _, _) if cursor < byte_indices.len() - 1 => {
+                    search_term.remove(byte_indices[cursor]);
                     term.flush()?;
                 }
                 (Key::Char(chr), _, _) if !chr.is_ascii_control() => {
-                    search_term.insert(position, chr);
-                    position += 1;
+                    search_term.insert(byte_indices[cursor], chr);
+                    cursor += 1;
                     term.flush()?;
                     sel = Some(0);
                     starting_row = 0;
