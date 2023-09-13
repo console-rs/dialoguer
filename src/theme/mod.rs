@@ -38,9 +38,9 @@ pub trait Theme {
             write!(f, "{} ", &prompt)?;
         }
         match default {
-            None => write!(f, "[y/n] ")?,
-            Some(true) => write!(f, "[Y/n] ")?,
-            Some(false) => write!(f, "[y/N] ")?,
+            None => write!(f, "[y/n or 1/0] ")?,
+            Some(true) => write!(f, "[Y/n or 1/0] ")?,
+            Some(false) => write!(f, "[y/N or 1/0] ")?,
         }
         Ok(())
     }

@@ -153,20 +153,20 @@ impl Theme for ColorfulTheme {
             None => write!(
                 f,
                 "{} {}",
-                self.hint_style.apply_to("(y/n)"),
+                self.hint_style.apply_to("(y/n or 1/0)"),
                 &self.prompt_suffix
             ),
             Some(true) => write!(
                 f,
                 "{} {} {}",
-                self.hint_style.apply_to("(y/n)"),
+                self.hint_style.apply_to("(y/n or 1/0)"),
                 &self.prompt_suffix,
                 self.defaults_style.apply_to("yes")
             ),
             Some(false) => write!(
                 f,
                 "{} {} {}",
-                self.hint_style.apply_to("(y/n)"),
+                self.hint_style.apply_to("(y/n or 1/0)"),
                 &self.prompt_suffix,
                 self.defaults_style.apply_to("no")
             ),
