@@ -49,7 +49,7 @@ pub use prompts::fuzzy_select::FuzzySelect;
 #[cfg(feature = "password")]
 pub use prompts::password::Password;
 pub use prompts::{
-    confirm::Confirm, input::Input, multi_select::MultiSelect, select::Select, sort::Sort,
+    confirm::Confirm, input::Input, multi_select::MultiSelect, multi_select_plus::MultiSelectPlus, multi_select_plus::MultiSelectPlusItem, select::Select, sort::Sort,
 };
 
 #[cfg(feature = "completion")]
