@@ -42,6 +42,15 @@ impl<'a> Paging<'a> {
         }
     }
 
+    pub fn update_page(&mut self, cursor_pos: usize) {
+        if cursor_pos != !0
+            && (cursor_pos < self.current_page * self.capacity
+                || cursor_pos >= (self.current_page + 1) * self.capacity)
+        {
+            self.current_page = cursor_pos / self.capacity;
+        }
+    }
+
     /// Updates all internal based on the current terminal size and cursor position
     pub fn update(&mut self, cursor_pos: usize) -> Result {
         let new_term_size = self.term.size();
@@ -65,12 +74,7 @@ impl<'a> Paging<'a> {
             self.term.clear_last_lines(self.capacity)?;
         }
 
-        if cursor_pos != !0
-            && (cursor_pos < self.current_page * self.capacity
-                || cursor_pos >= (self.current_page + 1) * self.capacity)
-        {
-            self.current_page = cursor_pos / self.capacity;
-        }
+        self.update_page(cursor_pos);
 
         Ok(())
     }
