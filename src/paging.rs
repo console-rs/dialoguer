@@ -50,7 +50,6 @@ impl<'a> Paging<'a> {
             self.current_page = cursor_pos / self.capacity;
         }
     }
-    
 
     /// Updates all internal based on the current terminal size and cursor position
     pub fn update(&mut self, cursor_pos: usize) -> Result {
