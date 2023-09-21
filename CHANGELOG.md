@@ -8,6 +8,7 @@
 * Added a `BasicHistory` implementation for `History`
 * Added vim mode for `FuzzySelect`
 * All prompts implement `Clone`
+* Add handling of `Delete` key for `FuzzySelect`
 
 ### Bug fixes
 
@@ -17,7 +18,6 @@
 * Resolve some issues with cursor positioning in `Input` when using `utf-8` characters
 * Correct page is shown when default selected option is not on the first page for `Select`
 * Fix panic in `FuzzySelect` when using non-ASCII characters
-* Add handling of `Delete` key for `FuzzySelect`
 
 ### Breaking
 
