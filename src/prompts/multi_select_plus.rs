@@ -3,8 +3,8 @@ use std::{io, ops::Rem};
 use console::{Key, Term};
 
 use crate::{
-    Paging,
-    Result, theme::{render::TermThemeRenderer, SimpleTheme, Theme},
+    theme::{render::TermThemeRenderer, SimpleTheme, Theme},
+    Paging, Result,
 };
 
 /// Renders a multi select prompt.
@@ -15,10 +15,26 @@ use crate::{
 /// use dialoguer::MultiSelectPlus;
 ///
 /// fn main() {
-///     use dialoguer::MultiSelectPlusItem;
+///     use dialoguer::{MultiSelectPlusItem, MultiSelectPlusStatus};
 ///     let items = vec![
-///         MultiSelectPlusItem { name: "Foo", summary_text: "Foo", checked: false },
-///         MultiSelectPlusItem { name: "Bar (more details here)", summary_text: "Bar", checked: true },
+///         MultiSelectPlusItem {
+///             name: String::from("Foo"),
+///             summary_text: String::from("Foo"),
+///             status: MultiSelectPlusStatus::UNCHECKED
+///         },
+///         MultiSelectPlusItem {
+///             name: String::from("Bar (more details here)"),
+///             summary_text: String::from("Bar"),
+///             status: MultiSelectPlusStatus::CHECKED
+///         },
+///         MultiSelectPlusItem {
+///             name: String::from("Baz"),
+///             summary_text: String::from("Baz"),
+///             status: MultiSelectPlusStatus {
+///                 checked: false,
+///                 symbol: "-"
+///             }
+///         }
 ///     ];
 ///
 ///     let selection = MultiSelectPlus::new()
@@ -35,8 +51,10 @@ use crate::{
 /// }
 /// ```
 #[derive(Clone)]
-pub struct MultiSelectPlus<'a, N: ToString + Clone, S: ToString + Clone> {
-    items: Vec<MultiSelectPlusItem<N, S>>,
+pub struct MultiSelectPlus<'a> {
+    items: Vec<MultiSelectPlusItem>,
+    checked_status: MultiSelectPlusStatus,
+    unchecked_status: MultiSelectPlusStatus,
     prompt: Option<String>,
     report: bool,
     clear: bool,
@@ -45,40 +63,55 @@ pub struct MultiSelectPlus<'a, N: ToString + Clone, S: ToString + Clone> {
 }
 
 #[derive(Clone)]
-pub struct MultiSelectPlusItem<N: ToString + Clone, S: ToString + Clone> {
-    pub name: N,
-    pub summary_text: S,
-    pub checked: bool,
+pub struct MultiSelectPlusItem {
+    pub name: String,
+    pub summary_text: String,
+    pub status: MultiSelectPlusStatus,
 }
 
-impl<N: ToString + Clone, S: ToString + Clone> MultiSelectPlusItem<N, S> {
-    pub fn name(&self) -> &N {
+impl MultiSelectPlusItem {
+    pub fn name(&self) -> &String {
         &self.name
     }
 
-    pub fn summary_text(&self) -> &S {
+    pub fn summary_text(&self) -> &String {
         &self.summary_text
     }
 
-    pub fn checked(&self) -> bool {
-        self.checked
+    pub fn checked(&self) -> &MultiSelectPlusStatus {
+        &self.status
     }
 }
 
-impl<N: ToString + Clone, S: ToString + Clone> Default for MultiSelectPlus<'static, N, S> {
+#[derive(Clone)]
+pub struct MultiSelectPlusStatus {
+    pub checked: bool,
+    pub symbol: &'static str,
+}
+
+impl MultiSelectPlusStatus {
+    pub const fn new(checked: bool, symbol: &'static str) -> Self {
+        Self { checked, symbol }
+    }
+
+    pub const CHECKED: Self = Self::new(true, "X");
+    pub const UNCHECKED: Self = Self::new(false, " ");
+}
+
+impl Default for MultiSelectPlus<'static> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<N: ToString + Clone, S: ToString + Clone> MultiSelectPlus<'static, N, S> {
+impl MultiSelectPlus<'static> {
     /// Creates a multi select prompt with default theme.
     pub fn new() -> Self {
         Self::with_theme(&SimpleTheme)
     }
 }
 
-impl<N: ToString + Clone, S: ToString + Clone> MultiSelectPlus<'_, N, S> {
+impl MultiSelectPlus<'_> {
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu.
@@ -100,13 +133,13 @@ impl<N: ToString + Clone, S: ToString + Clone> MultiSelectPlus<'_, N, S> {
     }
 
     /// Add a single item to the selector.
-    pub fn item(mut self, item: MultiSelectPlusItem<N, S>) -> Self {
+    pub fn item(mut self, item: MultiSelectPlusItem) -> Self {
         self.items.push(item);
         self
     }
 
     /// Adds multiple items to the selector.
-    pub fn items(mut self, items: Vec<MultiSelectPlusItem<N, S>>) -> Self {
+    pub fn items(mut self, items: Vec<MultiSelectPlusItem>) -> Self {
         self.items.extend(items);
         self
     }
@@ -150,11 +183,28 @@ impl<N: ToString + Clone, S: ToString + Clone> MultiSelectPlus<'_, N, S> {
     /// ```rust,no_run
     /// use dialoguer::MultiSelectPlus;
     /// use dialoguer::MultiSelectPlusItem;
+    /// use dialoguer::MultiSelectPlusStatus;
     ///
     /// fn main() {
     ///     let items = vec![
-    ///         MultiSelectPlusItem { name: "Foo", summary_text: "Foo", checked: false },
-    ///         MultiSelectPlusItem { name: "Bar (more details here)", summary_text: "Bar", checked: true },
+    ///         MultiSelectPlusItem {
+    ///             name: String::from("Foo"),
+    ///             summary_text: String::from("Foo"),
+    ///             status: MultiSelectPlusStatus::UNCHECKED
+    ///         },
+    ///         MultiSelectPlusItem {
+    ///             name: String::from("Bar (more details here)"),
+    ///             summary_text: String::from("Bar"),
+    ///             status: MultiSelectPlusStatus::CHECKED
+    ///         },
+    ///         MultiSelectPlusItem {
+    ///             name: String::from("Baz"),
+    ///             summary_text: String::from("Baz"),
+    ///             status: MultiSelectPlusStatus {
+    ///                 checked: false,
+    ///                 symbol: "-"
+    ///             }
+    ///         }
     ///     ];
     ///
     ///     let ordered = MultiSelectPlus::new()
@@ -209,9 +259,16 @@ impl<N: ToString + Clone, S: ToString + Clone> MultiSelectPlus<'_, N, S> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
 
-        let size_vec = self.items
+        let size_vec = self
+            .items
             .iter()
-            .flat_map(|i| i.name.to_string().split('\n').map(|s| s.len()).collect::<Vec<_>>())
+            .flat_map(|i| {
+                i.name
+                    .to_string()
+                    .split('\n')
+                    .map(|s| s.len())
+                    .collect::<Vec<_>>()
+            })
             .collect::<Vec<_>>();
 
         term.hide_cursor()?;
@@ -231,7 +288,7 @@ impl<N: ToString + Clone, S: ToString + Clone> MultiSelectPlus<'_, N, S> {
                 .skip(paging.current_page * paging.capacity)
                 .take(paging.capacity)
             {
-                render.multi_select_prompt_item(item.name().to_string().as_str(), item.checked, sel == idx)?;
+                render.multi_select_plus_prompt_item(item, sel == idx)?;
             }
 
             term.flush()?;
@@ -263,15 +320,24 @@ impl<N: ToString + Clone, S: ToString + Clone> MultiSelectPlus<'_, N, S> {
                     }
                 }
                 Key::Char(' ') => {
-                    items[sel].checked = !items[sel].checked;
+                    items[sel].status = if items[sel].status.checked {
+                        self.unchecked_status.clone()
+                    } else {
+                        self.checked_status.clone()
+                    };
                     self.items = items;
                 }
                 Key::Char('a') => {
-                    if items.iter().all(|item| item.checked) {
-                        items.iter_mut().for_each(|item| item.checked = false);
+                    if items.iter().all(|item| item.status.checked) {
+                        items
+                            .iter_mut()
+                            .for_each(|item| item.status = self.unchecked_status.clone());
                     } else {
-                        items.iter_mut().for_each(|item| item.checked = true);
+                        items
+                            .iter_mut()
+                            .for_each(|item| item.status = self.checked_status.clone());
                     }
+                    self.items = items;
                 }
                 Key::Escape | Key::Char('q') => {
                     if allow_quit {
@@ -298,7 +364,7 @@ impl<N: ToString + Clone, S: ToString + Clone> MultiSelectPlus<'_, N, S> {
                                 .iter()
                                 .enumerate()
                                 .filter_map(|(_, item)| {
-                                    if item.checked {
+                                    if item.status.checked {
                                         Some(item.summary_text.to_string())
                                     } else {
                                         None
@@ -306,7 +372,10 @@ impl<N: ToString + Clone, S: ToString + Clone> MultiSelectPlus<'_, N, S> {
                                 })
                                 .collect();
 
-                            render.multi_select_prompt_selection(prompt, &selections.iter().map(|s| s.as_str()).collect::<Vec<_>>())?;
+                            render.multi_select_prompt_selection(
+                                prompt,
+                                &selections.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
+                            )?;
                         }
                     }
 
@@ -317,7 +386,9 @@ impl<N: ToString + Clone, S: ToString + Clone> MultiSelectPlus<'_, N, S> {
                         items
                             .into_iter()
                             .enumerate()
-                            .filter_map(|(idx, item)| if item.checked { Some(idx) } else { None })
+                            .filter_map(
+                                |(idx, item)| if item.status.checked { Some(idx) } else { None },
+                            )
                             .collect(),
                     ));
                 }
@@ -335,7 +406,7 @@ impl<N: ToString + Clone, S: ToString + Clone> MultiSelectPlus<'_, N, S> {
     }
 }
 
-impl<'a, N: ToString + Clone, S: ToString + Clone> MultiSelectPlus<'a, N, S> {
+impl<'a> MultiSelectPlus<'a> {
     /// Creates a multi select prompt with a specific theme.
     ///
     /// ## Example
@@ -353,6 +424,8 @@ impl<'a, N: ToString + Clone, S: ToString + Clone> MultiSelectPlus<'a, N, S> {
     pub fn with_theme(theme: &'a dyn Theme) -> Self {
         Self {
             items: vec![],
+            unchecked_status: MultiSelectPlusStatus::UNCHECKED,
+            checked_status: MultiSelectPlusStatus::CHECKED,
             clear: true,
             prompt: None,
             report: true,
@@ -368,7 +441,7 @@ mod tests {
 
     #[test]
     fn test_clone() {
-        let multi_select = MultiSelectPlus::<String, String>::new().with_prompt("Select your favorite(s)");
+        let multi_select = MultiSelectPlus::new().with_prompt("Select your favorite(s)");
 
         let _ = multi_select.clone();
     }
