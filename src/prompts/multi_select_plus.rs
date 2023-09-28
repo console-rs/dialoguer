@@ -50,11 +50,11 @@ use crate::{
 ///     }
 /// }
 /// ```
-#[derive(Clone)]
 pub struct MultiSelectPlus<'a> {
     items: Vec<MultiSelectPlusItem>,
     checked_status: MultiSelectPlusStatus,
     unchecked_status: MultiSelectPlusStatus,
+    select_callback: Option<Box<SelectCallback<'a>>>,
     prompt: Option<String>,
     report: bool,
     clear: bool,
@@ -83,7 +83,7 @@ impl MultiSelectPlusItem {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct MultiSelectPlusStatus {
     pub checked: bool,
     pub symbol: &'static str,
@@ -104,14 +104,17 @@ impl Default for MultiSelectPlus<'static> {
     }
 }
 
-impl MultiSelectPlus<'static> {
+impl <'a> MultiSelectPlus<'a> {
     /// Creates a multi select prompt with default theme.
     pub fn new() -> Self {
         Self::with_theme(&SimpleTheme)
     }
 }
 
-impl MultiSelectPlus<'_> {
+pub type SelectCallback<'a> = dyn Fn(&MultiSelectPlusItem, &Vec<MultiSelectPlusItem>) -> Option<Vec<MultiSelectPlusItem>> + 'a;
+
+
+impl<'a> MultiSelectPlus<'a> {
     /// Sets the clear behavior of the menu.
     ///
     /// The default is to clear the menu.
@@ -129,6 +132,11 @@ impl MultiSelectPlus<'_> {
         // we can show the intended amount of items we need to add two
         // to our value.
         self.max_length = Some(val + 2);
+        self
+    }
+
+    pub fn with_select_callback(mut self, val: Box<SelectCallback<'a>>) -> Self {
+        self.select_callback = Some(val);
         self
     }
 
@@ -325,7 +333,12 @@ impl MultiSelectPlus<'_> {
                     } else {
                         self.checked_status.clone()
                     };
-                    self.items = items;
+                    // if the callback exists, try getting a value from it
+                    // if nothing is returned from the first step, use the `items` as a fallback
+                    self.items = self.select_callback.as_ref()
+                        .and_then(|callback| callback(&items[sel], &items))
+                        .unwrap_or(items)
+
                 }
                 Key::Char('a') => {
                     if items.iter().all(|item| item.status.checked) {
@@ -426,23 +439,12 @@ impl<'a> MultiSelectPlus<'a> {
             items: vec![],
             unchecked_status: MultiSelectPlusStatus::UNCHECKED,
             checked_status: MultiSelectPlusStatus::CHECKED,
+            select_callback: None,
             clear: true,
             prompt: None,
             report: true,
             max_length: None,
             theme,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_clone() {
-        let multi_select = MultiSelectPlus::new().with_prompt("Select your favorite(s)");
-
-        let _ = multi_select.clone();
     }
 }
