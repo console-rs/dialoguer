@@ -31,7 +31,7 @@ fn main() {
     }
 
     let selection = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Optionally pick your flavor, hint it might be on the second page")
+        .with_prompt("Pick your flavor, hint it might be on the second page")
         .default(0)
         .max_length(2)
         .items(&selections[..])
