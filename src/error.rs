@@ -10,5 +10,5 @@ pub enum Error {
     IO(#[from] IoError),
 }
 
-/// Result type where errors are of type [Error](crate::error::Error)
+/// Result type where errors are of type [Error](enum@Error).
 pub type Result<T = ()> = StdResult<T, Error>;
