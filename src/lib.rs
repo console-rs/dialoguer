@@ -30,6 +30,7 @@
 //! By default `editor` and `password` are enabled.
 
 #![deny(clippy::all)]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 pub use console;
 

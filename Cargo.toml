@@ -56,4 +56,5 @@ required-features = ["completion"]
 no_individual_tags = true
 
 [package.metadata.docs.rs]
+rustdoc-args = ["--cfg", "docsrs"]
 all-features = true
