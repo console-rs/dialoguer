@@ -368,7 +368,7 @@ mod tests {
         let selections = vec!["a".to_string(), "b".to_string()];
 
         assert_eq!(
-            Select::new().default(0).items(&selections[..]).items,
+            Select::new().default(0).items(&selections).items,
             selections
         );
     }
@@ -380,9 +380,14 @@ mod tests {
 
         let selections = &[a, b];
 
-        assert_eq!(
-            Select::new().default(0).items(&selections[..]).items,
-            selections
-        );
+        assert_eq!(Select::new().default(0).items(selections).items, selections);
+    }
+
+    #[test]
+    fn test_iterator() {
+        let items = ["First", "Second", "Third"];
+        let iterator = items.iter().skip(1);
+
+        assert_eq!(Select::new().default(0).items(iterator).items, &items[1..]);
     }
 }

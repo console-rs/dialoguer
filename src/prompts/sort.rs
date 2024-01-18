@@ -377,4 +377,12 @@ mod tests {
 
         let _ = sort.clone();
     }
+
+    #[test]
+    fn test_iterator() {
+        let items = ["First", "Second", "Third"];
+        let iterator = items.iter().skip(1);
+
+        assert_eq!(Sort::new().items(iterator).items, &items[1..]);
+    }
 }

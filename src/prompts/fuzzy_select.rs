@@ -408,4 +408,12 @@ mod tests {
 
         let _ = fuzzy_select.clone();
     }
+
+    #[test]
+    fn test_iterator() {
+        let items = ["First", "Second", "Third"];
+        let iterator = items.iter().skip(1);
+
+        assert_eq!(FuzzySelect::new().items(iterator).items, &items[1..]);
+    }
 }

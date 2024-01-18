@@ -386,4 +386,12 @@ mod tests {
 
         let _ = multi_select.clone();
     }
+
+    #[test]
+    fn test_iterator() {
+        let items = ["First", "Second", "Third"];
+        let iterator = items.iter().skip(1);
+
+        assert_eq!(MultiSelect::new().items(iterator).items, &items[1..]);
+    }
 }
