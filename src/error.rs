@@ -12,3 +12,13 @@ pub enum Error {
 
 /// Result type where errors are of type [Error](enum@Error).
 pub type Result<T = ()> = StdResult<T, Error>;
+
+impl From<Error> for IoError {
+    fn from(value: Error) -> Self {
+        match value {
+            Error::IO(err) => err,
+            // If other error types are added in the future:
+            // err => IoError::new(std::io::ErrorKind::Other, err),
+        }
+    }
+}
