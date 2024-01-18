@@ -83,10 +83,14 @@ impl Sort<'_> {
     }
 
     /// Adds multiple items to the selector.
-    pub fn items<T: ToString>(mut self, items: &[T]) -> Self {
-        for item in items {
-            self.items.push(item.to_string());
-        }
+    pub fn items<T, I>(mut self, items: I) -> Self
+    where
+        T: ToString,
+        I: IntoIterator<Item = T>,
+    {
+        self.items
+            .extend(items.into_iter().map(|item| item.to_string()));
+
         self
     }
 
