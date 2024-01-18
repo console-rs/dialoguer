@@ -99,14 +99,19 @@ impl Select<'_> {
     /// ```
     pub fn item<T: ToString>(mut self, item: T) -> Self {
         self.items.push(item.to_string());
+
         self
     }
 
     /// Adds multiple items to the selector.
-    pub fn items<T: ToString>(mut self, items: &[T]) -> Self {
-        for item in items {
-            self.items.push(item.to_string());
-        }
+    pub fn items<T, I>(mut self, items: I) -> Self
+    where
+        T: ToString,
+        I: IntoIterator<Item = T>,
+    {
+        self.items
+            .extend(items.into_iter().map(|item| item.to_string()));
+
         self
     }
 
@@ -363,7 +368,7 @@ mod tests {
         let selections = vec!["a".to_string(), "b".to_string()];
 
         assert_eq!(
-            Select::new().default(0).items(&selections[..]).items,
+            Select::new().default(0).items(&selections).items,
             selections
         );
     }
@@ -375,9 +380,14 @@ mod tests {
 
         let selections = &[a, b];
 
-        assert_eq!(
-            Select::new().default(0).items(&selections[..]).items,
-            selections
-        );
+        assert_eq!(Select::new().default(0).items(selections).items, selections);
+    }
+
+    #[test]
+    fn test_iterator() {
+        let items = ["First", "Second", "Third"];
+        let iterator = items.iter().skip(1);
+
+        assert_eq!(Select::new().default(0).items(iterator).items, &items[1..]);
     }
 }

@@ -81,10 +81,14 @@ impl FuzzySelect<'_> {
     }
 
     /// Adds multiple items to the fuzzy selector.
-    pub fn items<T: ToString>(mut self, items: &[T]) -> Self {
-        for item in items {
-            self.items.push(item.to_string());
-        }
+    pub fn items<T, I>(mut self, items: I) -> Self
+    where
+        T: ToString,
+        I: IntoIterator<Item = T>,
+    {
+        self.items
+            .extend(items.into_iter().map(|item| item.to_string()));
+
         self
     }
 
@@ -403,5 +407,13 @@ mod tests {
         let fuzzy_select = FuzzySelect::new().with_prompt("Do you want to continue?");
 
         let _ = fuzzy_select.clone();
+    }
+
+    #[test]
+    fn test_iterator() {
+        let items = ["First", "Second", "Third"];
+        let iterator = items.iter().skip(1);
+
+        assert_eq!(FuzzySelect::new().items(iterator).items, &items[1..]);
     }
 }

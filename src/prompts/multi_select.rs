@@ -101,17 +101,21 @@ impl MultiSelect<'_> {
     }
 
     /// Adds multiple items to the selector.
-    pub fn items<T: ToString>(mut self, items: &[T]) -> Self {
-        for item in items {
-            self.items.push(item.to_string());
-            self.defaults.push(false);
-        }
-        self
+    pub fn items<T, I>(self, items: I) -> Self
+    where
+        T: ToString,
+        I: IntoIterator<Item = T>,
+    {
+        self.items_checked(items.into_iter().map(|item| (item, false)))
     }
 
     /// Adds multiple items to the selector with checked state
-    pub fn items_checked<T: ToString>(mut self, items: &[(T, bool)]) -> Self {
-        for &(ref item, checked) in items {
+    pub fn items_checked<T, I>(mut self, items: I) -> Self
+    where
+        T: ToString,
+        I: IntoIterator<Item = (T, bool)>,
+    {
+        for (item, checked) in items.into_iter() {
             self.items.push(item.to_string());
             self.defaults.push(checked);
         }
@@ -381,5 +385,13 @@ mod tests {
         let multi_select = MultiSelect::new().with_prompt("Select your favorite(s)");
 
         let _ = multi_select.clone();
+    }
+
+    #[test]
+    fn test_iterator() {
+        let items = ["First", "Second", "Third"];
+        let iterator = items.iter().skip(1);
+
+        assert_eq!(MultiSelect::new().items(iterator).items, &items[1..]);
     }
 }
