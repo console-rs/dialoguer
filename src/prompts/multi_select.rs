@@ -230,8 +230,6 @@ impl MultiSelect<'_> {
 
         let mut checked: Vec<bool> = self.defaults.clone();
 
-        term.hide_cursor()?;
-
         loop {
             if let Some(ref prompt) = self.prompt {
                 paging
@@ -250,7 +248,7 @@ impl MultiSelect<'_> {
 
             term.flush()?;
 
-            match term.read_key()? {
+            match term.read_key_no_cursor()? {
                 Key::ArrowDown | Key::Tab | Key::Char('j') => {
                     if sel == !0 {
                         sel = 0;
@@ -294,7 +292,6 @@ impl MultiSelect<'_> {
                             term.clear_last_lines(paging.capacity)?;
                         }
 
-                        term.show_cursor()?;
                         term.flush()?;
 
                         return Ok(None);
@@ -323,7 +320,6 @@ impl MultiSelect<'_> {
                         }
                     }
 
-                    term.show_cursor()?;
                     term.flush()?;
 
                     return Ok(Some(

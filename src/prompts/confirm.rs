@@ -164,8 +164,6 @@ impl Confirm<'_> {
         };
 
         render.confirm_prompt(&self.prompt, default_if_show)?;
-
-        term.hide_cursor()?;
         term.flush()?;
 
         let rv;
@@ -176,7 +174,7 @@ impl Confirm<'_> {
             let mut value = default_if_show;
 
             loop {
-                let input = term.read_key()?;
+                let input = term.read_key_no_cursor()?;
 
                 match input {
                     Key::Char('y') | Key::Char('Y') => {
@@ -211,7 +209,7 @@ impl Confirm<'_> {
             // Default behavior: matches continuously on every keystroke,
             // and does not wait for user to hit the Enter key.
             loop {
-                let input = term.read_key()?;
+                let input = term.read_key_no_cursor()?;
                 let value = match input {
                     Key::Char('y') | Key::Char('Y') => Some(true),
                     Key::Char('n') | Key::Char('N') => Some(false),
@@ -231,8 +229,6 @@ impl Confirm<'_> {
         if self.report {
             render.confirm_prompt_selection(&self.prompt, rv)?;
         }
-        term.show_cursor()?;
-        term.flush()?;
 
         Ok(rv)
     }

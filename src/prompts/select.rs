@@ -218,7 +218,6 @@ impl Select<'_> {
             size_vec.push(*size);
         }
 
-        term.hide_cursor()?;
         paging.update_page(sel);
 
         loop {
@@ -238,7 +237,7 @@ impl Select<'_> {
 
             term.flush()?;
 
-            match term.read_key()? {
+            match term.read_key_no_cursor()? {
                 Key::ArrowDown | Key::Tab | Key::Char('j') => {
                     if sel == !0 {
                         sel = 0;
@@ -254,7 +253,6 @@ impl Select<'_> {
                             term.clear_last_lines(paging.capacity)?;
                         }
 
-                        term.show_cursor()?;
                         term.flush()?;
 
                         return Ok(None);
@@ -290,7 +288,6 @@ impl Select<'_> {
                         }
                     }
 
-                    term.show_cursor()?;
                     term.flush()?;
 
                     return Ok(Some(sel));

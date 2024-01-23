@@ -198,8 +198,6 @@ impl Sort<'_> {
         let mut order: Vec<_> = (0..self.items.len()).collect();
         let mut checked: bool = false;
 
-        term.hide_cursor()?;
-
         loop {
             if let Some(ref prompt) = self.prompt {
                 paging.render_prompt(|paging_info| render.sort_prompt(prompt, paging_info))?;
@@ -216,7 +214,7 @@ impl Sort<'_> {
 
             term.flush()?;
 
-            match term.read_key()? {
+            match term.read_key_no_cursor()? {
                 Key::ArrowDown | Key::Tab | Key::Char('j') => {
                     let old_sel = sel;
 
@@ -299,9 +297,6 @@ impl Sort<'_> {
                             term.clear_last_lines(paging.capacity)?;
                         }
 
-                        term.show_cursor()?;
-                        term.flush()?;
-
                         return Ok(None);
                     }
                 }
@@ -320,9 +315,6 @@ impl Sort<'_> {
                             render.sort_prompt_selection(prompt, &list[..])?;
                         }
                     }
-
-                    term.show_cursor()?;
-                    term.flush()?;
 
                     return Ok(Some(order));
                 }

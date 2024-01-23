@@ -223,8 +223,6 @@ impl FuzzySelect<'_> {
         // Variable used to determine if we need to scroll through the list.
         let mut starting_row = 0;
 
-        term.hide_cursor()?;
-
         let mut vim_mode = false;
 
         loop {
@@ -265,7 +263,7 @@ impl FuzzySelect<'_> {
             }
             term.flush()?;
 
-            match (term.read_key()?, sel, vim_mode) {
+            match (term.read_key_no_cursor()?, sel, vim_mode) {
                 (Key::Escape, _, false) if self.enable_vim_mode => {
                     vim_mode = true;
                 }
@@ -274,7 +272,6 @@ impl FuzzySelect<'_> {
                         render.clear()?;
                         term.flush()?;
                     }
-                    term.show_cursor()?;
                     return Ok(None);
                 }
                 (Key::Char('i' | 'a'), _, true) => {
@@ -339,7 +336,6 @@ impl FuzzySelect<'_> {
                     let sel_string_pos_in_items =
                         self.items.iter().position(|item| item.eq(sel_string));
 
-                    term.show_cursor()?;
                     return Ok(sel_string_pos_in_items);
                 }
                 (Key::Backspace, _, _) if cursor > 0 => {
