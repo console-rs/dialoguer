@@ -111,6 +111,10 @@ impl <'a> MultiSelectPlus<'a> {
     }
 }
 
+/// A callback that can be used to modify the items in the multi select prompt.
+/// Executed between the selection of an item and the rendering of the prompt.
+/// * `item` - The item that was selected
+/// * `items` - The current list of items
 pub type SelectCallback<'a> = dyn Fn(&MultiSelectPlusItem, &Vec<MultiSelectPlusItem>) -> Option<Vec<MultiSelectPlusItem>> + 'a;
 
 
@@ -270,13 +274,12 @@ impl<'a> MultiSelectPlus<'a> {
         let size_vec = self
             .items
             .iter()
-            .flat_map(|i| {
-                i.name
-                    .to_string()
+            .flat_map(|i|
+                i.summary_text
                     .split('\n')
                     .map(|s| s.len())
                     .collect::<Vec<_>>()
-            })
+            )
             .collect::<Vec<_>>();
 
         term.hide_cursor()?;
@@ -400,7 +403,7 @@ impl<'a> MultiSelectPlus<'a> {
                             .into_iter()
                             .enumerate()
                             .filter_map(
-                                |(idx, item)| if item.status.checked { Some(idx) } else { None },
+                                |(idx, item)| if item.status.checked { Some(idx) } else { None }
                             )
                             .collect(),
                     ));
@@ -425,11 +428,31 @@ impl<'a> MultiSelectPlus<'a> {
     /// ## Example
     ///
     /// ```rust,no_run
-    /// use dialoguer::{theme::ColorfulTheme, MultiSelect};
+    /// use dialoguer::{theme::ColorfulTheme, MultiSelectPlus, MultiSelectPlusItem, MultiSelectPlusStatus};
     ///
     /// fn main() {
-    ///     let selection = MultiSelect::with_theme(&ColorfulTheme::default())
-    ///         .items(&["foo", "bar", "baz"])
+    ///     let items = vec![
+    ///         MultiSelectPlusItem {
+    ///             name: String::from("Foo"),
+    ///             summary_text: String::from("Foo"),
+    ///             status: MultiSelectPlusStatus::UNCHECKED
+    ///         },
+    ///         MultiSelectPlusItem {
+    ///             name: String::from("Bar (more details here)"),
+    ///             summary_text: String::from("Bar"),
+    ///             status: MultiSelectPlusStatus::CHECKED
+    ///         },
+    ///         MultiSelectPlusItem {
+    ///             name: String::from("Baz"),
+    ///             summary_text: String::from("Baz"),
+    ///             status: MultiSelectPlusStatus {
+    ///                 checked: false,
+    ///                 symbol: "-"
+    ///             }
+    ///         }
+    ///     ];
+    ///     let selection = MultiSelectPlus::with_theme(&ColorfulTheme::default())
+    ///         .items(items)
     ///         .interact()
     ///         .unwrap();
     /// }
