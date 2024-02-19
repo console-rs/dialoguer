@@ -151,7 +151,10 @@ impl<'a> MultiSelectPlus<'a> {
     }
 
     /// Adds multiple items to the selector.
-    pub fn items(mut self, items: Vec<MultiSelectPlusItem>) -> Self {
+    pub fn items<I>(mut self, items: I) -> Self
+    where
+        I: IntoIterator<Item = MultiSelectPlusItem>
+    {
         self.items.extend(items);
         self
     }
