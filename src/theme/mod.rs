@@ -262,4 +262,14 @@ pub trait Theme {
         let (st_head, st_tail) = search_term.split_at(bytes_pos);
         write!(f, "{st_head}|{st_tail}")
     }
+
+    /// Format header.
+    fn format_header(&self, _f: &mut dyn fmt::Write) -> fmt::Result {
+        Ok(())
+    }
+
+    /// Format footer.
+    fn format_footer(&self, _f: &mut dyn fmt::Write) -> fmt::Result {
+        Ok(())
+    }
 }
