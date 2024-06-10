@@ -4,7 +4,7 @@
 
 ### Enhancements
 
-* Added `dialouger::Result` and `dialouger::Error`
+* Added `dialoguer::Result` and `dialoguer::Error`
 * Added a `BasicHistory` implementation for `History`
 * Added vim mode for `FuzzySelect`
 * All prompts implement `Clone`
@@ -27,7 +27,7 @@
 * Prompt builder functions now take `mut self` instead of `&mut self`
 * Prompt builder functions now return `Self` instead of `&mut Self`
 * Prompt interaction functions now take `self` instead of `&self`
-* Prompt interaction functions and other operations now return `dialouger::Result` instead of `std::io::Result`
+* Prompt interaction functions and other operations now return `dialoguer::Result` instead of `std::io::Result`
 * Rename `Validator` to `InputValidator`
 * The trait method `Theme::format_fuzzy_select_prompt()` now takes a byte position instead of a cursor position in order to support UTF-8.
 
