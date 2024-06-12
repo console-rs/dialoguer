@@ -4,7 +4,7 @@ use console::{measure_text_width, Term};
 #[cfg(feature = "fuzzy-select")]
 use fuzzy_matcher::skim::SkimMatcherV2;
 
-use crate::{theme::Theme, Result};
+use crate::{theme::Theme, MultiSelectPlusItem, Result};
 
 /// Helper struct to conveniently render a theme.
 pub(crate) struct TermThemeRenderer<'a> {
@@ -207,6 +207,17 @@ impl<'a> TermThemeRenderer<'a> {
         self.write_formatted_line(|this, buf| {
             this.theme
                 .format_multi_select_prompt_item(buf, text, checked, active)
+        })
+    }
+
+    pub fn multi_select_plus_prompt_item(
+        &mut self,
+        item: &MultiSelectPlusItem,
+        active: bool,
+    ) -> Result {
+        self.write_formatted_line(|this, buf| {
+            this.theme
+                .format_multi_select_plus_prompt_item(buf, item, active)
         })
     }
 

@@ -1,5 +1,6 @@
 use std::fmt;
 
+use crate::MultiSelectPlusItem;
 use console::{style, Style, StyledObject};
 #[cfg(feature = "fuzzy-select")]
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
@@ -315,6 +316,35 @@ impl Theme for ColorfulTheme {
             (false, false) => (
                 &self.unchecked_item_prefix,
                 self.inactive_item_style.apply_to(text),
+            ),
+        };
+
+        write!(f, "{} {}", details.0, details.1)
+    }
+
+    /// Formats a multi select plus prompt item.
+    fn format_multi_select_plus_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        item: &MultiSelectPlusItem,
+        active: bool,
+    ) -> fmt::Result {
+        let details = match (item.status.checked, active) {
+            (true, true) => (
+                &self.checked_item_prefix,
+                self.active_item_style.apply_to(item.name()),
+            ),
+            (true, false) => (
+                &self.checked_item_prefix,
+                self.inactive_item_style.apply_to(item.name()),
+            ),
+            (false, true) => (
+                &self.unchecked_item_prefix,
+                self.active_item_style.apply_to(item.name()),
+            ),
+            (false, false) => (
+                &self.unchecked_item_prefix,
+                self.inactive_item_style.apply_to(item.name()),
             ),
         };
 
