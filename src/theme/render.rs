@@ -147,6 +147,11 @@ impl<'a> TermThemeRenderer<'a> {
         })
     }
 
+    #[cfg(feature = "folder-select")]
+    pub fn folder_select_path(&mut self, path: &str) -> Result {
+        self.write_formatted_line(|this, buf| this.theme.format_select_prompt(buf, path))
+    }
+
     pub fn select_prompt_selection(&mut self, prompt: &str, sel: &str) -> Result {
         self.write_formatted_prompt(|this, buf| {
             this.theme.format_select_prompt_selection(buf, prompt, sel)
