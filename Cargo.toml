@@ -23,6 +23,7 @@ fuzzy-select = ["fuzzy-matcher"]
 history = []
 password = ["zeroize"]
 completion = []
+folder-select = []
 
 [dependencies]
 console = "0.15.0"
@@ -51,6 +52,10 @@ required-features = ["history"]
 [[example]]
 name = "completion"
 required-features = ["completion"]
+
+[[example]]
+name = "folder_select"
+required-features = ["folder-select"]
 
 [workspace.metadata.workspaces]
 no_individual_tags = true
