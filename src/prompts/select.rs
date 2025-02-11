@@ -1,34 +1,23 @@
 use std::{io, ops::Rem};
-
+use std::collections::HashMap;
 use console::{Key, Term};
+use std::sync::Arc;
 
 use crate::{
     theme::{render::TermThemeRenderer, SimpleTheme, Theme},
     Paging, Result,
 };
 
-/// Renders a select prompt.
-///
-/// User can select from one or more options.
-/// Interaction returns index of an item selected in the order they appear in `item` invocation or `items` slice.
-///
-/// ## Example
-///
-/// ```rust,no_run
-/// use dialoguer::Select;
-///
-/// fn main() {
-///     let items = vec!["foo", "bar", "baz"];
-///
-///     let selection = Select::new()
-///         .with_prompt("What do you choose?")
-///         .items(&items)
-///         .interact()
-///         .unwrap();
-///
-///     println!("You chose: {}", items[selection]);
-/// }
-/// ```
+// State struct with lifetime parameter
+#[derive(Clone)]
+struct SelectState {
+    sel: usize,
+    items_len: usize,
+}
+
+// Key handler now takes separate parameters instead of using SelectState reference
+type KeyHandler = Arc<dyn Fn(SelectState, &mut Paging, &Term) -> io::Result<Option<Option<usize>>> + Send + Sync>;
+
 #[derive(Clone)]
 pub struct Select<'a> {
     default: usize,
@@ -38,6 +27,7 @@ pub struct Select<'a> {
     clear: bool,
     theme: &'a dyn Theme,
     max_length: Option<usize>,
+    key_handlers: HashMap<Key, KeyHandler>,
 }
 
 impl Default for Select<'static> {
