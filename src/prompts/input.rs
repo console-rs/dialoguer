@@ -6,6 +6,7 @@ use std::{
 };
 
 use console::{Key, Term};
+use unicode_width::UnicodeWidthChar;
 
 #[cfg(feature = "completion")]
 use crate::completion::Completion;
@@ -328,7 +329,7 @@ where
                 match term.read_key()? {
                     Key::Backspace if position > 0 => {
                         position -= 1;
-                        chars.remove(position);
+                        let remove_char = chars.remove(position);
                         let line_size = term.size().1 as usize;
                         // Case we want to delete last char of a line so the cursor is at the beginning of the next line
                         if (position + prompt_len) % (line_size - 1) == 0 {
@@ -336,7 +337,7 @@ where
                             term.move_cursor_up(1)?;
                             term.move_cursor_right(line_size + 1)?;
                         } else {
-                            term.clear_chars(1)?;
+                            term.clear_chars(remove_char.width().unwrap_or_default())?;
                         }
 
                         let tail: String = chars[position..].iter().collect();
