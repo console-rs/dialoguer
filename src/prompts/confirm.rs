@@ -163,7 +163,7 @@ impl Confirm<'_> {
             None
         };
 
-        render.confirm_prompt(&self.prompt, default_if_show)?;
+        let mut prompt_width = render.confirm_prompt(&self.prompt, default_if_show)?;
 
         term.hide_cursor()?;
         term.flush()?;
@@ -204,8 +204,15 @@ impl Confirm<'_> {
                     }
                 };
 
-                term.clear_line()?;
-                render.confirm_prompt(&self.prompt, value)?;
+                let term_width = term.size().1 as usize;
+                if prompt_width > term_width {
+                    let lines = prompt_width / term_width;
+                    term.clear_last_lines(lines)?;
+                } else {
+                    term.clear_line()?;
+                }
+
+                prompt_width = render.confirm_prompt(&self.prompt, value)?;
             }
         } else {
             // Default behavior: matches continuously on every keystroke,
