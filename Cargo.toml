@@ -45,6 +45,10 @@ name = "fuzzy_select"
 required-features = ["fuzzy-select"]
 
 [[example]]
+name = "history_custom"
+required-features = ["history"]
+
+[[example]]
 name = "history"
 required-features = ["history"]
 
