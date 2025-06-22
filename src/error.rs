@@ -1,13 +1,26 @@
-use std::{io::Error as IoError, result::Result as StdResult};
-
-use thiserror::Error;
+use std::{fmt, io::Error as IoError, result::Result as StdResult};
 
 /// Possible errors returned by prompts.
-#[derive(Error, Debug)]
+#[derive(Debug)]
 pub enum Error {
     /// Error while executing IO operations.
-    #[error("IO error: {0}")]
-    IO(#[from] IoError),
+    IO(IoError),
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::IO(io) => write!(f, "IO error: {}", io),
+        }
+    }
+}
+
+impl std::error::Error for Error {}
+
+impl From<IoError> for Error {
+    fn from(err: IoError) -> Self {
+        Self::IO(err)
+    }
 }
 
 /// Result type where errors are of type [Error](enum@Error).
