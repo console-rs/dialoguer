@@ -6,7 +6,7 @@ pub trait History<T> {
     /// be read from history. The `pos` represents the number
     /// of times the `Up`/`Down` arrow key has been pressed.
     /// This would normally be used as an index to some sort
-    /// of vector. If the `pos` does not have an entry, [`None`](Option::None)
+    /// of vector. If the `pos` does not have an entry, `None`
     /// should be returned.
     fn read(&self, pos: usize) -> Option<String>;
 

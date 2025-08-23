@@ -45,3 +45,13 @@ jobs:
         run: cargo lint
       - name: Format check
         run: cargo format-check
+
+  docs:
+    name: Check for documentation errors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo doc --all-features --no-deps --document-private-items
+        env:
+          RUSTDOCFLAGS: -Dwarnings
