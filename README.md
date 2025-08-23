@@ -1,6 +1,6 @@
 # dialoguer
 
-[![Build Status](https://github.com/console-rs/dialoguer/workflows/CI/badge.svg)](https://github.com/console-rs/dialoguer/actions?query=branch%3Amaster)
+[![Build Status](https://github.com/console-rs/dialoguer/workflows/CI/badge.svg)](https://github.com/console-rs/dialoguer/actions?query=branch%3Amain)
 [![Latest version](https://img.shields.io/crates/v/dialoguer.svg)](https://crates.io/crates/dialoguer)
 [![Documentation](https://docs.rs/dialoguer/badge.svg)](https://docs.rs/dialoguer)
 
@@ -15,5 +15,5 @@ Best paired with other libraries in the family:
 
 * [Documentation](https://docs.rs/dialoguer/)
 * [Issue Tracker](https://github.com/console-rs/dialoguer/issues)
-* [Examples](https://github.com/console-rs/dialoguer/tree/master/examples)
+* [Examples](https://github.com/console-rs/dialoguer/tree/main/examples)
 * License: [MIT](https://github.com/console-rs/dialoguer/blob/main/LICENSE)
