@@ -23,7 +23,7 @@ impl<'a> Paging<'a> {
         let term_size = term.size();
         // Subtract -2 because we need space to render the prompt, if paging is active
         let capacity = max_capacity
-            .unwrap_or(std::usize::MAX)
+            .unwrap_or(usize::MAX)
             .clamp(3, term_size.0 as usize)
             - 2;
         let pages = (items_len as f64 / capacity as f64).ceil() as usize;
@@ -59,7 +59,7 @@ impl<'a> Paging<'a> {
             self.current_term_size = new_term_size;
             self.capacity = self
                 .max_capacity
-                .unwrap_or(std::usize::MAX)
+                .unwrap_or(usize::MAX)
                 .clamp(3, self.current_term_size.0 as usize)
                 - 2;
             self.pages = (self.items_len as f64 / self.capacity as f64).ceil() as usize;

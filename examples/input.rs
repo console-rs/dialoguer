@@ -13,7 +13,7 @@ fn main() {
         .validate_with({
             let mut force = None;
             move |input: &String| -> Result<(), &str> {
-                if input.contains('@') || force.as_ref().map_or(false, |old| old == input) {
+                if input.contains('@') || (force.as_ref() == Some(input)) {
                     Ok(())
                 } else {
                     force = Some(input.clone());
