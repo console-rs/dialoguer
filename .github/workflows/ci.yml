@@ -83,3 +83,10 @@ jobs:
       - run: cargo install --locked cargo-check-external-types
       - name: run cargo-check-external-types
         run: cargo check-external-types --all-features
+
+  audit:
+    name: Audit dependencies
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: EmbarkStudios/cargo-deny-action@v2
