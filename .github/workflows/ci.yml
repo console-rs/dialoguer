@@ -38,6 +38,7 @@ jobs:
           targets: ${{ matrix.target }}
       - name: Checkout
         uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
       - name: Install linker
         if: matrix.target == 'i686-unknown-linux-gnu'
         run: |
