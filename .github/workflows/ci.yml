@@ -55,3 +55,14 @@ jobs:
       - run: cargo doc --all-features --no-deps --document-private-items
         env:
           RUSTDOCFLAGS: -Dwarnings
+
+  semver:
+    name: Check semver compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Check semver
+        uses: obi1kenobi/cargo-semver-checks-action@v2
