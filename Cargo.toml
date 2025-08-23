@@ -53,3 +53,8 @@ no_individual_tags = true
 [package.metadata.docs.rs]
 rustdoc-args = ["--cfg", "docsrs"]
 all-features = true
+
+[package.metadata.cargo_check_external_types]
+allowed_external_types = [
+    "console", "console::*", "fuzzy_matcher::skim::SkimMatcherV2",
+]
