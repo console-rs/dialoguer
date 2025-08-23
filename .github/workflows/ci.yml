@@ -12,13 +12,13 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            rust: 1.66.0
-          - os: ubuntu-latest
-            rust: 1.66.0
-          - os: windows-latest
-            rust: 1.66.0
+            rust: stable
           - os: ubuntu-latest
             rust: stable
+          - os: windows-latest
+            rust: stable
+          - os: ubuntu-latest
+            rust: 1.66.0
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install rust
