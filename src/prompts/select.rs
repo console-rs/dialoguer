@@ -7,6 +7,16 @@ use crate::{
     Paging, Result,
 };
 
+/// The result of the select prompt if optional keystrokes are detected
+/// by calling interact_opt_with_keys
+/// If the user selected an option, index will be set and key will be None
+/// if the user pressed a key, the key will be Some key code and index will be None
+#[derive(Clone, Default)]
+pub struct SelectResult {
+    pub index: Option<usize>,
+    pub key: Option<Key>
+}
+
 /// Renders a select prompt.
 ///
 /// User can select from one or more options.
@@ -178,19 +188,64 @@ impl Select<'_> {
     /// Like [`interact`](Self::interact) but allows a specific terminal to be set.
     #[inline]
     pub fn interact_on(self, term: &Term) -> Result<usize> {
-        Ok(self
-            ._interact_on(term, false)?
-            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
+        let result = self._interact_on(term, false, None)?;
+        Ok(result.index.unwrap())
+        // Ok(self
+        //     ._interact_on(term, false, None)?
+        //     .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
     }
 
     /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
     #[inline]
     pub fn interact_on_opt(self, term: &Term) -> Result<Option<usize>> {
-        self._interact_on(term, true)
+        let result = self._interact_on(term, true, None).unwrap();
+        Ok(result.index)
+    }
+
+    /// Enables user interaction and returns the result - also allows detection of additional keys
+    ///
+    /// The user can select the items with the 'Space' bar or 'Enter' and the index of selected item will be returned.
+    /// The dialog is rendered on stderr.
+    /// Result contains a SelectResult - the index field is Some with a selected item, the key field is Some key if a key is pressed
+    ///
+    /// ## Example
+    ///
+    ///```rust,no_run
+    /// use dialoguer::Select;
+    ///
+    /// fn main() {
+    ///     let items = vec!["foo", "bar", "baz"];
+    ///     let keys = vec!["a","b","c"];
+    ///
+    ///     let selection = Select::new()
+    ///         .with_prompt("What do you choose?")
+    ///         .items(&items)
+    ///         .interact_opt_with_keys(&keys)
+    ///         .unwrap();
+    ///
+    ///     match selection.index {
+    ///         Some(index) => println!("You chose: {}", items[index]),
+    ///         None => println!("You did not choose anything.")
+    ///     }
+    ///     match selection.key {
+    ///         Some(key) => println!("You pressed: {}", key),
+    ///         None => {}
+    ///     }
+    /// }
+    ///```
+    #[inline]
+    /// Like [`interact_opt`](Self::interact_opt) but allows additional keys to be detected
+    pub fn interact_opt_with_keys(self, keys: &Vec<Key>) -> Result<SelectResult> {
+        self._interact_on(&Term::stderr(), true, Some(keys.clone()))
     }
 
     /// Like `interact` but allows a specific terminal to be set.
-    fn _interact_on(self, term: &Term, allow_quit: bool) -> Result<Option<usize>> {
+    fn _interact_on(
+        self,
+        term: &Term,
+        allow_quit: bool,
+        keys: Option<Vec<Key>>,
+    ) -> Result<SelectResult> {
         if !term.is_term() {
             return Err(io::Error::new(io::ErrorKind::NotConnected, "not a terminal").into());
         }
@@ -207,6 +262,8 @@ impl Select<'_> {
         let mut sel = self.default;
 
         let mut size_vec = Vec::new();
+
+        let mut result = SelectResult::default();
 
         for items in self
             .items
@@ -239,6 +296,20 @@ impl Select<'_> {
             term.flush()?;
 
             match term.read_key()? {
+                // check for keys first - so we can override
+                key if keys.as_ref().map_or(false, |k| k.contains(&key)) => {
+                    if self.clear {
+                        render.clear()?;
+                    } else {
+                        term.clear_last_lines(paging.capacity)?;
+                    }
+
+                    term.show_cursor()?;
+                    term.flush()?;
+
+                    result.key = Some(key);
+                    return Ok(result);
+                }
                 Key::ArrowDown | Key::Tab | Key::Char('j') => {
                     if sel == !0 {
                         sel = 0;
@@ -257,7 +328,7 @@ impl Select<'_> {
                         term.show_cursor()?;
                         term.flush()?;
 
-                        return Ok(None);
+                        return Ok(result);
                     }
                 }
                 Key::ArrowUp | Key::BackTab | Key::Char('k') => {
@@ -293,8 +364,10 @@ impl Select<'_> {
                     term.show_cursor()?;
                     term.flush()?;
 
-                    return Ok(Some(sel));
+                    result.index = Some(sel);
+                    return Ok(result);
                 }
+                
                 _ => {}
             }
 
