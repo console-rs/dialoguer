@@ -44,6 +44,10 @@ name = "history"
 required-features = ["history"]
 
 [[example]]
+name = "history_custom"
+required-features = ["history"]
+
+[[example]]
 name = "completion"
 required-features = ["completion"]
 
