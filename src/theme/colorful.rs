@@ -393,7 +393,11 @@ impl Theme for ColorfulTheme {
             }
         }
 
-        write!(f, "{}", text)
+        if active {
+            write!(f, "{}", self.active_item_style.apply_to(text))
+        } else {
+            write!(f, "{}", text)
+        }
     }
 
     /// Formats a fuzzy-selectprompt after selection.
