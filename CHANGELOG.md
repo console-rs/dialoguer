@@ -1,5 +1,7 @@
 # Changelog
 
+For newer releases, please see [releases](https://github.com/console-rs/dialoguer/releases).
+
 ## 0.11.0
 
 ### Enhancements
