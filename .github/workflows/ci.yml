@@ -18,7 +18,7 @@ jobs:
           - os: windows-latest
             rust: stable
           - os: ubuntu-latest
-            rust: 1.66.0
+            rust: 1.71.0
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install rust
