@@ -3,11 +3,11 @@ use dialoguer::{theme::ColorfulTheme, Completion, Input};
 fn main() {
     println!("Use the Right arrow or Tab to complete your command");
 
-    let completion = MyCompletion::default();
+    let mut completion = MyCompletion::default();
 
     Input::<String>::with_theme(&ColorfulTheme::default())
         .with_prompt("dialoguer")
-        .completion_with(&completion)
+        .completion_with(&mut completion)
         .interact_text()
         .unwrap();
 }
@@ -30,7 +30,7 @@ impl Default for MyCompletion {
 
 impl Completion for MyCompletion {
     /// Simple completion implementation based on substring
-    fn get(&self, input: &str) -> Option<String> {
+    fn next(&mut self, input: &str, _completion_modified: bool) -> Option<String> {
         let matches = self
             .options
             .iter()
