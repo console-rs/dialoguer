@@ -52,6 +52,9 @@ pub use prompts::{
     confirm::Confirm, input::Input, multi_select::MultiSelect, select::Select, sort::Sort,
 };
 
+#[cfg(feature = "folder-select")]
+pub use prompts::folder_select::FolderSelect;
+
 #[cfg(feature = "completion")]
 mod completion;
 #[cfg(feature = "editor")]

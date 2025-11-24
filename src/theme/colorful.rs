@@ -427,4 +427,14 @@ impl Theme for ColorfulTheme {
         let prompt_suffix = &self.prompt_suffix;
         write!(f, "{prompt_suffix} {st_head}{st_cursor}{st_tail}",)
     }
+
+    #[cfg(feature = "folder-select")]
+    fn format_folder_select_item(&self, text: &str) -> String {
+        return format!("{} {}", "📁", text);
+    }
+
+    #[cfg(feature = "folder-select")]
+    fn format_file_select_item(&self, text: &str) -> String {
+        return format!("{} {}", "📄", text);
+    }
 }

@@ -262,4 +262,14 @@ pub trait Theme {
         let (st_head, st_tail) = search_term.split_at(bytes_pos);
         write!(f, "{st_head}|{st_tail}")
     }
+
+    #[cfg(feature = "folder-select")]
+    fn format_folder_select_item(&self, text: &str) -> String {
+        return format!("{} {}", "d ", text);
+    }
+
+    #[cfg(feature = "folder-select")]
+    fn format_file_select_item(&self, text: &str) -> String {
+        return format!("{} {}", "f ", text);
+    }
 }
