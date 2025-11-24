@@ -224,8 +224,8 @@ impl MultiSelect<'_> {
             .flat_map(|i| i.split('\n'))
             .collect::<Vec<_>>()
         {
-            let size = &items.len();
-            size_vec.push(*size);
+            let size = console::measure_text_width(items);
+            size_vec.push(size);
         }
 
         let mut checked: Vec<bool> = self.defaults.clone();
