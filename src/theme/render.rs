@@ -259,4 +259,12 @@ impl<'a> TermThemeRenderer<'a> {
         self.height = 0;
         Ok(())
     }
+
+    pub fn header(&mut self) -> Result<usize> {
+        self.write_formatted_str(|this, buf| this.theme.format_header(buf))
+    }
+
+    pub fn footer(&mut self) -> Result<usize> {
+        self.write_formatted_str(|this, buf| this.theme.format_footer(buf))
+    }
 }

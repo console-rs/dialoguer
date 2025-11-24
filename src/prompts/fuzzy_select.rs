@@ -238,6 +238,8 @@ impl FuzzySelect<'_> {
             render.clear()?;
             render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, byte_indices[cursor])?;
 
+            render.header()?;
+
             // Maps all items to a tuple of item and its match score.
             let mut filtered_list = self
                 .items
@@ -263,6 +265,9 @@ impl FuzzySelect<'_> {
                     &search_term,
                 )?;
             }
+
+            render.footer()?;
+
             term.flush()?;
 
             match (term.read_key()?, sel, vim_mode) {

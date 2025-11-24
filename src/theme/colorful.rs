@@ -50,6 +50,10 @@ pub struct ColorfulTheme {
     // Formats the highlighting if matched characters
     #[cfg(feature = "fuzzy-select")]
     pub fuzzy_match_highlight_style: Style,
+    // Header for multiple items components
+    pub header: StyledObject<String>,
+    // Footer for multiple items components
+    pub footer: StyledObject<String>,
 }
 
 impl Default for ColorfulTheme {
@@ -77,6 +81,8 @@ impl Default for ColorfulTheme {
             fuzzy_cursor_style: Style::new().for_stderr().black().on_white(),
             #[cfg(feature = "fuzzy-select")]
             fuzzy_match_highlight_style: Style::new().for_stderr().bold(),
+            header: style("".to_string()).for_stderr(),
+            footer: style("".to_string()).for_stderr(),
         }
     }
 }
@@ -426,5 +432,15 @@ impl Theme for ColorfulTheme {
 
         let prompt_suffix = &self.prompt_suffix;
         write!(f, "{prompt_suffix} {st_head}{st_cursor}{st_tail}",)
+    }
+
+    /// Format header.
+    fn format_header(&self, f: &mut dyn fmt::Write) -> fmt::Result {
+        write!(f, "{}\n", &self.header)
+    }
+
+    /// Format footer.
+    fn format_footer(&self, f: &mut dyn fmt::Write) -> fmt::Result {
+        write!(f, "{}", &self.footer)
     }
 }
