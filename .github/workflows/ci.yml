@@ -26,7 +26,7 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
       - name: Test
         run: cargo test --all-features
@@ -40,7 +40,7 @@ jobs:
         with:
           components: rustfmt, clippy
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Lint check
         run: cargo lint
       - name: Format check
@@ -50,7 +50,7 @@ jobs:
     name: Check for documentation errors
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo doc --all-features --no-deps --document-private-items
         env:
@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Check semver
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Install rust toolchain
@@ -88,5 +88,5 @@ jobs:
     name: Audit dependencies
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: EmbarkStudios/cargo-deny-action@v2
