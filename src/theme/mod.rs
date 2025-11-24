@@ -6,12 +6,14 @@ use console::style;
 #[cfg(feature = "fuzzy-select")]
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 
+pub use colorful::ColorfulTheme;
+pub use simple::SimpleTheme;
+
+use crate::MultiSelectPlusItem;
+
 mod colorful;
 pub(crate) mod render;
 mod simple;
-
-pub use colorful::ColorfulTheme;
-pub use simple::SimpleTheme;
 
 /// Implements a theme for dialoguer.
 pub trait Theme {
@@ -193,6 +195,23 @@ pub trait Theme {
                 (false, false) => "  [ ]",
             },
             text
+        )
+    }
+
+    fn format_multi_select_plus_prompt_item(
+        &self,
+        f: &mut dyn fmt::Write,
+        item: &MultiSelectPlusItem,
+        active: bool,
+    ) -> fmt::Result {
+        write!(
+            f,
+            "{} {}",
+            match active {
+                true => format!("> [{}]", item.status.symbol),
+                false => format!("  [{}]", item.status.symbol),
+            },
+            item.name
         )
     }
 
