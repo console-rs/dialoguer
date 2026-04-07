@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
       - name: Test
-        run: cargo test --all-features
+        run: cargo test --locked --all-features
 
   lint:
     name: Linting (fmt + clippy)
@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo doc --all-features --no-deps --document-private-items
+      - run: cargo doc --locked --all-features --no-deps --document-private-items
         env:
           RUSTDOCFLAGS: -Dwarnings
 
@@ -82,7 +82,7 @@ jobs:
           # ^ sync with https://github.com/awslabs/cargo-check-external-types/blob/main/rust-toolchain.toml
       - run: cargo install --locked cargo-check-external-types
       - name: run cargo-check-external-types
-        run: cargo check-external-types --all-features
+        run: cargo check-external-types --locked --all-features
 
   audit:
     name: Audit dependencies
