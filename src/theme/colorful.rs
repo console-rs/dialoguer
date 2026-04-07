@@ -172,7 +172,6 @@ impl Theme for ColorfulTheme {
             ),
         }
     }
-
     /// Formats a confirm prompt after selection.
     fn format_confirm_prompt_selection(
         &self,
