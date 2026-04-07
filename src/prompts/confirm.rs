@@ -172,11 +172,10 @@ impl Confirm<'_> {
             None
         };
 
-        term.clear_line()?;
         if self.show_hint {
             render.confirm_prompt(&self.prompt, default_if_show)?;
         } else {
-            term.write_str(&format!("{} ", &self.prompt))?;
+            render.confirm_prompt_no_hint(&self.prompt)?;
         }
 
         term.hide_cursor()?;

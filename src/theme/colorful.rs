@@ -172,6 +172,21 @@ impl Theme for ColorfulTheme {
             ),
         }
     }
+
+    /// Formats an input prompt without a hint.
+    fn format_confirm_prompt_no_hint(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        if !prompt.is_empty() {
+            write!(
+                f,
+                "{} {} {}",
+                &self.prompt_prefix,
+                self.prompt_style.apply_to(prompt),
+                &self.prompt_suffix
+            )?;
+        }
+        Ok(())
+    }
+
     /// Formats a confirm prompt after selection.
     fn format_confirm_prompt_selection(
         &self,
