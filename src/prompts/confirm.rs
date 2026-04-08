@@ -35,6 +35,7 @@ pub struct Confirm<'a> {
     show_default: bool,
     wait_for_newline: bool,
     theme: &'a dyn Theme,
+    show_hint: bool,
 }
 
 impl Default for Confirm<'static> {
@@ -94,6 +95,14 @@ impl Confirm<'_> {
     /// The default is to append the default value to the prompt to tell the user.
     pub fn show_default(mut self, val: bool) -> Self {
         self.show_default = val;
+        self
+    }
+
+    /// Disables or enables the hint display (e.g. `[y/n]`).
+    ///
+    /// The default is to show the hint.
+    pub fn show_hint(mut self, val: bool) -> Self {
+        self.show_hint = val;
         self
     }
 
@@ -163,7 +172,11 @@ impl Confirm<'_> {
             None
         };
 
-        render.confirm_prompt(&self.prompt, default_if_show)?;
+        if self.show_hint {
+            render.confirm_prompt(&self.prompt, default_if_show)?;
+        } else {
+            render.confirm_prompt_no_hint(&self.prompt)?;
+        }
 
         term.hide_cursor()?;
         term.flush()?;
@@ -260,6 +273,7 @@ impl<'a> Confirm<'a> {
             show_default: true,
             wait_for_newline: false,
             theme,
+            show_hint: true,
         }
     }
 }

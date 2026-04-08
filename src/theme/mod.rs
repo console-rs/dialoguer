@@ -45,6 +45,14 @@ pub trait Theme {
         Ok(())
     }
 
+    /// Formats a confirm prompt without the hint ([y/n]).
+    fn format_confirm_prompt_no_hint(&self, f: &mut dyn fmt::Write, prompt: &str) -> fmt::Result {
+        if !prompt.is_empty() {
+            write!(f, "{} ", prompt)?;
+        }
+        Ok(())
+    }
+
     /// Formats a confirm prompt after selection.
     fn format_confirm_prompt_selection(
         &self,
