@@ -87,6 +87,12 @@ impl<'a> TermThemeRenderer<'a> {
         self.write_formatted_line(|this, buf| this.theme.format_error(buf, err))
     }
 
+    pub fn alert_prompt(&mut self, alert_text: &str, prompt: &str) -> Result<usize> {
+        self.write_formatted_str(|this, buf| {
+            this.theme.format_alert_prompt(buf, alert_text, prompt)
+        })
+    }
+
     pub fn confirm_prompt(&mut self, prompt: &str, default: Option<bool>) -> Result<usize> {
         self.write_formatted_str(|this, buf| this.theme.format_confirm_prompt(buf, prompt, default))
     }
