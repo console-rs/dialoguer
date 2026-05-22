@@ -214,7 +214,7 @@ impl Select<'_> {
             .flat_map(|i| i.split('\n'))
             .collect::<Vec<_>>()
         {
-            let size = &items.len();
+            let size = &items.len_visible();
             size_vec.push(*size);
         }
 
@@ -334,6 +334,34 @@ impl<'a> Select<'a> {
             max_length: None,
             theme,
         }
+    }
+}
+
+trait VisibleLength {
+    fn len_visible(&self) -> usize;
+}
+
+impl VisibleLength for &str {
+    fn len_visible(&self) -> usize {
+        let mut len: usize = 0;
+
+        let mut chars = self.chars();
+        while let Some(c) = chars.next() {
+            if c == '\x1b' {
+                #[allow(clippy::while_let_on_iterator)]
+                while let Some(c) = chars.next() {
+                    if c == 'm' {
+                        break;
+                    }
+                }
+
+                continue;
+            }
+
+            len += 1;
+        }
+
+        len
     }
 }
 
