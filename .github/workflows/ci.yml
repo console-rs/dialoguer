@@ -17,8 +17,6 @@ jobs:
             rust: stable
           - os: windows-latest
             rust: stable
-          - os: ubuntu-latest
-            rust: 1.71.0
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install rust
@@ -45,6 +43,16 @@ jobs:
         run: cargo lint
       - name: Format check
         run: cargo format-check
+
+  msrv:
+    name: Check MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.71.0
+      - run: cargo check --locked --lib --all-features
 
   docs:
     name: Check for documentation errors
