@@ -33,6 +33,7 @@ use crate::{
 #[derive(Clone)]
 pub struct MultiSelect<'a> {
     defaults: Vec<bool>,
+    disabled: Vec<bool>,
     items: Vec<String>,
     prompt: Option<String>,
     report: bool,
@@ -63,15 +64,24 @@ impl MultiSelect<'_> {
         self
     }
 
-    /// Sets a defaults for the menu.
-    pub fn defaults(mut self, val: &[bool]) -> Self {
-        self.defaults = val
-            .to_vec()
+    fn get_bool_array(&self, val: &[bool]) -> Vec<bool> {
+        val.to_vec()
             .iter()
             .copied()
             .chain(repeat(false))
             .take(self.items.len())
-            .collect();
+            .collect()
+    }
+
+    /// Sets a defaults for the menu.
+    pub fn defaults(mut self, val: &[bool]) -> Self {
+        self.defaults = self.get_bool_array(val);
+        self
+    }
+
+    /// Sets disabled items for the menu.
+    pub fn disabled(mut self, val: &[bool]) -> Self {
+        self.disabled = self.get_bool_array(val);
         self
     }
 
@@ -97,6 +107,8 @@ impl MultiSelect<'_> {
     pub fn item_checked<T: ToString>(mut self, item: T, checked: bool) -> Self {
         self.items.push(item.to_string());
         self.defaults.push(checked);
+        // TODO: Add support for adding disabled items
+        self.disabled.push(false);
         self
     }
 
@@ -118,6 +130,8 @@ impl MultiSelect<'_> {
         for (item, checked) in items.into_iter() {
             self.items.push(item.to_string());
             self.defaults.push(checked);
+            // TODO: Add support for adding disabled items
+            self.disabled.push(false);
         }
         self
     }
@@ -229,6 +243,7 @@ impl MultiSelect<'_> {
         }
 
         let mut checked: Vec<bool> = self.defaults.clone();
+        let disabled: Vec<bool> = self.disabled.clone();
 
         term.hide_cursor()?;
 
@@ -277,13 +292,26 @@ impl MultiSelect<'_> {
                     }
                 }
                 Key::Char(' ') => {
-                    checked[sel] = !checked[sel];
+                    if !disabled[sel] {
+                        checked[sel] = !checked[sel];
+                    }
                 }
                 Key::Char('a') => {
-                    if checked.iter().all(|&item_checked| item_checked) {
-                        checked.fill(false);
-                    } else {
-                        checked.fill(true);
+                    let all_non_disabled_checked = checked
+                        .iter()
+                        .zip(disabled.iter())
+                        .filter_map(|(checked, disabled)| (!disabled).then_some(checked))
+                        .all(|&item_checked| item_checked);
+
+                    // If all already checked, uncheck all
+                    let new_checked = !all_non_disabled_checked;
+
+                    for (idx, (_checked_value, disabled_value)) in
+                        checked.clone().iter().zip(disabled.iter()).enumerate()
+                    {
+                        if !disabled_value {
+                            checked[idx] = new_checked;
+                        }
                     }
                 }
                 Key::Escape | Key::Char('q') => {
@@ -367,6 +395,7 @@ impl<'a> MultiSelect<'a> {
         Self {
             items: vec![],
             defaults: vec![],
+            disabled: vec![],
             clear: true,
             prompt: None,
             report: true,
