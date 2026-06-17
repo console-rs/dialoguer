@@ -191,8 +191,8 @@ impl Sort<'_> {
         let mut size_vec = Vec::new();
 
         for items in self.items.iter().as_slice() {
-            let size = &items.len();
-            size_vec.push(*size);
+            let size = console::measure_text_width(items);
+            size_vec.push(size);
         }
 
         let mut order: Vec<_> = (0..self.items.len()).collect();
