@@ -37,6 +37,7 @@ pub struct MultiSelect<'a> {
     prompt: Option<String>,
     report: bool,
     clear: bool,
+    default_under_cursor: bool,
     max_length: Option<usize>,
     theme: &'a dyn Theme,
 }
@@ -128,6 +129,16 @@ impl MultiSelect<'_> {
     /// the selection. You can opt-out of this with [`report`](Self::report).
     pub fn with_prompt<S: Into<String>>(mut self, prompt: S) -> Self {
         self.prompt = Some(prompt.into());
+        self
+    }
+
+    /// Selects item under cursor if nothing is selected
+    ///
+    /// By default, if nothing is selected and the user submits the form nothing is
+    /// returned.  By default_under_cursor enabled the item under the cursor is returned
+    /// as the selected item.
+    pub fn with_default_under_cursor(mut self, default_under_cursor: bool) -> Self {
+        self.default_under_cursor = default_under_cursor;
         self
     }
 
@@ -326,13 +337,17 @@ impl MultiSelect<'_> {
                     term.show_cursor()?;
                     term.flush()?;
 
-                    return Ok(Some(
-                        checked
-                            .into_iter()
-                            .enumerate()
-                            .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
-                            .collect(),
-                    ));
+                    let selected_items: Vec<_> = checked
+                        .into_iter()
+                        .enumerate()
+                        .filter_map(|(idx, checked)| if checked { Some(idx) } else { None })
+                        .collect();
+
+                    if selected_items.is_empty() && self.default_under_cursor {
+                        return Ok(Some(vec![sel]));
+                    }
+
+                    return Ok(Some(selected_items));
                 }
                 _ => {}
             }
@@ -370,6 +385,7 @@ impl<'a> MultiSelect<'a> {
             clear: true,
             prompt: None,
             report: true,
+            default_under_cursor: false,
             max_length: None,
             theme,
         }
