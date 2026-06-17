@@ -27,6 +27,25 @@ pub trait Theme {
         write!(f, "error: {}", err)
     }
 
+    /// Formats an alert prompt.
+    fn format_alert_prompt(
+        &self,
+        f: &mut dyn fmt::Write,
+        alert_text: &str,
+        prompt: &str,
+    ) -> fmt::Result {
+        if !alert_text.is_empty() {
+            write!(f, "⚠ {}", &alert_text)?;
+        }
+        if !prompt.is_empty() {
+            if !alert_text.is_empty() {
+                writeln!(f, "")?;
+            }
+            write!(f, "{}", &prompt)?;
+        }
+        Ok(())
+    }
+
     /// Formats a confirm prompt.
     fn format_confirm_prompt(
         &self,
