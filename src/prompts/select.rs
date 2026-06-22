@@ -1,6 +1,5 @@
-use std::{io, ops::Rem};
-
 use console::{Key, Term};
+use std::{io, ops::Rem};
 
 use crate::{
     theme::{render::TermThemeRenderer, SimpleTheme, Theme},
@@ -226,6 +225,8 @@ impl Select<'_> {
                 paging.render_prompt(|paging_info| render.select_prompt(prompt, paging_info))?;
             }
 
+            render.header()?;
+
             for (idx, item) in self
                 .items
                 .iter()
@@ -235,6 +236,8 @@ impl Select<'_> {
             {
                 render.select_prompt_item(item, sel == idx)?;
             }
+
+            render.footer()?;
 
             term.flush()?;
 

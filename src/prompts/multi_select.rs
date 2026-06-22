@@ -238,6 +238,8 @@ impl MultiSelect<'_> {
                     .render_prompt(|paging_info| render.multi_select_prompt(prompt, paging_info))?;
             }
 
+            render.header()?;
+
             for (idx, item) in self
                 .items
                 .iter()
@@ -247,6 +249,8 @@ impl MultiSelect<'_> {
             {
                 render.multi_select_prompt_item(item, checked[idx], sel == idx)?;
             }
+
+            render.footer()?;
 
             term.flush()?;
 
