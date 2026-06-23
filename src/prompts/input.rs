@@ -288,12 +288,39 @@ where
     /// while [`interact`](Self::interact) allows virtually any character to be used e.g arrow keys.
     ///
     /// The dialog is rendered on stderr.
+    /// This unlike [`interact_text_opt`](Self::interact_text_opt) does not allow to quit with 'Esc'.
+    #[inline]
     pub fn interact_text(self) -> Result<T> {
         self.interact_text_on(&Term::stderr())
     }
 
+    /// Enables the user to enter a printable ascii sequence and returns the result.
+    ///
+    /// Unlike [`interact`](Self::interact) it only allows ascii characters for string,
+    /// and can be cancelled with 'Esc'.
+    /// 
+    /// The dialog is rendered on stderr.
+    /// Result contains `Some(T)` if user hit 'Enter' or `None` if user cancelled with 'Esc'.
+    #[inline]
+    pub fn interact_text_opt(self) -> Result<Option<T>> {
+        self.interact_text_on_opt(&Term::stderr())
+    }
+
     /// Like [`interact_text`](Self::interact_text) but allows a specific terminal to be set.
-    pub fn interact_text_on(mut self, term: &Term) -> Result<T> {
+    #[inline]
+    pub fn interact_text_on(self, term: &Term) -> Result<T> {
+        Ok(self
+            ._interact_text_on(term, false)?
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
+    }
+
+    /// Like [`interact_text_opt`](Self::interact_text_opt) but allows a specific terminal to be set.
+    #[inline]
+    pub fn interact_text_on_opt(self, term: &Term) -> Result<Option<T>> {
+        self._interact_text_on(term, true)
+    }
+    
+    fn _interact_text_on(mut self, term: &Term, allow_quit: bool) -> Result<Option<T>> {
         if !term.is_term() {
             return Err(io::Error::new(io::ErrorKind::NotConnected, "not a terminal").into());
         }
@@ -326,6 +353,13 @@ where
 
             loop {
                 match term.read_key()? {
+                    Key::Escape if allow_quit => {
+                        term.clear_line()?;
+                        render.clear()?;
+                        term.flush()?;
+                        term.show_cursor()?;
+                        return Ok(None);
+                    }
                     Key::Backspace if position > 0 => {
                         position -= 1;
                         chars.remove(position);
@@ -585,7 +619,7 @@ where
                         render.input_prompt_selection(&self.prompt, &default.to_string())?;
                     }
                     term.flush()?;
-                    return Ok(default.clone());
+                    return Ok(Some(default.clone()));
                 } else if !self.permit_empty {
                     continue;
                 }
@@ -614,7 +648,7 @@ where
                     }
                     term.flush()?;
 
-                    return Ok(value);
+                    return Ok(Some(value));
                 }
                 Err(err) => {
                     render.error(&err.to_string())?;
@@ -630,7 +664,7 @@ where
     /// Some of the keys might have undesired behavior.
     /// For more limited version, see [`interact_text`](Self::interact_text).
     ///
-    /// If the user confirms the result is `true`, `false` otherwise.
+    /// Returns the parsed value once the user validates their input with 'Enter'.
     /// The dialog is rendered on stderr.
     pub fn interact(self) -> Result<T> {
         self.interact_on(&Term::stderr())
