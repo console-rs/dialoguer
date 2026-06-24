@@ -214,8 +214,8 @@ impl Select<'_> {
             .flat_map(|i| i.split('\n'))
             .collect::<Vec<_>>()
         {
-            let size = &items.len();
-            size_vec.push(*size);
+            let size = console::measure_text_width(items);
+            size_vec.push(size);
         }
 
         term.hide_cursor()?;
@@ -246,19 +246,17 @@ impl Select<'_> {
                         sel = (sel as u64 + 1).rem(self.items.len() as u64) as usize;
                     }
                 }
-                Key::Escape | Key::Char('q') => {
-                    if allow_quit {
-                        if self.clear {
-                            render.clear()?;
-                        } else {
-                            term.clear_last_lines(paging.capacity)?;
-                        }
-
-                        term.show_cursor()?;
-                        term.flush()?;
-
-                        return Ok(None);
+                Key::Escape | Key::Char('q') if allow_quit => {
+                    if self.clear {
+                        render.clear()?;
+                    } else {
+                        term.clear_last_lines(paging.capacity)?;
                     }
+
+                    term.show_cursor()?;
+                    term.flush()?;
+
+                    return Ok(None);
                 }
                 Key::ArrowUp | Key::BackTab | Key::Char('k') => {
                     if sel == !0 {
@@ -268,15 +266,11 @@ impl Select<'_> {
                             % (self.items.len() as i64)) as usize;
                     }
                 }
-                Key::ArrowLeft | Key::Char('h') => {
-                    if paging.active {
-                        sel = paging.previous_page();
-                    }
+                Key::ArrowLeft | Key::Char('h') if paging.active => {
+                    sel = paging.previous_page();
                 }
-                Key::ArrowRight | Key::Char('l') => {
-                    if paging.active {
-                        sel = paging.next_page();
-                    }
+                Key::ArrowRight | Key::Char('l') if paging.active => {
+                    sel = paging.next_page();
                 }
 
                 Key::Enter | Key::Char(' ') if sel != !0 => {
