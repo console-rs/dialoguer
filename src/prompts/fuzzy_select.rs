@@ -238,18 +238,9 @@ impl FuzzySelect<'_> {
             render.clear()?;
             render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, byte_indices[cursor])?;
 
-            // Maps all items to a tuple of item and its match score.
-            let mut filtered_list = self
-                .items
-                .iter()
-                .map(|item| (item, matcher.fuzzy_match(item, &search_term)))
-                .filter_map(|(item, score)| score.map(|s| (item, s)))
-                .collect::<Vec<_>>();
+            let filtered_list = filter_and_rank(&self.items, &matcher, &search_term);
 
-            // Renders all matching items, from best match to worst.
-            filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(s1));
-
-            for (idx, (item, _)) in filtered_list
+            for (idx, item) in filtered_list
                 .iter()
                 .enumerate()
                 .skip(starting_row)
@@ -331,11 +322,10 @@ impl FuzzySelect<'_> {
                     }
 
                     if self.report {
-                        render
-                            .input_prompt_selection(self.prompt.as_str(), filtered_list[sel].0)?;
+                        render.input_prompt_selection(self.prompt.as_str(), filtered_list[sel])?;
                     }
 
-                    let sel_string = filtered_list[sel].0;
+                    let sel_string = filtered_list[sel];
                     let sel_string_pos_in_items =
                         self.items.iter().position(|item| item.eq(sel_string));
 
@@ -396,6 +386,26 @@ impl<'a> FuzzySelect<'a> {
             initial_text: "".into(),
         }
     }
+}
+
+// Fuzzy-filter `items` by `search_term`, ordered best match first.
+fn filter_and_rank<'a>(
+    items: &'a [String],
+    matcher: &impl FuzzyMatcher,
+    search_term: &str,
+) -> Vec<&'a String> {
+    let mut filtered = items
+        .iter()
+        .filter_map(|item| {
+            matcher
+                .fuzzy_match(item, search_term)
+                .map(|score| (item, score))
+        })
+        .collect::<Vec<_>>();
+
+    filtered.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(s1));
+
+    filtered.into_iter().map(|(item, _)| item).collect()
 }
 
 #[cfg(test)]
