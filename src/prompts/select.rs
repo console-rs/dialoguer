@@ -3,6 +3,7 @@ use std::{io, ops::Rem};
 use console::{Key, Term};
 
 use crate::{
+    tabular::{self, ColumnConfig},
     theme::{render::TermThemeRenderer, SimpleTheme, Theme},
     Paging, Result,
 };
@@ -38,6 +39,7 @@ pub struct Select<'a> {
     clear: bool,
     theme: &'a dyn Theme,
     max_length: Option<usize>,
+    tabular_columns: Option<Vec<ColumnConfig>>,
 }
 
 impl Default for Select<'static> {
@@ -112,6 +114,39 @@ impl Select<'_> {
         self.items
             .extend(items.into_iter().map(|item| item.to_string()));
 
+        self
+    }
+
+    /// Aligns the items into columns using the provided configuration.
+    ///
+    /// Each item is split into cells on the configured separators and padded so
+    /// that related fields line up across every row. See the
+    /// [`tabular`] module for details.
+    ///
+    /// ## Example
+    ///
+    /// ```rust,no_run
+    /// use dialoguer::{
+    ///     tabular::{ColumnAlignment, ColumnConfig},
+    ///     Select,
+    /// };
+    ///
+    /// fn main() {
+    ///     let columns = vec![
+    ///         ColumnConfig::new_with_separator(": ", ColumnAlignment::Left),
+    ///         ColumnConfig::new(ColumnAlignment::Right),
+    ///     ];
+    ///
+    ///     let selection = Select::new()
+    ///         .with_prompt("Connect to server")
+    ///         .items(&["alpha: 12ms", "beta: 120ms"])
+    ///         .with_tabular_columns(columns)
+    ///         .interact()
+    ///         .unwrap();
+    /// }
+    /// ```
+    pub fn with_tabular_columns(mut self, columns: Vec<ColumnConfig>) -> Self {
+        self.tabular_columns = Some(columns);
         self
     }
 
@@ -202,14 +237,20 @@ impl Select<'_> {
             ))?;
         }
 
-        let mut paging = Paging::new(term, self.items.len(), self.max_length);
+        // When columns are configured, the interactive list shows the aligned
+        // items. The original items are kept for the post-selection report.
+        let display_items = match &self.tabular_columns {
+            Some(columns) => tabular::format_rows(&self.items, columns),
+            None => self.items.clone(),
+        };
+
+        let mut paging = Paging::new(term, display_items.len(), self.max_length);
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
         let mut size_vec = Vec::new();
 
-        for items in self
-            .items
+        for items in display_items
             .iter()
             .flat_map(|i| i.split('\n'))
             .collect::<Vec<_>>()
@@ -226,8 +267,7 @@ impl Select<'_> {
                 paging.render_prompt(|paging_info| render.select_prompt(prompt, paging_info))?;
             }
 
-            for (idx, item) in self
-                .items
+            for (idx, item) in display_items
                 .iter()
                 .enumerate()
                 .skip(paging.current_page * paging.capacity)
@@ -332,6 +372,7 @@ impl<'a> Select<'a> {
             report: false,
             clear: true,
             max_length: None,
+            tabular_columns: None,
             theme,
         }
     }

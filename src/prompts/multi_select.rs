@@ -3,6 +3,7 @@ use std::{io, iter::repeat, ops::Rem};
 use console::{Key, Term};
 
 use crate::{
+    tabular::{self, ColumnConfig},
     theme::{render::TermThemeRenderer, SimpleTheme, Theme},
     Paging, Result,
 };
@@ -38,6 +39,7 @@ pub struct MultiSelect<'a> {
     report: bool,
     clear: bool,
     max_length: Option<usize>,
+    tabular_columns: Option<Vec<ColumnConfig>>,
     theme: &'a dyn Theme,
 }
 
@@ -119,6 +121,43 @@ impl MultiSelect<'_> {
             self.items.push(item.to_string());
             self.defaults.push(checked);
         }
+        self
+    }
+
+    /// Aligns the items into columns using the provided configuration.
+    ///
+    /// Each item is split into cells on the configured separators and padded so
+    /// that related fields line up across every row. See the
+    /// [`tabular`] module for details.
+    ///
+    /// ## Example
+    ///
+    /// ```rust,no_run
+    /// use dialoguer::{
+    ///     tabular::{ColumnAlignment, ColumnConfig},
+    ///     MultiSelect,
+    /// };
+    ///
+    /// fn main() {
+    ///     let columns = vec![
+    ///         ColumnConfig::new_with_separator(": ", ColumnAlignment::Left),
+    ///         ColumnConfig::new(ColumnAlignment::Left),
+    ///         ColumnConfig::new_with_separator(", ", ColumnAlignment::Left),
+    ///     ];
+    ///
+    ///     let selection = MultiSelect::new()
+    ///         .with_prompt("Select projects to clean")
+    ///         .items(&[
+    ///             "copy_current_location: 898.95 KB (2025-10-12 15:41), /path1",
+    ///             "rona: 1.26 GB (2025-10-14 18:29), /path3",
+    ///         ])
+    ///         .with_tabular_columns(columns)
+    ///         .interact()
+    ///         .unwrap();
+    /// }
+    /// ```
+    pub fn with_tabular_columns(mut self, columns: Vec<ColumnConfig>) -> Self {
+        self.tabular_columns = Some(columns);
         self
     }
 
@@ -212,14 +251,20 @@ impl MultiSelect<'_> {
             ))?;
         }
 
-        let mut paging = Paging::new(term, self.items.len(), self.max_length);
+        // When columns are configured, the interactive list shows the aligned
+        // items. The original items are kept for the post-selection report.
+        let display_items = match &self.tabular_columns {
+            Some(columns) => tabular::format_rows(&self.items, columns),
+            None => self.items.clone(),
+        };
+
+        let mut paging = Paging::new(term, display_items.len(), self.max_length);
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
 
         let mut size_vec = Vec::new();
 
-        for items in self
-            .items
+        for items in display_items
             .iter()
             .flat_map(|i| i.split('\n'))
             .collect::<Vec<_>>()
@@ -238,8 +283,7 @@ impl MultiSelect<'_> {
                     .render_prompt(|paging_info| render.multi_select_prompt(prompt, paging_info))?;
             }
 
-            for (idx, item) in self
-                .items
+            for (idx, item) in display_items
                 .iter()
                 .enumerate()
                 .skip(paging.current_page * paging.capacity)
@@ -371,6 +415,7 @@ impl<'a> MultiSelect<'a> {
             prompt: None,
             report: true,
             max_length: None,
+            tabular_columns: None,
             theme,
         }
     }

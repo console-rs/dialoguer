@@ -61,5 +61,6 @@ mod error;
 mod history;
 mod paging;
 mod prompts;
+pub mod tabular;
 pub mod theme;
 mod validate;
