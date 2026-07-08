@@ -1,6 +1,6 @@
 use std::{io, sync::Arc};
 
-use console::Term;
+use console::{Key, Term};
 use zeroize::Zeroizing;
 
 use crate::{
@@ -36,6 +36,7 @@ pub struct Password<'a> {
     allow_empty_password: bool,
     confirmation_prompt: Option<(String, String)>,
     validator: Option<PasswordValidatorCallback<'a>>,
+    mask: Option<char>,
 }
 
 impl Default for Password<'static> {
@@ -81,6 +82,32 @@ impl Password<'_> {
     /// By default this setting is set to false (i.e. password is not empty).
     pub fn allow_empty_password(mut self, allow_empty_password: bool) -> Self {
         self.allow_empty_password = allow_empty_password;
+        self
+    }
+
+    /// Sets the character used to mask each typed character.
+    ///
+    /// By default no mask is used and the input is fully hidden (nothing is
+    /// echoed). When a mask is set, one mask character is echoed for every
+    /// character typed.
+    ///
+    /// ## Example
+    ///
+    /// ```rust,no_run
+    /// use dialoguer::Password;
+    ///
+    /// fn main() {
+    ///     let password = Password::new()
+    ///         .with_prompt("Enter password")
+    ///         .with_mask('*')
+    ///         .interact()
+    ///         .unwrap();
+    ///
+    ///     println!("Your password length is: {}", password.len());
+    /// }
+    /// ```
+    pub fn with_mask(mut self, mask: char) -> Self {
+        self.mask = Some(mask);
         self
     }
 
@@ -136,12 +163,43 @@ impl Password<'_> {
             render.password_prompt(prompt)?;
             render.term().flush()?;
 
-            let input = render.term().read_secure_line()?;
+            let Some(mask) = self.mask else {
+                let input = render.term().read_secure_line()?;
+                render.add_line();
+
+                if !input.is_empty() || self.allow_empty_password {
+                    return Ok(input);
+                }
+
+                continue;
+            };
+
+            let term = render.term();
+            let mut password = String::new();
+
+            loop {
+                match term.read_key()? {
+                    Key::Char(chr) if !chr.is_ascii_control() => {
+                        password.push(chr);
+                        term.write_str(mask.encode_utf8(&mut [0; 4]))?;
+                        term.flush()?;
+                    }
+                    Key::Backspace if !password.is_empty() => {
+                        password.pop();
+                        term.clear_chars(1)?;
+                        term.flush()?;
+                    }
+                    Key::Enter => break,
+                    _ => {}
+                }
+            }
+
+            term.write_line("")?;
 
             render.add_line();
 
-            if !input.is_empty() || self.allow_empty_password {
-                return Ok(input);
+            if !password.is_empty() || self.allow_empty_password {
+                return Ok(password);
             }
         }
     }
@@ -213,6 +271,7 @@ impl<'a> Password<'a> {
             allow_empty_password: false,
             confirmation_prompt: None,
             validator: None,
+            mask: None,
         }
     }
 }
