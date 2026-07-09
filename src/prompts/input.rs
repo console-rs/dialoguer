@@ -64,7 +64,9 @@ pub struct Input<'a, T> {
     #[cfg(feature = "history")]
     history: Option<Arc<Mutex<&'a mut dyn History<T>>>>,
     #[cfg(feature = "completion")]
-    completion: Option<&'a dyn Completion>,
+    completion: Option<Arc<Mutex<&'a mut dyn Completion>>>,
+    #[cfg(feature = "completion")]
+    completion_modified: bool,
 }
 
 impl<T> Default for Input<'static, T> {
@@ -164,6 +166,8 @@ impl<'a, T> Input<'a, T> {
             history: None,
             #[cfg(feature = "completion")]
             completion: None,
+            #[cfg(feature = "completion")]
+            completion_modified: false,
         }
     }
 
@@ -219,11 +223,11 @@ impl<'a, T> Input<'a, T> {
 
     /// Enable completion
     #[cfg(feature = "completion")]
-    pub fn completion_with<C>(mut self, completion: &'a C) -> Self
+    pub fn completion_with<C>(mut self, completion: &'a mut C) -> Self
     where
         C: Completion,
     {
-        self.completion = Some(completion);
+        self.completion = Some(Arc::new(Mutex::new(completion)));
         self
     }
 }
@@ -354,6 +358,11 @@ where
                         }
 
                         term.flush()?;
+
+                        #[cfg(feature = "completion")]
+                        if self.completion.is_some() {
+                            self.completion_modified = true;
+                        }
                     }
                     Key::Char(chr) if !chr.is_ascii_control() => {
                         chars.insert(position, chr);
@@ -363,6 +372,11 @@ where
                         term.write_str(&tail)?;
                         term.move_cursor_left(tail.chars().count() - 1)?;
                         term.flush()?;
+
+                        #[cfg(feature = "completion")]
+                        if self.completion.is_some() {
+                            self.completion_modified = true;
+                        }
                     }
                     Key::ArrowLeft if position > 0 => {
                         if (position + prompt_len) % term.size().1 as usize == 0 {
@@ -473,9 +487,13 @@ where
                     }
                     #[cfg(feature = "completion")]
                     Key::ArrowRight | Key::Tab => {
-                        if let Some(completion) = &self.completion {
+                        if let Some(completion) = &mut self.completion {
                             let input: String = chars.clone().into_iter().collect();
-                            if let Some(x) = completion.get(&input) {
+                            if let Some(x) = completion
+                                .lock()
+                                .unwrap()
+                                .next(&input, self.completion_modified)
+                            {
                                 term.clear_chars(chars.len())?;
                                 chars.clear();
                                 position = 0;
@@ -486,6 +504,8 @@ where
                                 term.write_str(&x)?;
                                 term.flush()?;
                             }
+
+                            self.completion_modified = false;
                         }
                     }
                     #[cfg(feature = "history")]
