@@ -266,15 +266,11 @@ impl MultiSelect<'_> {
                             % (self.items.len() as i64)) as usize;
                     }
                 }
-                Key::ArrowLeft | Key::Char('h') => {
-                    if paging.active {
-                        sel = paging.previous_page();
-                    }
+                Key::ArrowLeft | Key::Char('h') if paging.active => {
+                    sel = paging.previous_page();
                 }
-                Key::ArrowRight | Key::Char('l') => {
-                    if paging.active {
-                        sel = paging.next_page();
-                    }
+                Key::ArrowRight | Key::Char('l') if paging.active => {
+                    sel = paging.next_page();
                 }
                 Key::Char(' ') => {
                     checked[sel] = !checked[sel];
@@ -286,19 +282,17 @@ impl MultiSelect<'_> {
                         checked.fill(true);
                     }
                 }
-                Key::Escape | Key::Char('q') => {
-                    if allow_quit {
-                        if self.clear {
-                            render.clear()?;
-                        } else {
-                            term.clear_last_lines(paging.capacity)?;
-                        }
-
-                        term.show_cursor()?;
-                        term.flush()?;
-
-                        return Ok(None);
+                Key::Escape | Key::Char('q') if allow_quit => {
+                    if self.clear {
+                        render.clear()?;
+                    } else {
+                        term.clear_last_lines(paging.capacity)?;
                     }
+
+                    term.show_cursor()?;
+                    term.flush()?;
+
+                    return Ok(None);
                 }
                 Key::Enter => {
                     if self.clear {

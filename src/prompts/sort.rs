@@ -244,66 +244,60 @@ impl Sort<'_> {
                         order.swap(old_sel, sel);
                     }
                 }
-                Key::ArrowLeft | Key::Char('h') => {
-                    if paging.active {
-                        let old_sel = sel;
-                        let old_page = paging.current_page;
+                Key::ArrowLeft | Key::Char('h') if paging.active => {
+                    let old_sel = sel;
+                    let old_page = paging.current_page;
 
-                        sel = paging.previous_page();
+                    sel = paging.previous_page();
 
-                        if checked {
-                            let indexes: Vec<_> = if old_page == 0 {
-                                let indexes1: Vec<_> = (0..=old_sel).rev().collect();
-                                let indexes2: Vec<_> = (sel..self.items.len()).rev().collect();
-                                [indexes1, indexes2].concat()
-                            } else {
-                                (sel..=old_sel).rev().collect()
-                            };
+                    if checked {
+                        let indexes: Vec<_> = if old_page == 0 {
+                            let indexes1: Vec<_> = (0..=old_sel).rev().collect();
+                            let indexes2: Vec<_> = (sel..self.items.len()).rev().collect();
+                            [indexes1, indexes2].concat()
+                        } else {
+                            (sel..=old_sel).rev().collect()
+                        };
 
-                            for index in 0..(indexes.len() - 1) {
-                                order.swap(indexes[index], indexes[index + 1]);
-                            }
+                        for index in 0..(indexes.len() - 1) {
+                            order.swap(indexes[index], indexes[index + 1]);
                         }
                     }
                 }
-                Key::ArrowRight | Key::Char('l') => {
-                    if paging.active {
-                        let old_sel = sel;
-                        let old_page = paging.current_page;
+                Key::ArrowRight | Key::Char('l') if paging.active => {
+                    let old_sel = sel;
+                    let old_page = paging.current_page;
 
-                        sel = paging.next_page();
+                    sel = paging.next_page();
 
-                        if checked {
-                            let indexes: Vec<_> = if old_page == paging.pages - 1 {
-                                let indexes1: Vec<_> = (old_sel..self.items.len()).collect();
-                                let indexes2: Vec<_> = vec![0];
-                                [indexes1, indexes2].concat()
-                            } else {
-                                (old_sel..=sel).collect()
-                            };
+                    if checked {
+                        let indexes: Vec<_> = if old_page == paging.pages - 1 {
+                            let indexes1: Vec<_> = (old_sel..self.items.len()).collect();
+                            let indexes2: Vec<_> = vec![0];
+                            [indexes1, indexes2].concat()
+                        } else {
+                            (old_sel..=sel).collect()
+                        };
 
-                            for index in 0..(indexes.len() - 1) {
-                                order.swap(indexes[index], indexes[index + 1]);
-                            }
+                        for index in 0..(indexes.len() - 1) {
+                            order.swap(indexes[index], indexes[index + 1]);
                         }
                     }
                 }
                 Key::Char(' ') => {
                     checked = !checked;
                 }
-                Key::Escape | Key::Char('q') => {
-                    if allow_quit {
-                        if self.clear {
-                            render.clear()?;
-                        } else {
-                            term.clear_last_lines(paging.capacity)?;
-                        }
-
-                        term.show_cursor()?;
-                        term.flush()?;
-
-                        return Ok(None);
+                Key::Escape | Key::Char('q') if allow_quit => {
+                    if self.clear {
+                        render.clear()?;
+                    } else {
+                        term.clear_last_lines(paging.capacity)?;
                     }
+
+                    term.show_cursor()?;
+                    term.flush()?;
+
+                    return Ok(None);
                 }
                 Key::Enter => {
                     if self.clear {
