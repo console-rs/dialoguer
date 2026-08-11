@@ -658,7 +658,8 @@ where
             term.flush()?;
 
             let input = if let Some(initial_text) = self.initial_text.as_ref() {
-                term.read_line_initial_text(initial_text)?
+                let typed = term.read_line_initial_text(initial_text)?;
+                join_initial_text(initial_text, &typed)
             } else {
                 term.read_line()?
             };
@@ -711,9 +712,28 @@ where
     }
 }
 
+/// `Term::read_line_initial_text` renders the initial text but returns only the
+/// characters typed after it, so it has to be prepended back to get the full line.
+fn join_initial_text(initial_text: &str, typed: &str) -> String {
+    let mut input = String::with_capacity(initial_text.len() + typed.len());
+    input.push_str(initial_text);
+    input.push_str(typed);
+    input
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_join_initial_text() {
+        // Accepting the initial text unchanged must yield the initial text,
+        // not an empty string (which would fall through to the default value).
+        assert_eq!(join_initial_text("initial text", ""), "initial text");
+        assert_eq!(join_initial_text("initial", " text"), "initial text");
+        assert_eq!(join_initial_text("", "typed"), "typed");
+        assert_eq!(join_initial_text("héllo ", "wörld"), "héllo wörld");
+    }
 
     #[test]
     fn test_clone() {
