@@ -35,7 +35,7 @@ pub trait Theme {
         default: Option<bool>,
     ) -> fmt::Result {
         if !prompt.is_empty() {
-            write!(f, "{} ", &prompt)?;
+            write!(f, "{} ", prompt)?;
         }
         match default {
             None => write!(f, "[y/n] ")?,
@@ -67,11 +67,11 @@ pub trait Theme {
                 write!(f, "{}", selection)
             }
             Some(selection) => {
-                write!(f, "{} {}", &prompt, selection)
+                write!(f, "{} {}", prompt, selection)
             }
             None if prompt.is_empty() => Ok(()),
             None => {
-                write!(f, "{}", &prompt)
+                write!(f, "{}", prompt)
             }
         }
     }

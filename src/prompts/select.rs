@@ -180,7 +180,7 @@ impl Select<'_> {
     pub fn interact_on(self, term: &Term) -> Result<usize> {
         Ok(self
             ._interact_on(term, false)?
-            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
+            .ok_or_else(|| io::Error::other("Quit not allowed in this case"))?)
     }
 
     /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
@@ -196,10 +196,7 @@ impl Select<'_> {
         }
 
         if self.items.is_empty() {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "Empty list of items given to `Select`",
-            ))?;
+            Err(io::Error::other("Empty list of items given to `Select`"))?;
         }
 
         let mut paging = Paging::new(term, self.items.len(), self.max_length);

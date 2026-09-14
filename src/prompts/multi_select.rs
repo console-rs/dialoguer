@@ -191,7 +191,7 @@ impl MultiSelect<'_> {
     pub fn interact_on(self, term: &Term) -> Result<Vec<usize>> {
         Ok(self
             ._interact_on(term, false)?
-            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Quit not allowed in this case"))?)
+            .ok_or_else(|| io::Error::other("Quit not allowed in this case"))?)
     }
 
     /// Like [`interact_opt`](Self::interact_opt) but allows a specific terminal to be set.
@@ -206,8 +206,7 @@ impl MultiSelect<'_> {
         }
 
         if self.items.is_empty() {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
+            Err(io::Error::other(
                 "Empty list of items given to `MultiSelect`",
             ))?;
         }
