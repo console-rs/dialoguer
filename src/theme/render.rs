@@ -47,7 +47,7 @@ impl<'a> TermThemeRenderer<'a> {
         f: F,
     ) -> Result<usize> {
         let mut buf = String::new();
-        f(self, &mut buf).map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+        f(self, &mut buf).map_err(io::Error::other)?;
         self.height += buf.chars().filter(|&x| x == '\n').count();
         self.term.write_str(&buf)?;
         Ok(measure_text_width(&buf))
@@ -60,7 +60,7 @@ impl<'a> TermThemeRenderer<'a> {
         f: F,
     ) -> Result {
         let mut buf = String::new();
-        f(self, &mut buf).map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+        f(self, &mut buf).map_err(io::Error::other)?;
         self.height += buf.chars().filter(|&x| x == '\n').count() + 1;
         Ok(self.term.write_line(&buf)?)
     }

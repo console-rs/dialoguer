@@ -88,12 +88,12 @@ impl Theme for ColorfulTheme {
             write!(
                 f,
                 "{} {} ",
-                &self.prompt_prefix,
+                self.prompt_prefix,
                 self.prompt_style.apply_to(prompt)
             )?;
         }
 
-        write!(f, "{}", &self.prompt_suffix)
+        write!(f, "{}", self.prompt_suffix)
     }
 
     /// Formats an error
@@ -101,7 +101,7 @@ impl Theme for ColorfulTheme {
         write!(
             f,
             "{} {}",
-            &self.error_prefix,
+            self.error_prefix,
             self.error_style.apply_to(err)
         )
     }
@@ -117,7 +117,7 @@ impl Theme for ColorfulTheme {
             write!(
                 f,
                 "{} {} ",
-                &self.prompt_prefix,
+                self.prompt_prefix,
                 self.prompt_style.apply_to(prompt)
             )?;
         }
@@ -127,9 +127,9 @@ impl Theme for ColorfulTheme {
                 f,
                 "{} {} ",
                 self.hint_style.apply_to(&format!("({})", default)),
-                &self.prompt_suffix
+                self.prompt_suffix
             ),
-            None => write!(f, "{} ", &self.prompt_suffix),
+            None => write!(f, "{} ", self.prompt_suffix),
         }
     }
 
@@ -144,7 +144,7 @@ impl Theme for ColorfulTheme {
             write!(
                 f,
                 "{} {} ",
-                &self.prompt_prefix,
+                self.prompt_prefix,
                 self.prompt_style.apply_to(prompt)
             )?;
         }
@@ -154,20 +154,20 @@ impl Theme for ColorfulTheme {
                 f,
                 "{} {}",
                 self.hint_style.apply_to("(y/n)"),
-                &self.prompt_suffix
+                self.prompt_suffix
             ),
             Some(true) => write!(
                 f,
                 "{} {} {}",
                 self.hint_style.apply_to("(y/n)"),
-                &self.prompt_suffix,
+                self.prompt_suffix,
                 self.defaults_style.apply_to("yes")
             ),
             Some(false) => write!(
                 f,
                 "{} {} {}",
                 self.hint_style.apply_to("(y/n)"),
-                &self.prompt_suffix,
+                self.prompt_suffix,
                 self.defaults_style.apply_to("no")
             ),
         }
@@ -179,9 +179,9 @@ impl Theme for ColorfulTheme {
             write!(
                 f,
                 "{} {} {}",
-                &self.prompt_prefix,
+                self.prompt_prefix,
                 self.prompt_style.apply_to(prompt),
-                &self.prompt_suffix
+                self.prompt_suffix
             )?;
         }
         Ok(())
@@ -198,7 +198,7 @@ impl Theme for ColorfulTheme {
             write!(
                 f,
                 "{} {} ",
-                &self.success_prefix,
+                self.success_prefix,
                 self.prompt_style.apply_to(prompt)
             )?;
         }
@@ -209,12 +209,12 @@ impl Theme for ColorfulTheme {
                 write!(
                     f,
                     "{} {}",
-                    &self.success_suffix,
+                    self.success_suffix,
                     self.values_style.apply_to(selection)
                 )
             }
             None => {
-                write!(f, "{}", &self.success_suffix)
+                write!(f, "{}", self.success_suffix)
             }
         }
     }
@@ -230,7 +230,7 @@ impl Theme for ColorfulTheme {
             write!(
                 f,
                 "{} {} ",
-                &self.success_prefix,
+                self.success_prefix,
                 self.prompt_style.apply_to(prompt)
             )?;
         }
@@ -238,7 +238,7 @@ impl Theme for ColorfulTheme {
         write!(
             f,
             "{} {}",
-            &self.success_suffix,
+            self.success_suffix,
             self.values_style.apply_to(sel)
         )
     }
@@ -264,12 +264,12 @@ impl Theme for ColorfulTheme {
             write!(
                 f,
                 "{} {} ",
-                &self.success_prefix,
+                self.success_prefix,
                 self.prompt_style.apply_to(prompt)
             )?;
         }
 
-        write!(f, "{} ", &self.success_suffix)?;
+        write!(f, "{} ", self.success_suffix)?;
 
         for (idx, sel) in selections.iter().enumerate() {
             write!(
