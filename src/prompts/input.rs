@@ -91,6 +91,11 @@ impl<T> Input<'_, T> {
         self
     }
 
+    /// Returns the text to show in place of the prompt once input is complete.
+    fn completion_prompt(&self) -> &str {
+        self.post_completion_text.as_deref().unwrap_or(&self.prompt)
+    }
+
     /// Indicates whether to report the input value after interaction.
     ///
     /// The default is to report the input value.
@@ -582,7 +587,10 @@ where
                     }
 
                     if self.report {
-                        render.input_prompt_selection(&self.prompt, &default.to_string())?;
+                        render.input_prompt_selection(
+                            self.completion_prompt(),
+                            &default.to_string(),
+                        )?;
                     }
                     term.flush()?;
                     return Ok(default.clone());
@@ -606,11 +614,7 @@ where
                     }
 
                     if self.report {
-                        if let Some(post_completion_text) = &self.post_completion_text {
-                            render.input_prompt_selection(post_completion_text, &input)?;
-                        } else {
-                            render.input_prompt_selection(&self.prompt, &input)?;
-                        }
+                        render.input_prompt_selection(self.completion_prompt(), &input)?;
                     }
                     term.flush()?;
 
@@ -720,5 +724,16 @@ mod tests {
         let input = Input::<String>::new().with_prompt("Your name");
 
         let _ = input.clone();
+    }
+
+    #[test]
+    fn test_completion_prompt() {
+        let input = Input::<String>::new().with_prompt("Your name");
+        assert_eq!(input.completion_prompt(), "Your name");
+
+        let input = input
+            .with_post_completion_text("Name")
+            .default("Alice".to_string());
+        assert_eq!(input.completion_prompt(), "Name");
     }
 }
