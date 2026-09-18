@@ -681,7 +681,10 @@ where
                     }
 
                     if self.report {
-                        render.input_prompt_selection(&self.prompt, &default.to_string())?;
+                        render.input_prompt_selection(
+                            self.completion_prompt(),
+                            &default.to_string(),
+                        )?;
                     }
                     term.flush()?;
                     return Ok(default.clone());
@@ -700,7 +703,7 @@ where
                     }
 
                     if self.report {
-                        render.input_prompt_selection(&self.prompt, &input)?;
+                        render.input_prompt_selection(self.completion_prompt(), &input)?;
                     }
                     term.flush()?;
 
