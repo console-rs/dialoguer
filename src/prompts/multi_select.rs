@@ -278,7 +278,7 @@ impl MultiSelect<'_> {
                         if self.clear {
                             render.clear()?;
                         } else {
-                            term.clear_last_lines(paging.capacity)?;
+                            render.clear_preserve_prompt()?;
                         }
 
                         term.show_cursor()?;
