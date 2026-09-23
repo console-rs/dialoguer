@@ -6,6 +6,19 @@ use fuzzy_matcher::skim::SkimMatcherV2;
 
 use crate::{theme::Theme, Result};
 
+/// Counts the terminal rows occupied by text that is followed by a newline.
+///
+/// Each explicit line occupies at least one row, and lines wider than the
+/// terminal occupy additional rows through terminal wrapping.
+fn visual_line_count(text: &str, terminal_width: usize) -> usize {
+    let terminal_width = terminal_width.max(1);
+
+    text.split('\n')
+        .map(|line| measure_text_width(line).max(1))
+        .map(|width| (width - 1) / terminal_width + 1)
+        .sum()
+}
+
 /// Helper struct to conveniently render a theme.
 pub(crate) struct TermThemeRenderer<'a> {
     term: &'a Term,
@@ -63,7 +76,7 @@ impl<'a> TermThemeRenderer<'a> {
     ) -> Result {
         let mut buf = String::new();
         f(self, &mut buf).map_err(io::Error::other)?;
-        self.height += buf.chars().filter(|&x| x == '\n').count() + 1;
+        self.height += visual_line_count(&buf, self.term.size().1 as usize);
         Ok(self.term.write_line(&buf)?)
     }
 
@@ -249,19 +262,8 @@ impl<'a> TermThemeRenderer<'a> {
         Ok(())
     }
 
-    pub fn clear_preserve_prompt(&mut self, size_vec: &[usize]) -> Result {
-        let mut new_height = self.height;
-        let prefix_width = 2;
-        //Check each item size, increment on finding an overflow
-        for size in size_vec {
-            if *size > self.term.size().1 as usize {
-                new_height += (((*size as f64 + prefix_width as f64) / self.term.size().1 as f64)
-                    .ceil()) as usize
-                    - 1;
-            }
-        }
-
-        self.term.clear_last_lines(new_height)?;
+    pub fn clear_preserve_prompt(&mut self) -> Result {
+        self.term.clear_last_lines(self.height)?;
         self.height = 0;
         Ok(())
     }
@@ -269,7 +271,7 @@ impl<'a> TermThemeRenderer<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::TermThemeRenderer;
+    use super::{visual_line_count, TermThemeRenderer};
     use crate::theme::SimpleTheme;
     use console::Term;
 
@@ -287,5 +289,31 @@ mod tests {
         ] {
             assert_eq!(render.input_prompt(prompt, default).unwrap(), expected);
         }
+    }
+
+    #[test]
+    fn visual_line_count_counts_wrapped_rows() {
+        assert_eq!(visual_line_count("", 10), 1);
+        assert_eq!(visual_line_count("1234567890", 10), 1);
+        assert_eq!(visual_line_count("12345678901", 10), 2);
+        assert_eq!(visual_line_count("123456789012345678901", 10), 3);
+    }
+
+    #[test]
+    fn visual_line_count_includes_item_prefix_when_wrapping() {
+        // The text itself fits, but the MultiSelect marker makes the rendered
+        // item wrap onto a second terminal row.
+        assert_eq!(visual_line_count("> [ ] 12345", 10), 2);
+    }
+
+    #[test]
+    fn visual_line_count_handles_explicit_lines_and_display_width() {
+        assert_eq!(visual_line_count("123456\n1234", 5), 3);
+        assert_eq!(visual_line_count("界界界", 4), 2);
+    }
+
+    #[test]
+    fn visual_line_count_handles_zero_terminal_width() {
+        assert_eq!(visual_line_count("abc", 0), 3);
     }
 }

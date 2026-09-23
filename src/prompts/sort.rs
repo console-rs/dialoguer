@@ -185,13 +185,6 @@ impl Sort<'_> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = 0;
 
-        let mut size_vec = Vec::new();
-
-        for items in self.items.iter().as_slice() {
-            let size = &items.len();
-            size_vec.push(*size);
-        }
-
         let mut order: Vec<_> = (0..self.items.len()).collect();
         let mut checked: bool = false;
 
@@ -330,7 +323,7 @@ impl Sort<'_> {
             if paging.active {
                 render.clear()?;
             } else {
-                render.clear_preserve_prompt(&size_vec)?;
+                render.clear_preserve_prompt()?;
             }
         }
     }
