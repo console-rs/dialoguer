@@ -1,3 +1,4 @@
+use console::style;
 use dialoguer::{theme::ColorfulTheme, Select};
 
 fn main() {
@@ -30,7 +31,12 @@ fn main() {
         println!("You didn't select anything!");
     }
 
-    let selection = Select::with_theme(&ColorfulTheme::default())
+    let theme = ColorfulTheme {
+        header: style("-----------------------".to_string()).for_stderr(),
+        footer: style("-----------------------".to_string()).for_stderr(),
+        ..ColorfulTheme::default()
+    };
+    let selection = Select::with_theme(&theme)
         .with_prompt("Pick your flavor, hint it might be on the second page")
         .default(0)
         .max_length(2)
