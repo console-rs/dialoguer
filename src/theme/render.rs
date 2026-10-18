@@ -50,7 +50,9 @@ impl<'a> TermThemeRenderer<'a> {
         f(self, &mut buf).map_err(io::Error::other)?;
         self.height += buf.chars().filter(|&x| x == '\n').count();
         self.term.write_str(&buf)?;
-        Ok(measure_text_width(&buf))
+        Ok(measure_text_width(
+            buf.rsplit('\n').next().unwrap_or_default(),
+        ))
     }
 
     fn write_formatted_line<
@@ -262,5 +264,28 @@ impl<'a> TermThemeRenderer<'a> {
         self.term.clear_last_lines(new_height)?;
         self.height = 0;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::TermThemeRenderer;
+    use crate::theme::SimpleTheme;
+    use console::Term;
+
+    #[test]
+    fn input_prompt_width_uses_last_line() {
+        let term = Term::buffered_stderr();
+        let mut render = TermThemeRenderer::new(&term, &SimpleTheme);
+
+        for (prompt, default, expected) in [
+            ("prompt", None, 8),
+            ("first\nx", None, 3),
+            ("first\n", None, 2),
+            ("first\n\x1b[31m界\x1b[0m", None, 4),
+            ("prompt", Some("first\nlast"), 7),
+        ] {
+            assert_eq!(render.input_prompt(prompt, default).unwrap(), expected);
+        }
     }
 }
