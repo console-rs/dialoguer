@@ -202,6 +202,8 @@ impl Sort<'_> {
                 paging.render_prompt(|paging_info| render.sort_prompt(prompt, paging_info))?;
             }
 
+            render.header()?;
+
             for (idx, item) in order
                 .iter()
                 .enumerate()
@@ -210,6 +212,8 @@ impl Sort<'_> {
             {
                 render.sort_prompt_item(&self.items[*item], checked, sel == idx)?;
             }
+
+            render.footer()?;
 
             term.flush()?;
 
