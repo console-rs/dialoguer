@@ -1,21 +1,40 @@
 use std::{fmt, io};
 
-use console::{measure_text_width, Term};
+use console::{measure_text_width, strip_ansi_codes, Term};
 #[cfg(feature = "fuzzy-select")]
 use fuzzy_matcher::skim::SkimMatcherV2;
+use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{theme::Theme, Result};
 
 /// Counts the terminal rows occupied by text that is followed by a newline.
 ///
 /// Each explicit line occupies at least one row, and lines wider than the
-/// terminal occupy additional rows through terminal wrapping.
+/// terminal occupy additional rows through terminal wrapping. Wide grapheme
+/// clusters wrap as a unit when they cannot fit in the remaining columns.
 fn visual_line_count(text: &str, terminal_width: usize) -> usize {
     let terminal_width = terminal_width.max(1);
+    let text = strip_ansi_codes(text);
 
     text.split('\n')
-        .map(|line| measure_text_width(line).max(1))
-        .map(|width| (width - 1) / terminal_width + 1)
+        .map(|line| {
+            let mut rows = 1;
+            let mut column = 0;
+
+            for grapheme in line.graphemes(true) {
+                let width = measure_text_width(grapheme);
+                if width == 0 {
+                    continue;
+                }
+                if column > 0 && column + width > terminal_width {
+                    rows += 1;
+                    column = 0;
+                }
+                column += width;
+            }
+
+            rows
+        })
         .sum()
 }
 
@@ -310,6 +329,23 @@ mod tests {
     fn visual_line_count_handles_explicit_lines_and_display_width() {
         assert_eq!(visual_line_count("123456\n1234", 5), 3);
         assert_eq!(visual_line_count("界界界", 4), 2);
+    }
+
+    #[test]
+    fn visual_line_count_wraps_wide_characters_before_the_right_edge() {
+        // The wide character cannot fit in the one remaining column. Its
+        // unused cell means these 20 display columns occupy three rows.
+        assert_eq!(visual_line_count("> 1234567界123456789", 10), 3);
+        assert_eq!(visual_line_count("abc界abc", 4), 3);
+        assert_eq!(visual_line_count("abc界abc\nabc界abc", 4), 6);
+        assert_eq!(visual_line_count("\x1b[31mabc界abc\x1b[0m", 4), 3);
+    }
+
+    #[test]
+    fn visual_line_count_keeps_grapheme_clusters_together() {
+        assert_eq!(visual_line_count("123456789👩‍💻123456789", 10), 3);
+        assert_eq!(visual_line_count("123456789e\u{301}", 10), 1);
+        assert_eq!(visual_line_count("123456789e\x1b[31m\u{301}\x1b[0m", 10), 1);
     }
 
     #[test]
