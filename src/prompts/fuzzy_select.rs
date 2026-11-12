@@ -205,12 +205,6 @@ impl FuzzySelect<'_> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
-        let mut size_vec = Vec::new();
-        for items in self.items.iter().as_slice() {
-            let size = &items.len();
-            size_vec.push(*size);
-        }
-
         // Fuzzy matcher
         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
 
@@ -362,7 +356,7 @@ impl FuzzySelect<'_> {
                 _ => {}
             }
 
-            render.clear_preserve_prompt(&size_vec)?;
+            render.clear_preserve_prompt()?;
         }
     }
 }
