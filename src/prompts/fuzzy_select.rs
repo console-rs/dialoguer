@@ -238,18 +238,9 @@ impl FuzzySelect<'_> {
             render.clear()?;
             render.fuzzy_select_prompt(self.prompt.as_str(), &search_term, byte_indices[cursor])?;
 
-            // Maps all items to a tuple of item and its match score.
-            let mut filtered_list = self
-                .items
-                .iter()
-                .map(|item| (item, matcher.fuzzy_match(item, &search_term)))
-                .filter_map(|(item, score)| score.map(|s| (item, s)))
-                .collect::<Vec<_>>();
+            let filtered_list = filter_and_rank(&self.items, &matcher, &search_term);
 
-            // Renders all matching items, from best match to worst.
-            filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(s1));
-
-            for (idx, (item, _)) in filtered_list
+            for (idx, (_, item)) in filtered_list
                 .iter()
                 .enumerate()
                 .skip(starting_row)
@@ -332,15 +323,11 @@ impl FuzzySelect<'_> {
 
                     if self.report {
                         render
-                            .input_prompt_selection(self.prompt.as_str(), filtered_list[sel].0)?;
+                            .input_prompt_selection(self.prompt.as_str(), filtered_list[sel].1)?;
                     }
 
-                    let sel_string = filtered_list[sel].0;
-                    let sel_string_pos_in_items =
-                        self.items.iter().position(|item| item.eq(sel_string));
-
                     term.show_cursor()?;
-                    return Ok(sel_string_pos_in_items);
+                    return Ok(Some(filtered_list[sel].0));
                 }
                 (Key::Backspace, _, _) if cursor > 0 => {
                     cursor -= 1;
@@ -398,6 +385,32 @@ impl<'a> FuzzySelect<'a> {
     }
 }
 
+// Fuzzy-filter `items` by `search_term`, ordered best match first. Each survivor
+// keeps its original position so duplicate items resolve to the right index when
+// one is selected.
+fn filter_and_rank<'a>(
+    items: &'a [String],
+    matcher: &impl FuzzyMatcher,
+    search_term: &str,
+) -> Vec<(usize, &'a String)> {
+    let mut filtered = items
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, item)| {
+            matcher
+                .fuzzy_match(item, search_term)
+                .map(|score| (idx, item, score))
+        })
+        .collect::<Vec<_>>();
+
+    filtered.sort_unstable_by(|(_, _, s1), (_, _, s2)| s2.cmp(s1));
+
+    filtered
+        .into_iter()
+        .map(|(idx, item, _)| (idx, item))
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -415,5 +428,24 @@ mod tests {
         let iterator = items.iter().skip(1);
 
         assert_eq!(FuzzySelect::new().items(iterator).items, &items[1..]);
+    }
+
+    #[test]
+    fn duplicate_items_keep_their_original_index() {
+        let items = ["item0", "item1", "item1", "item3", "item4"]
+            .map(String::from)
+            .to_vec();
+        let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
+
+        let ranked = filter_and_rank(&items, &matcher, "item1");
+
+        let mut item1_indices = ranked
+            .iter()
+            .filter(|(_, item)| *item == "item1")
+            .map(|(idx, _)| *idx)
+            .collect::<Vec<_>>();
+        item1_indices.sort_unstable();
+
+        assert_eq!(item1_indices, vec![1, 2]);
     }
 }
