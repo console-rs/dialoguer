@@ -250,16 +250,9 @@ impl<'a> TermThemeRenderer<'a> {
     }
 
     pub fn clear_preserve_prompt(&mut self, size_vec: &[usize]) -> Result {
-        let mut new_height = self.height;
         let prefix_width = 2;
-        //Check each item size, increment on finding an overflow
-        for size in size_vec {
-            if *size > self.term.size().1 as usize {
-                new_height += (((*size as f64 + prefix_width as f64) / self.term.size().1 as f64)
-                    .ceil()) as usize
-                    - 1;
-            }
-        }
+        let new_height =
+            self.height + overflow_lines(size_vec, self.term.size().1 as usize, prefix_width);
 
         self.term.clear_last_lines(new_height)?;
         self.height = 0;
@@ -267,11 +260,60 @@ impl<'a> TermThemeRenderer<'a> {
     }
 }
 
+/// Number of extra visual lines taken up by items that wrap because they are wider than
+/// the terminal. `size_vec` holds the display width of each rendered item, and every item
+/// is prefixed by `prefix_width` columns.
+fn overflow_lines(size_vec: &[usize], term_width: usize, prefix_width: usize) -> usize {
+    if term_width == 0 {
+        return 0;
+    }
+
+    size_vec
+        .iter()
+        .map(|&size| {
+            let total = size.saturating_add(prefix_width);
+            if total > term_width {
+                // ceil(total / term_width) - 1
+                (total.div_ceil(term_width)) - 1
+            } else {
+                0
+            }
+        })
+        .sum()
+}
+
 #[cfg(test)]
 mod tests {
-    use super::TermThemeRenderer;
+    use super::{overflow_lines, TermThemeRenderer};
     use crate::theme::SimpleTheme;
     use console::Term;
+
+    #[test]
+    fn overflow_lines_accounts_for_the_item_prefix() {
+        // An item that is exactly as wide as the terminal fits on one line, but the
+        // two-column prefix pushes anything wider over the edge.
+        assert_eq!(overflow_lines(&[38], 40, 2), 0);
+        assert_eq!(overflow_lines(&[39], 40, 2), 1);
+        assert_eq!(overflow_lines(&[100], 40, 2), 2);
+        assert_eq!(overflow_lines(&[100, 100], 40, 2), 4);
+    }
+
+    #[test]
+    fn overflow_lines_without_a_known_width() {
+        assert_eq!(overflow_lines(&[100], 0, 2), 0);
+    }
+
+    #[test]
+    fn only_rendered_items_contribute_overflow_lines() {
+        // A fuzzy select may hold many items but only render the visible window.
+        // Off-screen wide items must not inflate the number of lines to clear.
+        let all_items = [200, 200, 200];
+        let rendered_items = [200];
+        assert!(
+            overflow_lines(&all_items, 40, 2) > overflow_lines(&rendered_items, 40, 2),
+            "all items would clear more lines than the rendered window"
+        );
+    }
 
     #[test]
     fn input_prompt_width_uses_last_line() {
