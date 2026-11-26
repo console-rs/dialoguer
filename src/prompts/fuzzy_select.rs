@@ -243,10 +243,7 @@ impl FuzzySelect<'_> {
             // Renders all matching items, from best match to worst.
             filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(s1));
 
-            // Only the items that are actually rendered may contribute to the height that
-            // has to be cleared on the next frame. Counting filtered-out or scrolled-out
-            // items (especially wide ones) makes `clear` erase more lines than were drawn,
-            // which scrolls the prompt off the screen.
+            // Only rendered items contribute to the clear height.
             let mut size_vec = Vec::new();
             for (idx, (item, _)) in filtered_list
                 .iter()

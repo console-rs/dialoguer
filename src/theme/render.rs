@@ -272,12 +272,7 @@ fn overflow_lines(size_vec: &[usize], term_width: usize, prefix_width: usize) ->
         .iter()
         .map(|&size| {
             let total = size.saturating_add(prefix_width);
-            if total > term_width {
-                // ceil(total / term_width) - 1
-                (total.div_ceil(term_width)) - 1
-            } else {
-                0
-            }
+            total.div_ceil(term_width).saturating_sub(1)
         })
         .sum()
 }
