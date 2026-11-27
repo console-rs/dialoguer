@@ -1,6 +1,6 @@
 use std::{io, ops::Rem};
 
-use console::{Key, Term};
+use console::{measure_text_width, Key, Term};
 use fuzzy_matcher::FuzzyMatcher;
 
 use crate::{
@@ -205,12 +205,6 @@ impl FuzzySelect<'_> {
         let mut render = TermThemeRenderer::new(term, self.theme);
         let mut sel = self.default;
 
-        let mut size_vec = Vec::new();
-        for items in self.items.iter().as_slice() {
-            let size = &items.len();
-            size_vec.push(*size);
-        }
-
         // Fuzzy matcher
         let matcher = fuzzy_matcher::skim::SkimMatcherV2::default();
 
@@ -249,12 +243,15 @@ impl FuzzySelect<'_> {
             // Renders all matching items, from best match to worst.
             filtered_list.sort_unstable_by(|(_, s1), (_, s2)| s2.cmp(s1));
 
+            // Only rendered items contribute to the clear height.
+            let mut size_vec = Vec::new();
             for (idx, (item, _)) in filtered_list
                 .iter()
                 .enumerate()
                 .skip(starting_row)
                 .take(visible_term_rows)
             {
+                size_vec.push(measure_text_width(item));
                 render.fuzzy_select_prompt_item(
                     item,
                     Some(idx) == sel,
