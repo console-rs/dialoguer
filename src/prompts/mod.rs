@@ -11,3 +11,6 @@ pub mod fuzzy_select;
 
 #[cfg(feature = "password")]
 pub mod password;
+
+#[cfg(feature = "folder-select")]
+pub mod folder_select;
