@@ -163,17 +163,6 @@ impl Password<'_> {
             render.password_prompt(prompt)?;
             render.term().flush()?;
 
-            let Some(mask) = self.mask else {
-                let input = render.term().read_secure_line()?;
-                render.add_line();
-
-                if !input.is_empty() || self.allow_empty_password {
-                    return Ok(input);
-                }
-
-                continue;
-            };
-
             let term = render.term();
             let mut password = String::new();
 
@@ -181,13 +170,19 @@ impl Password<'_> {
                 match term.read_key()? {
                     Key::Char(chr) if !chr.is_ascii_control() => {
                         password.push(chr);
-                        term.write_str(mask.encode_utf8(&mut [0; 4]))?;
-                        term.flush()?;
+
+                        if let Some(mask) = self.mask {
+                            term.write_str(mask.encode_utf8(&mut [0; 4]))?;
+                            term.flush()?;
+                        }
                     }
                     Key::Backspace if !password.is_empty() => {
                         password.pop();
-                        term.clear_chars(1)?;
-                        term.flush()?;
+
+                        if self.mask.is_some() {
+                            term.clear_chars(1)?;
+                            term.flush()?;
+                        }
                     }
                     Key::Enter => break,
                     _ => {}
